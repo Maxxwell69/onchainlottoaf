@@ -93,24 +93,65 @@ class DexScreenerService {
       console.log(`🔗 Scanning pair address for transactions...`);
       const { PublicKey } = require('@solana/web3.js');
       
-      // Get recent signatures for the pair address
-      const signatures = await connection.getSignaturesForAddress(
-        new PublicKey(pairAddress),
-        { limit: 100 }
-      );
+      // Fetch ALL signatures with pagination until we reach start time
+      const allSignatures = [];
+      let lastSignature = null;
+      const startTimeMs = new Date(startTime).getTime();
+      
+      console.log(`📅 Fetching all transactions since ${new Date(startTime).toLocaleString()}...`);
+      
+      while (true) {
+        const options = { limit: 100 };
+        if (lastSignature) {
+          options.before = lastSignature;
+        }
+        
+        const batch = await connection.getSignaturesForAddress(
+          new PublicKey(pairAddress),
+          options
+        );
+        
+        if (batch.length === 0) break;
+        
+        // Check if we've gone past the start time
+        const oldestInBatch = batch[batch.length - 1];
+        const oldestTime = oldestInBatch.blockTime ? oldestInBatch.blockTime * 1000 : 0;
+        
+        // Add all signatures from this batch
+        for (const sig of batch) {
+          if (sig.blockTime && sig.blockTime * 1000 >= startTimeMs) {
+            allSignatures.push(sig);
+          }
+        }
+        
+        // If oldest transaction in batch is before start time, we're done
+        if (oldestTime < startTimeMs) {
+          console.log(`✅ Reached start time. Total signatures: ${allSignatures.length}`);
+          break;
+        }
+        
+        // If we got less than 100, we've reached the end
+        if (batch.length < 100) {
+          console.log(`✅ Reached end of transaction history. Total signatures: ${allSignatures.length}`);
+          break;
+        }
+        
+        lastSignature = batch[batch.length - 1].signature;
+        
+        // Rate limiting
+        await new Promise(resolve => setTimeout(resolve, 200));
+      }
 
-      console.log(`✅ Found ${signatures.length} pair transactions\n`);
+      console.log(`✅ Found ${allSignatures.length} pair transactions since start time\n`);
 
       const qualifyingBuys = [];
       const processedSignatures = new Set();
       let checkedCount = 0;
       let parsedCount = 0;
 
-      for (const sig of signatures) {
-        // Check timestamp
-        if (!sig.blockTime || new Date(sig.blockTime * 1000) < new Date(startTime)) {
-          continue;
-        }
+      for (const sig of allSignatures) {
+        // Already filtered by time in pagination above
+        checkedCount++;
 
         checkedCount++;
 
