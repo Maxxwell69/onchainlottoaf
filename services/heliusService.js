@@ -193,17 +193,15 @@ class HeliusService {
         lastSignature
       );
 
-      // If Helius returns no transactions, use DexScreener + RPC fallback
-      if (!transactions || transactions.length === 0) {
-        console.log('⚠️  Helius returned no transactions, trying DexScreener + RPC fallback...');
-        const dexScreenerService = require('./dexScreenerService');
-        return await dexScreenerService.scanForQualifyingBuys(
-          draw.token_address,
-          draw.start_time,
-          draw.min_usd_amount,
-          this.connection
-        );
-      }
+      // ALWAYS use DexScreener for pump.fun and meme coins (more reliable)
+      console.log('🎯 Using DexScreener scan for maximum reliability...');
+      const dexScreenerService = require('./dexScreenerService');
+      return await dexScreenerService.scanForQualifyingBuys(
+        draw.token_address,
+        draw.start_time,
+        draw.min_usd_amount,
+        this.connection
+      );
 
       // Get current token price
       const tokenPrice = await this.getTokenPrice(draw.token_address);
