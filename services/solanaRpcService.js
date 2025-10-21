@@ -41,14 +41,15 @@ class SolanaRpcService {
       const allTransactions = [];
       const processedSignatures = new Set();
 
-      // Get recent transactions for first 20 accounts (to avoid rate limits)
-      const accountsToCheck = tokenAccounts.slice(0, 20);
+      // Get recent transactions for MORE accounts to find all recent activity
+      // Sort by last activity to get the most active accounts first
+      const accountsToCheck = tokenAccounts.slice(0, 200); // Increased to 200 accounts
       
       for (const account of accountsToCheck) {
         try {
           const signatures = await this.connection.getSignaturesForAddress(
             account.pubkey,
-            { limit: Math.ceil(limit / accountsToCheck.length) }
+            { limit: 5 } // Get last 5 transactions per account for better coverage
           );
 
           for (const sig of signatures) {
@@ -78,6 +79,7 @@ class SolanaRpcService {
 
   /**
    * Parse transaction to extract token transfer details
+   * Enhanced to handle pump.fun and Raydium swaps
    */
   async parseTransaction(signature, tokenMint) {
     try {
@@ -85,43 +87,62 @@ class SolanaRpcService {
         maxSupportedTransactionVersion: 0
       });
 
-      if (!tx || !tx.meta) {
+      if (!tx || !tx.meta || tx.meta.err) {
         return null;
       }
 
-      // Look for token transfers in the transaction
+      // Look for token balance changes in the transaction
       const preTokenBalances = tx.meta.preTokenBalances || [];
       const postTokenBalances = tx.meta.postTokenBalances || [];
 
-      // Find transfers of our token
+      // Find ALL accounts that received our token
+      const recipients = [];
+
       for (let i = 0; i < postTokenBalances.length; i++) {
         const post = postTokenBalances[i];
-        const pre = preTokenBalances.find(p => p.accountIndex === post.accountIndex);
-
-        if (post.mint === tokenMint && pre) {
-          const preAmount = parseFloat(pre.uiTokenAmount.uiAmount || 0);
-          const postAmount = parseFloat(post.uiTokenAmount.uiAmount || 0);
-          const change = postAmount - preAmount;
-
-          // If positive change, this account received tokens (buyer)
-          if (change > 0) {
-            const accountIndex = post.accountIndex;
-            const ownerAddress = post.owner;
-
-            return {
-              signature: signature,
-              buyer: ownerAddress,
-              tokenAmount: change * Math.pow(10, post.uiTokenAmount.decimals), // Convert back to raw amount
-              timestamp: new Date(tx.blockTime * 1000),
-              slot: tx.slot
-            };
-          }
+        
+        // Only process our token
+        if (post.mint !== tokenMint) {
+          continue;
         }
+
+        const pre = preTokenBalances.find(p => 
+          p.accountIndex === post.accountIndex && 
+          p.mint === tokenMint
+        );
+
+        const preAmount = pre ? parseFloat(pre.uiTokenAmount.uiAmount || 0) : 0;
+        const postAmount = parseFloat(post.uiTokenAmount.uiAmount || 0);
+        const change = postAmount - preAmount;
+
+        // If positive change, this account received tokens (potential buyer)
+        if (change > 0) {
+          recipients.push({
+            owner: post.owner,
+            change: change,
+            decimals: post.uiTokenAmount.decimals
+          });
+        }
+      }
+
+      // Find the largest recipient (the actual buyer in a swap)
+      if (recipients.length > 0) {
+        // Sort by change amount descending
+        recipients.sort((a, b) => b.change - a.change);
+        const buyer = recipients[0];
+
+        return {
+          signature: signature,
+          buyer: buyer.owner,
+          tokenAmount: buyer.change * Math.pow(10, buyer.decimals),
+          timestamp: new Date(tx.blockTime * 1000),
+          slot: tx.slot
+        };
       }
 
       return null;
     } catch (error) {
-      console.error(`Error parsing transaction ${signature}:`, error.message);
+      // Silently skip parsing errors for cleaner logs
       return null;
     }
   }
@@ -133,12 +154,15 @@ class SolanaRpcService {
     try {
       console.log('🔗 Using direct Solana RPC scanning (works with all tokens)...');
       
-      // Get recent transactions
-      const transactions = await this.getTokenAccountTransactions(tokenMint, 50);
+      // Get recent transactions (increased to 500 for better coverage)
+      const transactions = await this.getTokenAccountTransactions(tokenMint, 500);
       console.log(`📊 Processing ${transactions.length} transactions...`);
+      console.log(`⏰ Scanning for buys after ${new Date(startTime).toLocaleString()}...`);
 
       const qualifyingBuys = [];
+      const seenBuyers = new Set(); // Track unique buyers
       let processed = 0;
+      let successfullyParsed = 0;
 
       for (const tx of transactions) {
         // Check timestamp
@@ -150,11 +174,18 @@ class SolanaRpcService {
         const parsedTx = await this.parseTransaction(tx.signature, tokenMint);
         
         if (parsedTx && parsedTx.tokenAmount > 0) {
-          processed++;
+          successfullyParsed++;
           
           // Calculate USD value
           const tokenAmountUi = parsedTx.tokenAmount / 1e9; // Assuming 9 decimals
           const usdValue = tokenAmountUi * tokenPrice;
+
+          // Skip if we already have this buyer (deduplicate)
+          const buyKey = `${parsedTx.buyer}-${parsedTx.signature}`;
+          if (seenBuyers.has(buyKey)) {
+            continue;
+          }
+          seenBuyers.add(buyKey);
 
           console.log(`  📝 Buy: ${parsedTx.buyer.substring(0, 8)}... | ${tokenAmountUi.toFixed(2)} tokens | $${usdValue.toFixed(2)}`);
 
@@ -170,13 +201,15 @@ class SolanaRpcService {
           }
         }
 
-        // Add small delay to avoid rate limits
-        if (processed % 10 === 0) {
-          await new Promise(resolve => setTimeout(resolve, 100));
+        processed++;
+
+        // Add small delay every 20 transactions to avoid rate limits
+        if (processed % 20 === 0) {
+          await new Promise(resolve => setTimeout(resolve, 200));
         }
       }
 
-      console.log(`✅ Found ${qualifyingBuys.length} qualifying buys from ${processed} parsed transactions`);
+      console.log(`✅ Found ${qualifyingBuys.length} qualifying buys from ${successfullyParsed} parsed transactions (${processed} total checked)`);
       return qualifyingBuys;
     } catch (error) {
       console.error('Error in RPC scanning:', error);
