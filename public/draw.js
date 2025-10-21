@@ -192,20 +192,20 @@ function renderEntriesTable() {
     `).join('');
 }
 
-// Scan for new buys
-document.getElementById('scanBtn').addEventListener('click', async () => {
-    const scanBtn = document.getElementById('scanBtn');
-    const btnText = document.getElementById('scanBtnText');
-    const btnSpinner = document.getElementById('scanBtnSpinner');
+// Scan for new buys using DexScreener (ALWAYS works)
+document.getElementById('scanDexBtn').addEventListener('click', async () => {
+    const scanBtn = document.getElementById('scanDexBtn');
+    const btnText = document.getElementById('scanDexBtnText');
+    const btnSpinner = document.getElementById('scanDexBtnSpinner');
     
     scanBtn.disabled = true;
     btnText.style.display = 'none';
     btnSpinner.style.display = 'inline-block';
     
-    showToast('🔍 Scanning blockchain for new qualifying buys...', 'info');
+    showToast('🎯 Scanning DexScreener for new qualifying buys...', 'info');
     
     try {
-        const response = await fetch(`${API_URL}/api/draws/${drawId}/scan`, {
+        const response = await fetch(`${API_URL}/api/draws/${drawId}/scan-dex`, {
             method: 'POST'
         });
         
@@ -222,7 +222,7 @@ document.getElementById('scanBtn').addEventListener('click', async () => {
             
             // Update last scan info
             document.getElementById('lastScanInfo').textContent = 
-                `Last scan: ${formatDate(new Date())} - Found ${newEntries} new entries`;
+                `Last scan: ${formatDate(new Date())} - Found ${newEntries} new entries (DexScreener)`;
             
             // Reload draw data
             await loadDrawData();
