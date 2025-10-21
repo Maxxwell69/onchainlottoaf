@@ -138,17 +138,17 @@ class DexScreenerService {
             const { buyer, tokenAmount, isSwap } = tokenTransfers;
             
             if (isSwap && tokenAmount > 0) {
-              const tokenAmountUi = tokenAmount / 1e9; // Assuming 9 decimals
-              const usdValue = tokenAmountUi * price;
+              // Don't divide by decimals - tokenAmount already accounts for decimals from parsing
+              const usdValue = tokenAmount * price;
 
-              console.log(`  📝 Buy: ${buyer.substring(0, 8)}... | ${tokenAmountUi.toFixed(2)} tokens | $${usdValue.toFixed(2)}`);
+              console.log(`  📝 Buy: ${buyer.substring(0, 8)}... | ${tokenAmount.toFixed(2)} tokens | $${usdValue.toFixed(2)}`);
 
               // Check if meets minimum
               if (usdValue >= parseFloat(minUsdAmount)) {
                 qualifyingBuys.push({
                   signature: sig.signature,
                   walletAddress: buyer,
-                  tokenAmount: tokenAmount,
+                  tokenAmount: tokenAmount * 1e9, // Convert to raw amount for storage
                   usdAmount: usdValue,
                   timestamp: new Date(sig.blockTime * 1000)
                 });
@@ -219,7 +219,7 @@ class DexScreenerService {
 
         return {
           buyer: buyer.owner,
-          tokenAmount: buyer.change * Math.pow(10, buyer.decimals),
+          tokenAmount: buyer.change, // Use UI amount directly (already has decimals applied)
           isSwap: true
         };
       }
