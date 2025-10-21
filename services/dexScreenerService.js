@@ -153,8 +153,6 @@ class DexScreenerService {
         // Already filtered by time in pagination above
         checkedCount++;
 
-        checkedCount++;
-
         // Skip if already processed
         if (processedSignatures.has(sig.signature)) {
           continue;
