@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://api.helius.xyz https://price.jup.ag https://mainnet.helius-rpc.com;">
+    <title>Token Blacklist - On Chain Lotto</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <a href="tokens.html" class="back-link">← Back to Tokens</a>
+            <h1 id="tokenTitle">Loading...</h1>
+            <p class="subtitle" id="tokenAddress"></p>
+        </header>
+
+        <!-- Token Info -->
+        <div class="card">
+            <div class="info-grid">
+                <div class="info-item">
+                    <span class="label">Symbol</span>
+                    <span class="value" id="tokenSymbol">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">Blacklisted Wallets</span>
+                    <span class="value" id="blacklistCount">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">Status</span>
+                    <span class="value" id="tokenStatus">-</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add to Blacklist -->
+        <div class="card">
+            <h2>Add Wallet to Blacklist</h2>
+            <form id="addBlacklistForm">
+                <div class="form-group">
+                    <label for="walletAddress">Wallet Address*</label>
+                    <input type="text" id="walletAddress" required placeholder="Solana wallet address">
+                </div>
+
+                <div class="form-group">
+                    <label for="reason">Reason*</label>
+                    <select id="reason" required>
+                        <option value="">Select reason...</option>
+                        <option value="liquidity_pool">Liquidity Pool</option>
+                        <option value="bot">Bot</option>
+                        <option value="dex_wallet">DEX Wallet</option>
+                        <option value="contract">Smart Contract</option>
+                        <option value="suspicious">Suspicious Activity</option>
+                        <option value="manual">Manual Entry</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="notes">Notes</label>
+                    <input type="text" id="notes" placeholder="Optional notes...">
+                </div>
+
+                <button type="submit" class="btn btn-primary">
+                    🚫 Add to Blacklist
+                </button>
+            </form>
+        </div>
+
+        <!-- Bulk Add -->
+        <div class="card">
+            <h2>Bulk Add Wallets</h2>
+            <form id="bulkBlacklistForm">
+                <div class="form-group">
+                    <label for="bulkWallets">Wallet Addresses (one per line)*</label>
+                    <textarea id="bulkWallets" rows="6" required placeholder="Paste wallet addresses here, one per line..."></textarea>
+                    <small>You can paste multiple addresses separated by line breaks</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="bulkReason">Reason*</label>
+                    <select id="bulkReason" required>
+                        <option value="liquidity_pool">Liquidity Pool</option>
+                        <option value="bot">Bot</option>
+                        <option value="dex_wallet">DEX Wallet</option>
+                        <option value="bulk_add">Bulk Add</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn btn-secondary">
+                    📋 Bulk Add
+                </button>
+            </form>
+        </div>
+
+        <!-- Blacklist -->
+        <div class="card">
+            <div class="card-header">
+                <h2>Blacklisted Wallets</h2>
+                <span id="blacklistBadge" class="badge">0</span>
+            </div>
+            <div id="blacklistTable">
+                <p class="loading">Loading blacklist...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="toast"></div>
+
+    <script src="token-detail.js"></script>
+</body>
+</html>
+

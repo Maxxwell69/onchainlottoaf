@@ -5,6 +5,7 @@ const cron = require('node-cron');
 require('dotenv').config();
 
 const drawsRoutes = require('./routes/draws');
+const tokensRoutes = require('./routes/tokens');
 const scanService = require('./services/scanService');
 const { pool } = require('./database/db');
 
@@ -39,6 +40,7 @@ app.get('/health', (req, res) => {
 
 // API Routes
 app.use('/api/draws', drawsRoutes);
+app.use('/api/tokens', tokensRoutes);
 
 // Root route
 app.get('/', (req, res) => {

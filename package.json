@@ -7,6 +7,7 @@
     "start": "node server.js",
     "dev": "nodemon server.js",
     "init-db": "node scripts/initDatabase.js",
+    "init-token-manager": "node scripts/initTokenManager.js",
     "test-helius": "node scripts/testHelius.js"
   },
   "keywords": ["solana", "lottery", "helius", "crypto"],

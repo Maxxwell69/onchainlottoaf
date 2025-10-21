@@ -143,9 +143,23 @@ router.post('/:id/scan-dex', async (req, res) => {
       heliusService.connection
     );
 
+    // Check for blacklisted wallets
+    const WalletBlacklist = require('../models/WalletBlacklist');
+    const blacklistedWallets = await WalletBlacklist.getByTokenAddress(draw.token_address);
+    const blacklistSet = new Set(blacklistedWallets.map(b => b.wallet_address));
+    
     // Process buys and add to database
     let newEntries = 0;
+    let filtered = 0;
+    
     for (const buy of qualifyingBuys) {
+      // Skip blacklisted wallets
+      if (blacklistSet.has(buy.walletAddress)) {
+        filtered++;
+        console.log(`🚫 Filtered blacklisted wallet: ${buy.walletAddress.substring(0, 8)}...`);
+        continue;
+      }
+      
       const exists = await LottoEntry.existsBySignature(buy.signature);
       if (exists) continue;
 
@@ -164,6 +178,10 @@ router.post('/:id/scan-dex', async (req, res) => {
 
       if (entry) newEntries++;
     }
+    
+    if (filtered > 0) {
+      console.log(`🚫 Filtered out ${filtered} blacklisted wallets`);
+    }
 
     // Update draw
     const totalEntries = await LottoEntry.countByDrawId(id);
@@ -177,7 +195,8 @@ router.post('/:id/scan-dex', async (req, res) => {
         newEntries,
         totalEntries,
         totalSlots: draw.total_slots,
-        qualifyingTransactions: qualifyingBuys.length
+        qualifyingTransactions: qualifyingBuys.length,
+        filteredWallets: filtered || 0
       }
     });
   } catch (error) {
