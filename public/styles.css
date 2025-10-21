@@ -258,6 +258,11 @@ h2 {
 .draw-actions .btn {
     font-size: 0.875rem;
     padding: 0.5rem 1rem;
+    white-space: nowrap;
+}
+
+.draw-actions {
+    flex-wrap: wrap;
 }
 
 .info-grid {

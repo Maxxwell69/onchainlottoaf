@@ -278,5 +278,67 @@ router.put('/:id/status', async (req, res) => {
   }
 });
 
+/**
+ * DELETE /api/draws/:id
+ * Delete a draw and all its entries
+ */
+router.delete('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Check if draw exists
+    const draw = await LottoDraw.getById(id);
+    if (!draw) {
+      return res.status(404).json({
+        error: 'Draw not found'
+      });
+    }
+
+    // Delete the draw (cascade delete will handle entries and scan history)
+    const { query } = require('../database/db');
+    await query('DELETE FROM lotto_draws WHERE id = $1', [id]);
+
+    res.json({
+      success: true,
+      message: 'Draw and all associated data deleted successfully',
+      deletedDraw: {
+        id: draw.id,
+        name: draw.draw_name
+      }
+    });
+  } catch (error) {
+    console.error('Error deleting draw:', error);
+    res.status(500).json({
+      error: 'Failed to delete draw',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * DELETE /api/draws/:id/scan-history
+ * Clear scan history for a draw
+ */
+router.delete('/:id/scan-history', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const { query } = require('../database/db');
+    const result = await query('DELETE FROM scan_history WHERE draw_id = $1', [id]);
+
+    res.json({
+      success: true,
+      message: 'Scan history cleared',
+      deletedRecords: result.rowCount
+    });
+  } catch (error) {
+    console.error('Error clearing scan history:', error);
+    res.status(500).json({
+      error: 'Failed to clear scan history',
+      details: error.message
+    });
+  }
+});
+
 module.exports = router;
 

@@ -123,6 +123,12 @@ function renderDrawItem(draw) {
                         🔍 Scan Now
                     </button>
                 ` : ''}
+                <button class="btn btn-secondary" onclick="clearScanHistory(${draw.id}, '${draw.draw_name.replace(/'/g, "\\'")}')">
+                    🧹 Clear History
+                </button>
+                <button class="btn" style="background: var(--danger); color: white;" onclick="deleteDraw(${draw.id}, '${draw.draw_name.replace(/'/g, "\\'")}')">
+                    🗑️ Delete
+                </button>
             </div>
         </div>
     `;
@@ -188,26 +194,80 @@ async function loadAllDraws() {
 
 // Scan draw
 async function scanDraw(drawId) {
-    showToast('🔍 Scanning for new buys...', 'info');
+  showToast('🔍 Scanning for new buys...', 'info');
+  
+  try {
+    const response = await fetch(`${API_URL}/api/draws/${drawId}/scan`, {
+      method: 'POST'
+    });
     
-    try {
-        const response = await fetch(`${API_URL}/api/draws/${drawId}/scan`, {
-            method: 'POST'
-        });
-        
-        const data = await response.json();
-        
-        if (response.ok) {
-            showToast(`✅ Scan complete! Found ${data.result.newEntries} new entries`, 'success');
-            loadActiveDraws();
-            loadAllDraws();
-        } else {
-            showToast(`❌ Scan failed: ${data.error}`, 'error');
-        }
-    } catch (error) {
-        console.error('Error scanning draw:', error);
-        showToast('❌ Failed to scan draw', 'error');
+    const data = await response.json();
+    
+    if (response.ok) {
+      showToast(`✅ Scan complete! Found ${data.result.newEntries} new entries`, 'success');
+      loadActiveDraws();
+      loadAllDraws();
+    } else {
+      showToast(`❌ Scan failed: ${data.error}`, 'error');
     }
+  } catch (error) {
+    console.error('Error scanning draw:', error);
+    showToast('❌ Failed to scan draw', 'error');
+  }
+}
+
+// Delete draw
+async function deleteDraw(drawId, drawName) {
+  if (!confirm(`⚠️ Are you sure you want to delete "${drawName}"?\n\nThis will permanently delete:\n- The draw\n- All ${drawName} entries (lotto numbers)\n- All scan history\n\nThis action cannot be undone!`)) {
+    return;
+  }
+  
+  showToast('🗑️ Deleting draw...', 'info');
+  
+  try {
+    const response = await fetch(`${API_URL}/api/draws/${drawId}`, {
+      method: 'DELETE'
+    });
+    
+    const data = await response.json();
+    
+    if (response.ok) {
+      showToast('✅ Draw deleted successfully', 'success');
+      loadActiveDraws();
+      loadAllDraws();
+    } else {
+      showToast(`❌ Delete failed: ${data.error}`, 'error');
+    }
+  } catch (error) {
+    console.error('Error deleting draw:', error);
+    showToast('❌ Failed to delete draw', 'error');
+  }
+}
+
+// Clear scan history
+async function clearScanHistory(drawId, drawName) {
+  if (!confirm(`Clear scan history for "${drawName}"?\n\nThis will remove all scan records but keep the draw and entries.`)) {
+    return;
+  }
+  
+  showToast('🧹 Clearing scan history...', 'info');
+  
+  try {
+    const response = await fetch(`${API_URL}/api/draws/${drawId}/scan-history`, {
+      method: 'DELETE'
+    });
+    
+    const data = await response.json();
+    
+    if (response.ok) {
+      showToast(`✅ Cleared ${data.deletedRecords} scan records`, 'success');
+    } else {
+      showToast(`❌ Failed: ${data.error}`, 'error');
+    }
+  } catch (error) {
+    console.error('Error clearing scan history:', error);
+    showToast('❌ Failed to clear scan history', 'error');
+  }
 }
 
 // Refresh draws button
