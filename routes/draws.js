@@ -1,0 +1,215 @@
+const express = require('express');
+const router = express.Router();
+const LottoDraw = require('../models/LottoDraw');
+const LottoEntry = require('../models/LottoEntry');
+const scanService = require('../services/scanService');
+const heliusService = require('../services/heliusService');
+
+/**
+ * POST /api/draws
+ * Create a new lotto draw
+ */
+router.post('/', async (req, res) => {
+  try {
+    const { draw_name, token_address, token_symbol, min_usd_amount, start_time } = req.body;
+
+    // Validation
+    if (!draw_name || !token_address || !min_usd_amount || !start_time) {
+      return res.status(400).json({
+        error: 'Missing required fields',
+        required: ['draw_name', 'token_address', 'min_usd_amount', 'start_time']
+      });
+    }
+
+    // Get token metadata if token_symbol not provided
+    let finalTokenSymbol = token_symbol;
+    if (!finalTokenSymbol) {
+      const metadata = await heliusService.getTokenMetadata(token_address);
+      finalTokenSymbol = metadata?.symbol || 'UNKNOWN';
+    }
+
+    // Create draw
+    const draw = await LottoDraw.create({
+      draw_name,
+      token_address,
+      token_symbol: finalTokenSymbol,
+      min_usd_amount,
+      start_time
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Lotto draw created successfully',
+      draw
+    });
+  } catch (error) {
+    console.error('Error creating draw:', error);
+    res.status(500).json({
+      error: 'Failed to create lotto draw',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/draws
+ * Get all lotto draws
+ */
+router.get('/', async (req, res) => {
+  try {
+    const draws = await LottoDraw.getAll();
+    res.json({
+      success: true,
+      draws
+    });
+  } catch (error) {
+    console.error('Error fetching draws:', error);
+    res.status(500).json({
+      error: 'Failed to fetch draws',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/draws/active
+ * Get active lotto draws
+ */
+router.get('/active', async (req, res) => {
+  try {
+    const draws = await LottoDraw.getActive();
+    res.json({
+      success: true,
+      draws
+    });
+  } catch (error) {
+    console.error('Error fetching active draws:', error);
+    res.status(500).json({
+      error: 'Failed to fetch active draws',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/draws/:id
+ * Get a specific draw by ID with entries
+ */
+router.get('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const draw = await LottoDraw.getWithEntries(id);
+
+    if (!draw) {
+      return res.status(404).json({
+        error: 'Draw not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      draw
+    });
+  } catch (error) {
+    console.error('Error fetching draw:', error);
+    res.status(500).json({
+      error: 'Failed to fetch draw',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/draws/:id/scan
+ * Manually trigger a scan for a specific draw
+ */
+router.post('/:id/scan', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Check if draw exists
+    const draw = await LottoDraw.getById(id);
+    if (!draw) {
+      return res.status(404).json({
+        error: 'Draw not found'
+      });
+    }
+
+    // Trigger scan
+    const result = await scanService.scanDraw(id);
+
+    res.json({
+      success: true,
+      message: 'Scan completed',
+      result
+    });
+  } catch (error) {
+    console.error('Error scanning draw:', error);
+    res.status(500).json({
+      error: 'Failed to scan draw',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/draws/:id/entries
+ * Get entries for a specific draw
+ */
+router.get('/:id/entries', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const entries = await LottoEntry.getByDrawId(id);
+
+    res.json({
+      success: true,
+      entries
+    });
+  } catch (error) {
+    console.error('Error fetching entries:', error);
+    res.status(500).json({
+      error: 'Failed to fetch entries',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * PUT /api/draws/:id/status
+ * Update draw status
+ */
+router.put('/:id/status', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!status || !['active', 'completed', 'cancelled'].includes(status)) {
+      return res.status(400).json({
+        error: 'Invalid status',
+        allowed: ['active', 'completed', 'cancelled']
+      });
+    }
+
+    const draw = await LottoDraw.updateStatus(id, status);
+    if (!draw) {
+      return res.status(404).json({
+        error: 'Draw not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Draw status updated',
+      draw
+    });
+  } catch (error) {
+    console.error('Error updating draw status:', error);
+    res.status(500).json({
+      error: 'Failed to update draw status',
+      details: error.message
+    });
+  }
+});
+
+module.exports = router;
+

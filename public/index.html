@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>On Chain Lotto - Admin Panel</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎰 On Chain Lotto Draw</h1>
+            <p class="subtitle">Solana Meme Coin Lottery System</p>
+        </header>
+
+        <!-- Create Draw Form -->
+        <div class="card">
+            <h2>Create New Lotto Draw</h2>
+            <form id="createDrawForm">
+                <div class="form-group">
+                    <label for="drawName">Draw Name*</label>
+                    <input type="text" id="drawName" required placeholder="e.g., BONK Mega Draw #1">
+                    <small>This will be displayed on the results page</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="tokenAddress">Token Address (Mint)*</label>
+                    <input type="text" id="tokenAddress" required placeholder="e.g., DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263">
+                    <small>The Solana token mint address to monitor</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="tokenSymbol">Token Symbol</label>
+                    <input type="text" id="tokenSymbol" placeholder="e.g., BONK (optional)">
+                    <small>Leave empty to auto-fetch from blockchain</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="minUsdAmount">Minimum USD Amount*</label>
+                    <input type="number" id="minUsdAmount" required step="0.01" min="0.01" placeholder="e.g., 100">
+                    <small>Minimum purchase amount in USD to qualify for a lotto number</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="startTime">Start Date & Time*</label>
+                    <input type="datetime-local" id="startTime" required>
+                    <small>When the draw begins accepting entries</small>
+                </div>
+
+                <button type="submit" class="btn btn-primary" id="createBtn">
+                    <span id="createBtnText">Create Lotto Draw</span>
+                    <span id="createBtnSpinner" class="spinner" style="display: none;"></span>
+                </button>
+            </form>
+        </div>
+
+        <!-- Active Draws -->
+        <div class="card">
+            <div class="card-header">
+                <h2>Active Draws</h2>
+                <button class="btn btn-secondary" id="refreshDrawsBtn">🔄 Refresh</button>
+            </div>
+            <div id="activeDrawsList">
+                <p class="loading">Loading active draws...</p>
+            </div>
+        </div>
+
+        <!-- All Draws -->
+        <div class="card">
+            <div class="card-header">
+                <h2>All Draws</h2>
+            </div>
+            <div id="allDrawsList">
+                <p class="loading">Loading all draws...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+
+    <script src="admin.js"></script>
+</body>
+</html>
+

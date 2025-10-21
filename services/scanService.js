@@ -1,0 +1,147 @@
+const heliusService = require('./heliusService');
+const LottoDraw = require('../models/LottoDraw');
+const LottoEntry = require('../models/LottoEntry');
+const ScanHistory = require('../models/ScanHistory');
+
+class ScanService {
+  /**
+   * Scan a specific draw for new qualifying transactions
+   * @param {number} drawId - ID of the draw to scan
+   * @returns {Promise<Object>} Scan results
+   */
+  async scanDraw(drawId) {
+    try {
+      console.log(`\n🎰 Starting scan for draw #${drawId}`);
+
+      // Get draw details
+      const draw = await LottoDraw.getById(drawId);
+      if (!draw) {
+        throw new Error(`Draw #${drawId} not found`);
+      }
+
+      // Check if draw is still active
+      if (draw.status !== 'active') {
+        console.log(`⚠️  Draw #${drawId} is ${draw.status}, skipping scan`);
+        return {
+          success: true,
+          message: 'Draw is not active',
+          newEntries: 0
+        };
+      }
+
+      // Check if draw is already full
+      if (draw.filled_slots >= draw.total_slots) {
+        console.log(`⚠️  Draw #${drawId} is full (${draw.filled_slots}/${draw.total_slots})`);
+        await LottoDraw.updateStatus(drawId, 'completed');
+        return {
+          success: true,
+          message: 'Draw is full',
+          newEntries: 0
+        };
+      }
+
+      // Get last scan to know where to continue from
+      const lastScan = await ScanHistory.getLastScan(drawId);
+      const lastSignature = lastScan ? lastScan.last_signature : null;
+
+      // Scan blockchain for qualifying buys
+      const qualifyingBuys = await heliusService.scanForQualifyingBuys(
+        draw,
+        lastSignature
+      );
+
+      let newEntries = 0;
+      let lastProcessedSignature = lastSignature;
+
+      // Process qualifying buys
+      for (const buy of qualifyingBuys) {
+        // Check if transaction already processed
+        const exists = await LottoEntry.existsBySignature(buy.signature);
+        if (exists) {
+          console.log(`⏭️  Skipping duplicate transaction: ${buy.signature.substring(0, 8)}...`);
+          continue;
+        }
+
+        // Get next available lotto number
+        const nextNumber = await LottoEntry.getNextLottoNumber(drawId);
+        if (!nextNumber) {
+          console.log('🎯 All lottery numbers assigned!');
+          await LottoDraw.updateStatus(drawId, 'completed');
+          break;
+        }
+
+        // Create entry
+        const entry = await LottoEntry.create({
+          draw_id: drawId,
+          lotto_number: nextNumber,
+          wallet_address: buy.walletAddress,
+          transaction_signature: buy.signature,
+          token_amount: buy.tokenAmount,
+          usd_amount: buy.usdAmount,
+          timestamp: buy.timestamp
+        });
+
+        if (entry) {
+          newEntries++;
+          console.log(`🎫 Assigned lotto number ${nextNumber} to ${buy.walletAddress.substring(0, 8)}...`);
+          lastProcessedSignature = buy.signature;
+        }
+      }
+
+      // Update draw filled slots
+      const totalEntries = await LottoEntry.countByDrawId(drawId);
+      await LottoDraw.updateFilledSlots(drawId, totalEntries);
+
+      // Record scan history
+      await ScanHistory.create({
+        draw_id: drawId,
+        last_signature: lastProcessedSignature,
+        transactions_found: qualifyingBuys.length
+      });
+
+      console.log(`✅ Scan complete: ${newEntries} new entries added`);
+      console.log(`📊 Draw status: ${totalEntries}/${draw.total_slots} slots filled\n`);
+
+      return {
+        success: true,
+        newEntries,
+        totalEntries,
+        totalSlots: draw.total_slots,
+        qualifyingTransactions: qualifyingBuys.length
+      };
+
+    } catch (error) {
+      console.error(`❌ Error scanning draw #${drawId}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Scan all active draws
+   * @returns {Promise<Array>} Results for all scans
+   */
+  async scanAllActiveDraws() {
+    try {
+      const activeDraws = await LottoDraw.getActive();
+      console.log(`🔍 Found ${activeDraws.length} active draws to scan`);
+
+      const results = [];
+      for (const draw of activeDraws) {
+        const result = await this.scanDraw(draw.id);
+        results.push({
+          drawId: draw.id,
+          drawName: draw.draw_name,
+          ...result
+        });
+      }
+
+      return results;
+    } catch (error) {
+      console.error('Error scanning all draws:', error);
+      throw error;
+    }
+  }
+}
+
+module.exports = new ScanService();
+
