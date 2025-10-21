@@ -127,21 +127,36 @@ function renderNumbersGrid() {
     grid.innerHTML = html;
 }
 
-// Render entries table
+// Copy wallet address to clipboard
+function copyToClipboard(text, buttonElement) {
+    navigator.clipboard.writeText(text).then(() => {
+        const originalText = buttonElement.innerHTML;
+        buttonElement.innerHTML = '✓ Copied!';
+        buttonElement.classList.add('copied');
+        
+        setTimeout(() => {
+            buttonElement.innerHTML = originalText;
+            buttonElement.classList.remove('copied');
+        }, 2000);
+    }).catch(err => {
+        console.error('Failed to copy:', err);
+        showToast('Failed to copy address', 'error');
+    });
+}
+
+// Render entries with lotto balls
 function renderEntriesTable() {
-    const tbody = document.getElementById('entriesTableBody');
+    const entriesList = document.getElementById('lottoEntriesList');
     const countBadge = document.getElementById('entriesCount');
     
     countBadge.textContent = currentEntries.length;
     
     if (currentEntries.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="6" class="empty-state">
-                    <h3>No Entries Yet</h3>
-                    <p>Use the "Scan for New Buys" button to check for qualifying transactions</p>
-                </td>
-            </tr>
+        entriesList.innerHTML = `
+            <div class="empty-state">
+                <h3>No Entries Yet</h3>
+                <p>Use the "Scan for New Buys" button to check for qualifying transactions</p>
+            </div>
         `;
         return;
     }
@@ -149,27 +164,31 @@ function renderEntriesTable() {
     // Sort by lotto number
     const sortedEntries = [...currentEntries].sort((a, b) => a.lotto_number - b.lotto_number);
     
-    tbody.innerHTML = sortedEntries.map(entry => `
-        <tr>
-            <td><strong style="color: var(--primary);">#${entry.lotto_number}</strong></td>
-            <td>
-                <a href="https://solscan.io/account/${entry.wallet_address}" 
-                   target="_blank" 
-                   style="color: var(--secondary); text-decoration: none;">
-                    ${truncateAddress(entry.wallet_address)}
-                </a>
-            </td>
-            <td>${formatTokenAmount(entry.token_amount)}</td>
-            <td><strong>${formatUSD(entry.usd_amount)}</strong></td>
-            <td>
-                <a href="https://solscan.io/tx/${entry.transaction_signature}" 
-                   target="_blank" 
-                   style="color: var(--secondary); text-decoration: none;">
-                    ${truncateAddress(entry.transaction_signature)}
-                </a>
-            </td>
-            <td>${formatDate(entry.timestamp)}</td>
-        </tr>
+    entriesList.innerHTML = sortedEntries.map(entry => `
+        <div class="lotto-entry">
+            <div class="lotto-ball">
+                ${entry.lotto_number}
+            </div>
+            <div class="entry-details">
+                <div class="entry-amount">
+                    ${formatUSD(entry.usd_amount)}
+                </div>
+                <div class="entry-wallet">
+                    <span class="wallet-address">${entry.wallet_address}</span>
+                    <button class="copy-btn" onclick="copyToClipboard('${entry.wallet_address}', this)">
+                        📋 Copy
+                    </button>
+                </div>
+                <div style="display: flex; gap: 1rem; align-items: center;">
+                    <span class="entry-time">⏰ ${formatDate(entry.timestamp)}</span>
+                    <a href="https://solscan.io/tx/${entry.transaction_signature}" 
+                       target="_blank" 
+                       class="entry-tx-link">
+                        🔍 View Transaction
+                    </a>
+                </div>
+            </div>
+        </div>
     `).join('');
 }
 
