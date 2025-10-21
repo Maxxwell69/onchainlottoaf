@@ -86,17 +86,24 @@ class HeliusService {
    */
   async getTokenPrice(tokenAddress) {
     try {
-      // Try Jupiter API for price
-      const jupiterUrl = `https://price.jup.ag/v4/price?ids=${tokenAddress}`;
-      const response = await axios.get(jupiterUrl);
+      // Try Jupiter API for price (v6 endpoint)
+      const jupiterUrl = `https://api.jup.ag/price/v2?ids=${tokenAddress}`;
+      const response = await axios.get(jupiterUrl, {
+        timeout: 5000,
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
       
       if (response.data && response.data.data && response.data.data[tokenAddress]) {
         return response.data.data[tokenAddress].price;
       }
 
+      console.log(`⚠️  Token ${tokenAddress} not found on Jupiter price feed`);
       return 0;
     } catch (error) {
       console.error('Error fetching token price:', error.message);
+      console.log('💡 Tip: Token might be too new or not listed on Jupiter');
       return 0;
     }
   }
