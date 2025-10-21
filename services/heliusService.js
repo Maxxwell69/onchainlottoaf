@@ -193,9 +193,17 @@ class HeliusService {
         lastSignature
       );
 
+      // If Helius returns no transactions, use RPC fallback
       if (!transactions || transactions.length === 0) {
-        console.log('No new transactions found');
-        return [];
+        console.log('⚠️  Helius returned no transactions, trying direct RPC fallback...');
+        const rpcService = require('./solanaRpcService');
+        const tokenPrice = await this.getTokenPrice(draw.token_address);
+        return await rpcService.scanForQualifyingBuys(
+          draw.token_address,
+          draw.start_time,
+          draw.min_usd_amount,
+          tokenPrice
+        );
       }
 
       // Get current token price
