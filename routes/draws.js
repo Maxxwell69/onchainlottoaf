@@ -335,6 +335,67 @@ router.delete('/:id', async (req, res) => {
 });
 
 /**
+ * POST /api/draws/:id/clean-blacklisted
+ * Remove entries that are now blacklisted
+ */
+router.post('/:id/clean-blacklisted', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const draw = await LottoDraw.getById(id);
+    if (!draw) {
+      return res.status(404).json({ error: 'Draw not found' });
+    }
+
+    // Get blacklist for this token
+    const WalletBlacklist = require('../models/WalletBlacklist');
+    const blacklistedWallets = await WalletBlacklist.getByTokenAddress(draw.token_address);
+    
+    if (blacklistedWallets.length === 0) {
+      return res.json({
+        success: true,
+        message: 'No blacklisted wallets found',
+        removedEntries: 0
+      });
+    }
+
+    const blacklistSet = new Set(blacklistedWallets.map(b => b.wallet_address));
+    
+    // Find and remove blacklisted entries
+    const { query } = require('../database/db');
+    const result = await query(
+      `DELETE FROM lotto_entries 
+       WHERE draw_id = $1 
+       AND wallet_address = ANY($2)
+       RETURNING *`,
+      [id, Array.from(blacklistSet)]
+    );
+
+    const removedCount = result.rowCount;
+    
+    // Update draw filled_slots
+    if (removedCount > 0) {
+      const totalEntries = await LottoEntry.countByDrawId(id);
+      await LottoDraw.updateFilledSlots(id, totalEntries);
+    }
+
+    res.json({
+      success: true,
+      message: `Removed ${removedCount} blacklisted entries`,
+      removedEntries: removedCount,
+      removedWallets: result.rows.map(r => r.wallet_address)
+    });
+
+  } catch (error) {
+    console.error('Error cleaning blacklisted entries:', error);
+    res.status(500).json({
+      error: 'Failed to clean blacklisted entries',
+      details: error.message
+    });
+  }
+});
+
+/**
  * DELETE /api/draws/:id/scan-history
  * Clear scan history for a draw
  */

@@ -202,7 +202,7 @@ document.getElementById('scanDexBtn').addEventListener('click', async () => {
     btnText.style.display = 'none';
     btnSpinner.style.display = 'inline-block';
     
-    showToast('🎯 Scanning DexScreener for new qualifying buys...', 'info');
+    showToast('🔍 Scanning for new qualifying buys...', 'info');
     
     try {
         const response = await fetch(`${API_URL}/api/draws/${drawId}/scan-dex`, {
@@ -244,6 +244,37 @@ document.getElementById('refreshBtn').addEventListener('click', async () => {
     showToast('🔄 Refreshing results...', 'info');
     await loadDrawData();
     showToast('✅ Results refreshed', 'success');
+});
+
+// Clean blacklisted entries
+document.getElementById('cleanBlacklistedBtn').addEventListener('click', async () => {
+    if (!confirm('Remove all entries from blacklisted wallets?\n\nThis will free up their lotto numbers for new buyers.')) {
+        return;
+    }
+    
+    showToast('🧹 Removing blacklisted entries...', 'info');
+    
+    try {
+        const response = await fetch(`${API_URL}/api/draws/${drawId}/clean-blacklisted`, {
+            method: 'POST'
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            if (data.removedEntries > 0) {
+                showToast(`✅ Removed ${data.removedEntries} blacklisted entries!`, 'success');
+                await loadDrawData();
+            } else {
+                showToast('ℹ️ No blacklisted entries found', 'info');
+            }
+        } else {
+            showToast(`❌ Failed: ${data.error}`, 'error');
+        }
+    } catch (error) {
+        console.error('Error cleaning blacklisted:', error);
+        showToast('❌ Failed to clean entries', 'error');
+    }
 });
 
 // Auto-refresh every 30 seconds
