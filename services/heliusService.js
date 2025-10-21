@@ -193,16 +193,15 @@ class HeliusService {
         lastSignature
       );
 
-      // If Helius returns no transactions, use RPC fallback
+      // If Helius returns no transactions, use DexScreener + RPC fallback
       if (!transactions || transactions.length === 0) {
-        console.log('⚠️  Helius returned no transactions, trying direct RPC fallback...');
-        const rpcService = require('./solanaRpcService');
-        const tokenPrice = await this.getTokenPrice(draw.token_address);
-        return await rpcService.scanForQualifyingBuys(
+        console.log('⚠️  Helius returned no transactions, trying DexScreener + RPC fallback...');
+        const dexScreenerService = require('./dexScreenerService');
+        return await dexScreenerService.scanForQualifyingBuys(
           draw.token_address,
           draw.start_time,
           draw.min_usd_amount,
-          tokenPrice
+          this.connection
         );
       }
 
