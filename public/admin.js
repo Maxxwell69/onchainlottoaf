@@ -277,10 +277,53 @@ document.getElementById('refreshDrawsBtn').addEventListener('click', () => {
     loadAllDraws();
 });
 
+// Load managed tokens for dropdown
+async function loadManagedTokens() {
+    try {
+        const response = await fetch(`${API_URL}/api/tokens`);
+        const data = await response.json();
+        
+        const select = document.getElementById('tokenSelect');
+        if (data.tokens && data.tokens.length > 0) {
+            // Add managed tokens to dropdown
+            data.tokens.forEach(token => {
+                const option = document.createElement('option');
+                option.value = JSON.stringify({
+                    address: token.token_address,
+                    symbol: token.token_symbol,
+                    name: token.token_name
+                });
+                option.textContent = `${token.token_symbol || 'Unknown'} - ${token.token_name || 'No Name'}`;
+                select.appendChild(option);
+            });
+        }
+    } catch (error) {
+        console.error('Error loading managed tokens:', error);
+    }
+}
+
+// Token dropdown change handler
+document.getElementById('tokenSelect').addEventListener('change', (e) => {
+    const value = e.target.value;
+    if (value) {
+        const token = JSON.parse(value);
+        document.getElementById('tokenAddress').value = token.address;
+        document.getElementById('tokenSymbol').value = token.symbol || '';
+        
+        // Auto-generate draw name if empty
+        const drawNameField = document.getElementById('drawName');
+        if (!drawNameField.value && token.symbol) {
+            const now = new Date();
+            drawNameField.value = `${token.symbol} Draw - ${now.toLocaleDateString()}`;
+        }
+    }
+});
+
 // Set default start time to now
 document.getElementById('startTime').value = new Date().toISOString().slice(0, 16);
 
 // Initial load
 loadActiveDraws();
 loadAllDraws();
+loadManagedTokens();
 

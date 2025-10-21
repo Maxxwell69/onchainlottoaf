@@ -28,15 +28,23 @@
                 </div>
 
                 <div class="form-group">
+                    <label for="tokenSelect">Select Token</label>
+                    <select id="tokenSelect">
+                        <option value="">-- Select from Token Manager --</option>
+                    </select>
+                    <small>Choose from your managed tokens or enter manually below</small>
+                </div>
+
+                <div class="form-group">
                     <label for="tokenAddress">Token Address (Mint)*</label>
                     <input type="text" id="tokenAddress" required placeholder="e.g., DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263">
-                    <small>The Solana token mint address to monitor</small>
+                    <small>Auto-filled from dropdown or enter manually</small>
                 </div>
 
                 <div class="form-group">
                     <label for="tokenSymbol">Token Symbol</label>
-                    <input type="text" id="tokenSymbol" placeholder="e.g., BONK (optional)">
-                    <small>Leave empty to auto-fetch from blockchain</small>
+                    <input type="text" id="tokenSymbol" placeholder="e.g., BONK (auto-filled from dropdown)">
+                    <small>Auto-filled when selecting from dropdown</small>
                 </div>
 
                 <div class="form-group">
