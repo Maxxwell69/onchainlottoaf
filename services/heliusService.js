@@ -34,7 +34,23 @@ class HeliusService {
       const response = await axios.get(url, { params });
       return response.data;
     } catch (error) {
-      console.error('Error fetching token transactions:', error.message);
+      console.error(`Error fetching token transactions: ${error.message}`);
+      
+      // If Helius Enhanced API fails, try without the type filter
+      if (error.response && error.response.status === 500) {
+        console.log('🔄 Retrying without type filter...');
+        try {
+          delete params.type;
+          const retryResponse = await axios.get(url, { params });
+          return retryResponse.data;
+        } catch (retryError) {
+          console.error(`Retry also failed: ${retryError.message}`);
+          console.log('💡 This token may be too new or not supported by Helius Enhanced API');
+          console.log('💡 Try using a more established token like BONK for testing');
+          return [];
+        }
+      }
+      
       throw error;
     }
   }
@@ -85,8 +101,8 @@ class HeliusService {
    * @returns {Promise<number>} Price in USD
    */
   async getTokenPrice(tokenAddress) {
+    // Try Jupiter API first
     try {
-      // Try Jupiter API for price (v6 endpoint)
       const jupiterUrl = `https://api.jup.ag/price/v2?ids=${tokenAddress}`;
       const response = await axios.get(jupiterUrl, {
         timeout: 5000,
@@ -96,16 +112,56 @@ class HeliusService {
       });
       
       if (response.data && response.data.data && response.data.data[tokenAddress]) {
-        return response.data.data[tokenAddress].price;
+        const price = response.data.data[tokenAddress].price;
+        console.log(`✅ Got price from Jupiter: $${price}`);
+        return price;
       }
-
-      console.log(`⚠️  Token ${tokenAddress} not found on Jupiter price feed`);
-      return 0;
     } catch (error) {
-      console.error('Error fetching token price:', error.message);
-      console.log('💡 Tip: Token might be too new or not listed on Jupiter');
-      return 0;
+      console.log(`⚠️  Jupiter API failed: ${error.message}`);
     }
+
+    // Try Birdeye API as fallback
+    try {
+      console.log('🔄 Trying Birdeye API...');
+      const birdeyeUrl = `https://public-api.birdeye.so/public/price?address=${tokenAddress}`;
+      const response = await axios.get(birdeyeUrl, {
+        timeout: 5000,
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
+      
+      if (response.data && response.data.data && response.data.data.value) {
+        const price = response.data.data.value;
+        console.log(`✅ Got price from Birdeye: $${price}`);
+        return price;
+      }
+    } catch (error) {
+      console.log(`⚠️  Birdeye API failed: ${error.message}`);
+    }
+
+    // Try DexScreener as last resort
+    try {
+      console.log('🔄 Trying DexScreener API...');
+      const dexUrl = `https://api.dexscreener.com/latest/dex/tokens/${tokenAddress}`;
+      const response = await axios.get(dexUrl, {
+        timeout: 5000
+      });
+      
+      if (response.data && response.data.pairs && response.data.pairs.length > 0) {
+        const price = parseFloat(response.data.pairs[0].priceUsd);
+        if (price > 0) {
+          console.log(`✅ Got price from DexScreener: $${price}`);
+          return price;
+        }
+      }
+    } catch (error) {
+      console.log(`⚠️  DexScreener API failed: ${error.message}`);
+    }
+
+    console.log(`❌ Could not fetch price from any source for ${tokenAddress}`);
+    console.log('💡 Tip: Token might be too new or not yet listed on price feeds');
+    return 0;
   }
 
   /**
@@ -148,7 +204,8 @@ class HeliusService {
 
       if (tokenPrice === 0) {
         console.log('⚠️  Warning: Could not fetch token price');
-        return [];
+        console.log('📝 NOTE: Will still check for transactions, but cannot verify USD values');
+        console.log('💡 You may need to manually verify qualifying buys');
       }
 
       const qualifyingBuys = [];
@@ -173,8 +230,18 @@ class HeliusService {
           9 // Most Solana tokens use 9 decimals
         );
 
-        // Check if meets minimum USD requirement
-        if (usdValue >= parseFloat(draw.min_usd_amount)) {
+        // If price is unavailable, add all buys for manual verification
+        // Otherwise, check if meets minimum USD requirement
+        if (tokenPrice === 0) {
+          console.log(`⚠️  Adding buy without USD verification: ${parsedTx.signature.substring(0, 8)}... (${parsedTx.tokenAmount} tokens)`);
+          qualifyingBuys.push({
+            signature: parsedTx.signature,
+            walletAddress: parsedTx.buyer,
+            tokenAmount: parsedTx.tokenAmount,
+            usdAmount: 0, // Will show as $0 - needs manual verification
+            timestamp: parsedTx.timestamp
+          });
+        } else if (usdValue >= parseFloat(draw.min_usd_amount)) {
           qualifyingBuys.push({
             signature: parsedTx.signature,
             walletAddress: parsedTx.buyer,
