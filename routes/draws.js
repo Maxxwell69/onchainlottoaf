@@ -120,6 +120,73 @@ router.get('/:id', async (req, res) => {
 });
 
 /**
+ * POST /api/draws/:id/scan-dex
+ * Force DexScreener scan method
+ */
+router.post('/:id/scan-dex', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const draw = await LottoDraw.getById(id);
+    if (!draw) {
+      return res.status(404).json({ error: 'Draw not found' });
+    }
+
+    // Force DexScreener method
+    const dexScreenerService = require('../services/dexScreenerService');
+    const heliusService = require('../services/heliusService');
+    
+    const qualifyingBuys = await dexScreenerService.scanForQualifyingBuys(
+      draw.token_address,
+      draw.start_time,
+      draw.min_usd_amount,
+      heliusService.connection
+    );
+
+    // Process buys and add to database
+    let newEntries = 0;
+    for (const buy of qualifyingBuys) {
+      const exists = await LottoEntry.existsBySignature(buy.signature);
+      if (exists) continue;
+
+      const nextNumber = await LottoEntry.getNextLottoNumber(id);
+      if (!nextNumber) break;
+
+      const entry = await LottoEntry.create({
+        draw_id: id,
+        lotto_number: nextNumber,
+        wallet_address: buy.walletAddress,
+        transaction_signature: buy.signature,
+        token_amount: buy.tokenAmount / 1e9, // Store as UI amount to avoid overflow
+        usd_amount: buy.usdAmount,
+        timestamp: buy.timestamp
+      });
+
+      if (entry) newEntries++;
+    }
+
+    // Update draw
+    const totalEntries = await LottoEntry.countByDrawId(id);
+    await LottoDraw.updateFilledSlots(id, totalEntries);
+
+    res.json({
+      success: true,
+      message: 'DexScreener scan completed',
+      result: {
+        success: true,
+        newEntries,
+        totalEntries,
+        totalSlots: draw.total_slots,
+        qualifyingTransactions: qualifyingBuys.length
+      }
+    });
+  } catch (error) {
+    console.error('Error in DexScreener scan:', error);
+    res.status(500).json({ error: 'Scan failed', details: error.message });
+  }
+});
+
+/**
  * POST /api/draws/:id/scan
  * Manually trigger a scan for a specific draw
  */

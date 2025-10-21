@@ -148,7 +148,7 @@ class DexScreenerService {
                 qualifyingBuys.push({
                   signature: sig.signature,
                   walletAddress: buyer,
-                  tokenAmount: tokenAmount * 1e9, // Convert to raw amount for storage
+                  tokenAmount: tokenAmount, // Keep as UI amount
                   usdAmount: usdValue,
                   timestamp: new Date(sig.blockTime * 1000)
                 });
