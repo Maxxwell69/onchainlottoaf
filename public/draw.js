@@ -161,8 +161,10 @@ function renderEntriesTable() {
         return;
     }
     
-    // Sort by lotto number
-    const sortedEntries = [...currentEntries].sort((a, b) => a.lotto_number - b.lotto_number);
+    // Sort by timestamp (chronological - oldest to newest)
+    const sortedEntries = [...currentEntries].sort((a, b) => 
+        new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+    );
     
     entriesList.innerHTML = sortedEntries.map(entry => `
         <div class="lotto-entry">
@@ -246,6 +248,33 @@ document.getElementById('refreshBtn').addEventListener('click', async () => {
     showToast('✅ Results refreshed', 'success');
 });
 
+// Timezone selector change handler
+document.getElementById('timezoneSelect').addEventListener('change', (e) => {
+    selectedTimezone = e.target.value;
+    // Re-render everything with new timezone
+    updateDrawInfo();
+    renderEntriesTable();
+    showToast(`✅ Timezone changed to ${e.target.value}`, 'success');
+});
+
+// Set default timezone based on user's location
+function setDefaultTimezone() {
+    const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const select = document.getElementById('timezoneSelect');
+    
+    // Try to match user's timezone to our options
+    if (userTimezone.includes('New_York') || userTimezone.includes('Eastern')) {
+        select.value = 'America/New_York';
+        selectedTimezone = 'America/New_York';
+    } else if (userTimezone.includes('Los_Angeles') || userTimezone.includes('Pacific')) {
+        select.value = 'America/Los_Angeles';
+        selectedTimezone = 'America/Los_Angeles';
+    } else {
+        select.value = 'UTC';
+        selectedTimezone = 'UTC';
+    }
+}
+
 // Auto-refresh every 30 seconds
 setInterval(async () => {
     console.log('Auto-refreshing draw data...');
@@ -253,5 +282,6 @@ setInterval(async () => {
 }, 30000);
 
 // Initial load
+setDefaultTimezone();
 loadDrawData();
 
