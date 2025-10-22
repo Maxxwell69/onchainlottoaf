@@ -2,6 +2,7 @@ const heliusService = require('./heliusService');
 const LottoDraw = require('../models/LottoDraw');
 const LottoEntry = require('../models/LottoEntry');
 const ScanHistory = require('../models/ScanHistory');
+const WalletBlacklist = require('../models/WalletBlacklist');
 
 class ScanService {
   /**
@@ -50,11 +51,26 @@ class ScanService {
         lastSignature
       );
 
+      // Get blacklisted wallets for this token
+      const blacklistedWallets = await WalletBlacklist.getByTokenAddress(draw.token_address);
+      const blacklistSet = new Set(blacklistedWallets.map(b => b.wallet_address));
+      
+      if (blacklistedWallets.length > 0) {
+        console.log(`🚫 Found ${blacklistedWallets.length} blacklisted wallets for this token`);
+      }
+
       let newEntries = 0;
+      let filtered = 0;
       let lastProcessedSignature = lastSignature;
 
       // Process qualifying buys
       for (const buy of qualifyingBuys) {
+        // Skip blacklisted wallets
+        if (blacklistSet.has(buy.walletAddress)) {
+          filtered++;
+          console.log(`🚫 Filtered blacklisted wallet: ${buy.walletAddress.substring(0, 8)}...`);
+          continue;
+        }
         // Check if transaction already processed
         const exists = await LottoEntry.existsBySignature(buy.signature);
         if (exists) {
@@ -99,6 +115,10 @@ class ScanService {
         transactions_found: qualifyingBuys.length
       });
 
+      if (filtered > 0) {
+        console.log(`🚫 Filtered ${filtered} blacklisted entries`);
+      }
+      
       console.log(`✅ Scan complete: ${newEntries} new entries added`);
       console.log(`📊 Draw status: ${totalEntries}/${draw.total_slots} slots filled\n`);
 
