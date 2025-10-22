@@ -73,7 +73,7 @@ class ScanService {
         console.log(`📦 Processing batch ${Math.floor(i/batchSize) + 1}/${Math.ceil(qualifyingBuys.length/batchSize)} (${batch.length} transactions)`);
         
         for (const buy of batch) {
-          // Skip blacklisted wallets
+          // Skip blacklisted wallets - BULLETPROOF CHECK
           if (blacklistSet.has(buy.walletAddress)) {
             filtered++;
             console.log(`🚫 Filtered blacklisted wallet: ${buy.walletAddress.substring(0, 8)}...`);
@@ -110,6 +110,8 @@ class ScanService {
             newEntries++;
             console.log(`🎫 Assigned lotto number ${nextNumber} to ${buy.walletAddress.substring(0, 8)}...`);
             lastProcessedSignature = buy.signature;
+          } else {
+            console.log(`⚠️  Failed to create entry for ${buy.walletAddress.substring(0, 8)}... (likely duplicate signature)`);
           }
         }
         
