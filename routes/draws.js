@@ -148,6 +148,10 @@ router.post('/:id/scan-dex', async (req, res) => {
     const blacklistedWallets = await WalletBlacklist.getByTokenAddress(draw.token_address);
     const blacklistSet = new Set(blacklistedWallets.map(b => b.wallet_address));
     
+    // Sort qualifying buys by timestamp (chronological order)
+    qualifyingBuys.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+    console.log(`📅 Sorted ${qualifyingBuys.length} transactions chronologically`);
+
     // Process buys and add to database
     let newEntries = 0;
     let filtered = 0;
@@ -160,7 +164,7 @@ router.post('/:id/scan-dex', async (req, res) => {
         continue;
       }
       
-      const exists = await LottoEntry.existsBySignature(buy.signature);
+      const exists = await LottoEntry.existsBySignature(buy.signature, id);
       if (exists) continue;
 
       const nextNumber = await LottoEntry.getNextLottoNumber(id);
