@@ -63,44 +63,70 @@ class ScanService {
       let filtered = 0;
       let lastProcessedSignature = lastSignature;
 
-      // Process qualifying buys
-      for (const buy of qualifyingBuys) {
-        // Skip blacklisted wallets
-        if (blacklistSet.has(buy.walletAddress)) {
-          filtered++;
-          console.log(`🚫 Filtered blacklisted wallet: ${buy.walletAddress.substring(0, 8)}...`);
-          continue;
-        }
-        // Check if transaction already processed
-        const exists = await LottoEntry.existsBySignature(buy.signature);
-        if (exists) {
-          console.log(`⏭️  Skipping duplicate transaction: ${buy.signature.substring(0, 8)}...`);
-          continue;
-        }
+      // Process qualifying buys with rate limiting and batching
+      const batchSize = 5; // Process in small batches
+      const delayBetweenBatches = 1000; // 1 second delay between batches
+      
+      for (let i = 0; i < qualifyingBuys.length; i += batchSize) {
+        const batch = qualifyingBuys.slice(i, i + batchSize);
+        
+        console.log(`📦 Processing batch ${Math.floor(i/batchSize) + 1}/${Math.ceil(qualifyingBuys.length/batchSize)} (${batch.length} transactions)`);
+        
+        for (const buy of batch) {
+          // Skip blacklisted wallets
+          if (blacklistSet.has(buy.walletAddress)) {
+            filtered++;
+            console.log(`🚫 Filtered blacklisted wallet: ${buy.walletAddress.substring(0, 8)}...`);
+            continue;
+          }
+          
+          // Check if transaction already processed
+          const exists = await LottoEntry.existsBySignature(buy.signature);
+          if (exists) {
+            console.log(`⏭️  Skipping duplicate transaction: ${buy.signature.substring(0, 8)}...`);
+            continue;
+          }
 
-        // Get next available lotto number
-        const nextNumber = await LottoEntry.getNextLottoNumber(drawId);
-        if (!nextNumber) {
-          console.log('🎯 All lottery numbers assigned!');
-          await LottoDraw.updateStatus(drawId, 'completed');
-          break;
+          // Get next available lotto number
+          const nextNumber = await LottoEntry.getNextLottoNumber(drawId);
+          if (!nextNumber) {
+            console.log('🎯 All lottery numbers assigned!');
+            await LottoDraw.updateStatus(drawId, 'completed');
+            break;
+          }
+
+          // Create entry
+          const entry = await LottoEntry.create({
+            draw_id: drawId,
+            lotto_number: nextNumber,
+            wallet_address: buy.walletAddress,
+            transaction_signature: buy.signature,
+            token_amount: buy.tokenAmount,
+            usd_amount: buy.usdAmount,
+            timestamp: buy.timestamp
+          });
+
+          if (entry) {
+            newEntries++;
+            console.log(`🎫 Assigned lotto number ${nextNumber} to ${buy.walletAddress.substring(0, 8)}...`);
+            lastProcessedSignature = buy.signature;
+          }
         }
-
-        // Create entry
-        const entry = await LottoEntry.create({
-          draw_id: drawId,
-          lotto_number: nextNumber,
-          wallet_address: buy.walletAddress,
-          transaction_signature: buy.signature,
-          token_amount: buy.tokenAmount,
-          usd_amount: buy.usdAmount,
-          timestamp: buy.timestamp
-        });
-
-        if (entry) {
-          newEntries++;
-          console.log(`🎫 Assigned lotto number ${nextNumber} to ${buy.walletAddress.substring(0, 8)}...`);
-          lastProcessedSignature = buy.signature;
+        
+        // Update progress and rate limiting
+        const progress = Math.round(((i + batchSize) / qualifyingBuys.length) * 100);
+        console.log(`📊 Progress: ${Math.min(progress, 100)}% (${i + batchSize}/${qualifyingBuys.length} transactions processed)`);
+        
+        // Update draw filled slots periodically
+        if ((i + batchSize) % (batchSize * 5) === 0) {
+          const currentTotal = await LottoEntry.countByDrawId(drawId);
+          await LottoDraw.updateFilledSlots(drawId, currentTotal);
+        }
+        
+        // Rate limiting: delay between batches
+        if (i + batchSize < qualifyingBuys.length) {
+          console.log(`⏳ Waiting ${delayBetweenBatches}ms before next batch...`);
+          await new Promise(resolve => setTimeout(resolve, delayBetweenBatches));
         }
       }
 
@@ -108,11 +134,13 @@ class ScanService {
       const totalEntries = await LottoEntry.countByDrawId(drawId);
       await LottoDraw.updateFilledSlots(drawId, totalEntries);
 
-      // Record scan history
+      // Record scan history with progress tracking
       await ScanHistory.create({
         draw_id: drawId,
         last_signature: lastProcessedSignature,
-        transactions_found: qualifyingBuys.length
+        transactions_found: qualifyingBuys.length,
+        entries_added: newEntries,
+        entries_filtered: filtered
       });
 
       if (filtered > 0) {

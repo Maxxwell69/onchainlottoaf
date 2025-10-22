@@ -198,9 +198,15 @@ class DexScreenerService {
           // Skip parsing errors
         }
 
-        // Rate limiting
-        if (checkedCount % 20 === 0) {
-          await new Promise(resolve => setTimeout(resolve, 300));
+        // Rate limiting - more conservative approach
+        if (checkedCount % 10 === 0) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+        
+        // Additional delay every 50 transactions
+        if (checkedCount % 50 === 0) {
+          console.log(`⏳ Processed ${checkedCount} transactions, taking a longer break...`);
+          await new Promise(resolve => setTimeout(resolve, 2000));
         }
       }
 
