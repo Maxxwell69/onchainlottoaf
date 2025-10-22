@@ -24,11 +24,23 @@ function showToast(message, type = 'info') {
     }, 4000);
 }
 
-// Format functions
+// Format functions with timezone support
 function formatDate(dateString) {
     if (!dateString) return 'N/A';
     const date = new Date(dateString);
-    return date.toLocaleString();
+    
+    const options = {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        timeZone: selectedTimezone,
+        timeZoneName: 'short'
+    };
+    
+    return date.toLocaleString('en-US', options);
 }
 
 function formatUSD(amount) {
