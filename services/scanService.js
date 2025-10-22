@@ -63,9 +63,9 @@ class ScanService {
       let filtered = 0;
       let lastProcessedSignature = lastSignature;
 
-      // Process qualifying buys with rate limiting and batching
-      const batchSize = 5; // Process in small batches
-      const delayBetweenBatches = 1000; // 1 second delay between batches
+      // Process qualifying buys with very conservative rate limiting
+      const batchSize = 2; // Process in very small batches
+      const delayBetweenBatches = 5000; // 5 second delay between batches
       
       for (let i = 0; i < qualifyingBuys.length; i += batchSize) {
         const batch = qualifyingBuys.slice(i, i + batchSize);

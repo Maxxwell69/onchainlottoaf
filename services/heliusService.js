@@ -5,9 +5,55 @@ require('dotenv').config();
 class HeliusService {
   constructor() {
     this.apiKey = process.env.HELIUS_API_KEY;
-    this.rpcUrl = `https://mainnet.helius-rpc.com/?api-key=${this.apiKey}`;
-    this.connection = new Connection(this.rpcUrl, 'confirmed');
     this.baseUrl = 'https://api.helius.xyz/v0';
+    
+    // Multiple RPC endpoints for better rate limiting
+    this.rpcEndpoints = [
+      `https://mainnet.helius-rpc.com/?api-key=${this.apiKey}`,
+      'https://api.mainnet-beta.solana.com',
+      'https://solana-api.projectserum.com',
+      'https://rpc.ankr.com/solana'
+    ];
+    this.currentEndpointIndex = 0;
+    this.rpcUrl = this.rpcEndpoints[0];
+    this.connection = new Connection(this.rpcUrl, 'confirmed');
+    
+    // Rate limiting state
+    this.lastRequestTime = 0;
+    this.minRequestInterval = 3000; // 3 seconds between requests
+    this.requestCount = 0;
+  }
+
+  /**
+   * Rate limiting helper
+   */
+  async rateLimit() {
+    const now = Date.now();
+    const timeSinceLastRequest = now - this.lastRequestTime;
+    
+    if (timeSinceLastRequest < this.minRequestInterval) {
+      const waitTime = this.minRequestInterval - timeSinceLastRequest;
+      console.log(`⏳ Rate limiting: waiting ${waitTime}ms...`);
+      await new Promise(resolve => setTimeout(resolve, waitTime));
+    }
+    
+    this.lastRequestTime = Date.now();
+    this.requestCount++;
+    
+    // Switch endpoints every 50 requests to distribute load
+    if (this.requestCount % 50 === 0) {
+      this.switchEndpoint();
+    }
+  }
+
+  /**
+   * Switch to next RPC endpoint
+   */
+  switchEndpoint() {
+    this.currentEndpointIndex = (this.currentEndpointIndex + 1) % this.rpcEndpoints.length;
+    this.rpcUrl = this.rpcEndpoints[this.currentEndpointIndex];
+    this.connection = new Connection(this.rpcUrl, 'confirmed');
+    console.log(`🔄 Switched to RPC endpoint: ${this.rpcUrl.substring(0, 30)}...`);
   }
 
   /**
