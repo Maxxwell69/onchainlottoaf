@@ -63,6 +63,10 @@ class ScanService {
       let filtered = 0;
       let lastProcessedSignature = lastSignature;
 
+      // Sort qualifying buys by timestamp (chronological order)
+      qualifyingBuys.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+      console.log(`📅 Sorted ${qualifyingBuys.length} transactions chronologically`);
+
       // Process qualifying buys with optimized rate limiting for paid Helius
       const batchSize = 10; // Process in larger batches
       const delayBetweenBatches = 500; // 500ms delay between batches
