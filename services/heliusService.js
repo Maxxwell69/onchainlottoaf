@@ -18,9 +18,9 @@ class HeliusService {
     this.rpcUrl = this.rpcEndpoints[0];
     this.connection = new Connection(this.rpcUrl, 'confirmed');
     
-    // Rate limiting state
+    // Rate limiting state - optimized for paid Helius plan
     this.lastRequestTime = 0;
-    this.minRequestInterval = 3000; // 3 seconds between requests
+    this.minRequestInterval = 200; // 200ms between requests (much faster)
     this.requestCount = 0;
   }
 

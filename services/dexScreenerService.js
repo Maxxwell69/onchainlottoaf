@@ -198,21 +198,15 @@ class DexScreenerService {
           // Skip parsing errors
         }
 
-        // Much more aggressive rate limiting
-        if (checkedCount % 5 === 0) {
-          await new Promise(resolve => setTimeout(resolve, 2000));
-        }
-        
-        // Longer break every 20 transactions
+        // Optimized rate limiting for paid Helius plan
         if (checkedCount % 20 === 0) {
-          console.log(`⏳ Processed ${checkedCount} transactions, taking a longer break...`);
-          await new Promise(resolve => setTimeout(resolve, 5000));
+          await new Promise(resolve => setTimeout(resolve, 500));
         }
         
-        // Extra long break every 100 transactions
+        // Longer break every 100 transactions
         if (checkedCount % 100 === 0) {
-          console.log(`🛑 Processed ${checkedCount} transactions, taking extended break...`);
-          await new Promise(resolve => setTimeout(resolve, 10000));
+          console.log(`⏳ Processed ${checkedCount} transactions, taking a break...`);
+          await new Promise(resolve => setTimeout(resolve, 1000));
         }
       }
 
