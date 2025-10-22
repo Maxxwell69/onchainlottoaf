@@ -80,8 +80,8 @@ class ScanService {
             continue;
           }
           
-          // Check if transaction already processed
-          const exists = await LottoEntry.existsBySignature(buy.signature);
+          // Check if transaction already processed in this draw
+          const exists = await LottoEntry.existsBySignature(buy.signature, drawId);
           if (exists) {
             console.log(`⏭️  Skipping duplicate transaction: ${buy.signature.substring(0, 8)}...`);
             continue;

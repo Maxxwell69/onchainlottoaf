@@ -72,10 +72,10 @@ class LottoEntry {
     return null; // All slots filled
   }
 
-  // Check if transaction already exists
-  static async existsBySignature(signature) {
-    const sql = 'SELECT id FROM lotto_entries WHERE transaction_signature = $1';
-    const result = await query(sql, [signature]);
+  // Check if transaction already exists in a specific draw
+  static async existsBySignature(signature, drawId) {
+    const sql = 'SELECT id FROM lotto_entries WHERE transaction_signature = $1 AND draw_id = $2';
+    const result = await query(sql, [signature, drawId]);
     return result.rows.length > 0;
   }
 
