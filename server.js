@@ -6,6 +6,9 @@ require('dotenv').config();
 
 const drawsRoutes = require('./routes/draws');
 const tokensRoutes = require('./routes/tokens');
+const authRoutes = require('./routes/auth');
+const usersRoutes = require('./routes/users');
+const { authenticateToken, requireAdmin } = require('./middleware/auth');
 const scanService = require('./services/scanService');
 const { pool } = require('./database/db');
 
@@ -39,6 +42,8 @@ app.get('/health', (req, res) => {
 });
 
 // API Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/users', usersRoutes);
 app.use('/api/draws', drawsRoutes);
 app.use('/api/tokens', tokensRoutes);
 

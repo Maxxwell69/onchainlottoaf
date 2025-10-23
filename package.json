@@ -10,21 +10,27 @@
     "init-token-manager": "node scripts/initTokenManager.js",
     "test-helius": "node scripts/testHelius.js"
   },
-  "keywords": ["solana", "lottery", "helius", "crypto"],
+  "keywords": [
+    "solana",
+    "lottery",
+    "helius",
+    "crypto"
+  ],
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "express": "^4.18.2",
-    "pg": "^8.11.3",
-    "dotenv": "^16.3.1",
-    "cors": "^2.8.5",
-    "axios": "^1.6.2",
     "@solana/web3.js": "^1.87.6",
+    "axios": "^1.6.2",
+    "bcryptjs": "^3.0.2",
+    "body-parser": "^1.20.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.2",
     "node-cron": "^3.0.3",
-    "body-parser": "^1.20.2"
+    "pg": "^8.11.3"
   },
   "devDependencies": {
     "nodemon": "^3.0.2"
   }
 }
-

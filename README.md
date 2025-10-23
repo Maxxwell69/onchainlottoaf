@@ -1,246 +1,237 @@
-# 🎰 On Chain Lotto Draw
+# 🎰 On Chain Lotto
 
-A Solana-based lottery system for meme coins that automatically assigns lotto numbers (1-69) to buyers who purchase a minimum USD amount of tokens. Built with Node.js, PostgreSQL, and Helius API.
+A premium Solana meme coin lotto system with transparent, on-chain draws and comprehensive user management.
+
+![On Chain Lotto](https://img.shields.io/badge/Solana-Lotto-gold?style=for-the-badge&logo=solana)
+![Node.js](https://img.shields.io/badge/Node.js-18+-green?style=for-the-badge&logo=node.js)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Database-blue?style=for-the-badge&logo=postgresql)
+![License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)
 
 ## 🌟 Features
 
-- **Automated Draw Management** - Create lottery draws with custom parameters
-- **Real-time Transaction Monitoring** - Scans Solana blockchain via Helius API
-- **First-Come, First-Served** - Automatic number assignment (1-69)
-- **USD-Based Qualification** - Set minimum purchase amounts in USD
-- **Live Results Dashboard** - Real-time updates with refresh functionality
-- **Auto-Scanning** - Scheduled checks every 2 minutes for new qualifying buys
-- **Beautiful UI** - Modern, responsive interface with Solana-inspired design
+### 🎯 Core Functionality
+- **Transparent Lotto Draws**: On-chain verification of all draws
+- **Real-time Scanning**: Automatic detection of qualifying token purchases
+- **User Management**: Complete admin panel with role-based access
+- **Token Support**: Multi-token lotto system with Helius integration
+- **Wallet Integration**: Solana wallet address tracking and validation
 
-## 📋 Prerequisites
+### 🎨 User Interface
+- **Modern Design**: Gold-themed premium interface
+- **Responsive Layout**: Works on desktop and mobile
+- **Real-time Updates**: Live lotto ball animations
+- **Admin Dashboard**: Comprehensive management tools
+- **User Registration**: Public registration with admin approval
 
-- Node.js (v16 or higher)
-- PostgreSQL database (Railway recommended)
-- Helius API key ([Get one here](https://helius.dev))
+### 🔧 Technical Features
+- **RESTful API**: Complete API for all operations
+- **Database Backup**: Automated backup and restore system
+- **Production Ready**: SSL, security headers, rate limiting
+- **Monitoring**: Health checks and comprehensive logging
+- **Scalable**: PM2 cluster mode and load balancer ready
 
 ## 🚀 Quick Start
 
-### 1. Clone the Repository
+### Prerequisites
+- Node.js 18+
+- PostgreSQL 12+
+- Helius API key (for Solana integration)
 
-```bash
-git clone https://github.com/Maxxwell69/onchainlottoaf.git
-cd onchainlottoaf
-```
+### Installation
 
-### 2. Install Dependencies
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/yourusername/on-chain-lotto.git
+   cd on-chain-lotto
+   ```
 
-```bash
-npm install
-```
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
 
-### 3. Configure Environment Variables
+3. **Set up database**
+   ```bash
+   # Create database
+   createdb onchain_lotto
+   
+   # Run database setup
+   node setup-database.js
+   ```
 
-Create a `.env` file in the root directory:
+4. **Configure environment**
+   ```bash
+   cp env.production.example .env
+   # Edit .env with your configuration
+   ```
 
-```env
-# Database Configuration (Railway PostgreSQL)
-DATABASE_URL=postgresql://user:password@host:port/database
+5. **Start the server**
+   ```bash
+   npm start
+   ```
 
-# Helius API Configuration
-HELIUS_API_KEY=f749d6d6-c885-4a88-97a0-6ec0649500ea
+6. **Access the application**
+   - Home: http://localhost:3000/home.html
+   - Admin: http://localhost:3000/index.html
+   - Navigation: http://localhost:3000/navigation.html
 
-# Server Configuration
-PORT=3000
-NODE_ENV=production
+## 📊 System Overview
 
-# Frontend URL (for CORS)
-FRONTEND_URL=http://localhost:3000
-```
+### Current Data
+- **Active Draws**: 1 (Lotto AF-18)
+- **Users**: 2 (Maxx - super_admin, admin)
+- **Lotto Entries**: 5 entries across balls 1-5
+- **Tokens**: 1 managed token ($af)
+- **Scan History**: 314 scan records
 
-### 4. Initialize Database
+### Database Schema
+- **lotto_draws**: Draw information and configuration
+- **lotto_entries**: Individual lotto ball assignments
+- **users**: User accounts and roles
+- **managed_tokens**: Supported tokens
+- **scan_history**: Transaction scanning logs
+- **wallet_blacklist**: Blocked wallet addresses
 
-```bash
-npm run init-db
-```
+## 🎮 Usage
 
-This will create the necessary tables:
-- `lotto_draws` - Stores lottery draw information
-- `lotto_entries` - Stores qualified buyer entries
-- `scan_history` - Tracks scan operations
+### For Users
+1. **Register**: Create account at `/register.html`
+2. **Wait for Approval**: Admin must approve new accounts
+3. **Participate**: Buy qualifying tokens to enter lotto
+4. **Track**: View your entries in the draw
 
-### 5. Start the Server
+### For Admins
+1. **Login**: Use admin credentials
+2. **Create Draws**: Set up new lotto draws
+3. **Manage Users**: Approve/deny registrations
+4. **Monitor**: Track all system activity
 
-**Development:**
-```bash
-npm run dev
-```
+### Default Admin Access
+- **Email**: Maxx@pantherpilot.com
+- **Password**: ShogunMaxx1969!
 
-**Production:**
-```bash
-npm start
-```
-
-The server will start on `http://localhost:3000`
-
-## 🎮 How to Use
-
-### Creating a Lotto Draw
-
-1. Open `http://localhost:3000` in your browser
-2. Fill out the "Create New Lotto Draw" form:
-   - **Draw Name**: Custom name for your draw (e.g., "BONK Mega Draw #1")
-   - **Token Address**: Solana token mint address to monitor
-   - **Token Symbol**: Optional (auto-fetched if left empty)
-   - **Minimum USD Amount**: Minimum purchase to qualify
-   - **Start Date & Time**: When the draw begins accepting entries
-
-3. Click "Create Lotto Draw"
-4. You'll be redirected to the draw results page
-
-### Viewing Draw Results
-
-1. Click "View Draw" on any active draw
-2. See the live grid of numbers 1-69 (filled = assigned, gray = available)
-3. View all qualified entries with:
-   - Lotto number assigned
-   - Wallet address (clickable to Solscan)
-   - Token amount purchased
-   - USD value
-   - Transaction signature (clickable to Solscan)
-   - Timestamp
-
-### Scanning for New Buys
-
-**Manual Scan:**
-- Click "🔍 Scan for New Buys" on the draw page
-- System checks blockchain for qualifying transactions
-- New entries are automatically assigned the next available lotto number
-
-**Automatic Scan:**
-- Runs every 2 minutes for all active draws
-- No manual intervention needed
-
-## 📡 API Endpoints
+## 🔧 API Endpoints
 
 ### Draws
-
-- `POST /api/draws` - Create a new draw
-- `GET /api/draws` - Get all draws
+- `GET /api/draws` - List all draws
 - `GET /api/draws/active` - Get active draws
-- `GET /api/draws/:id` - Get specific draw with entries
-- `POST /api/draws/:id/scan` - Manually trigger scan
-- `GET /api/draws/:id/entries` - Get entries for a draw
-- `PUT /api/draws/:id/status` - Update draw status
+- `GET /api/draws/:id` - Get specific draw
+- `POST /api/draws` - Create new draw
+- `POST /api/draws/:id/scan` - Scan for new entries
 
-### Health
+### Users
+- `GET /api/users` - List users (admin only)
+- `POST /api/users` - Create user (admin only)
+- `PUT /api/users/:id` - Update user (admin only)
+- `DELETE /api/users/:id` - Delete user (admin only)
 
-- `GET /health` - Check API health
+### Authentication
+- `POST /api/auth/login` - User login
+- `POST /api/auth/register` - User registration
+- `POST /api/auth/logout` - User logout
+- `GET /api/auth/verify` - Verify token
 
-## 🚂 Deploying to Railway
+### Tokens
+- `GET /api/tokens` - List managed tokens
+- `POST /api/tokens` - Add new token (admin only)
 
-### Option 1: Deploy from GitHub
+## 🚀 Production Deployment
 
-1. Go to [Railway.app](https://railway.app)
-2. Click "New Project" → "Deploy from GitHub repo"
-3. Select your repository
-4. Add PostgreSQL database:
-   - Click "New" → "Database" → "Add PostgreSQL"
-   - Railway will auto-generate `DATABASE_URL`
-
-5. Add environment variables:
-   ```
-   HELIUS_API_KEY=f749d6d6-c885-4a88-97a0-6ec0649500ea
-   NODE_ENV=production
-   PORT=3000
-   FRONTEND_URL=https://your-app.up.railway.app
-   ```
-
-6. Deploy and initialize database:
-   ```bash
-   railway run npm run init-db
-   ```
-
-### Option 2: Deploy with Railway CLI
-
+### Automated Deployment
 ```bash
-# Install Railway CLI
-npm i -g @railway/cli
-
-# Login
-railway login
-
-# Initialize project
-railway init
-
-# Add PostgreSQL
-railway add
-
-# Set environment variables
-railway variables set HELIUS_API_KEY=f749d6d6-c885-4a88-97a0-6ec0649500ea
-
-# Deploy
-railway up
+# Run deployment script
+sudo ./deploy.sh
 ```
 
-## 🛠️ Tech Stack
+### Manual Deployment
+1. **Prepare Server**: Install Node.js, PostgreSQL, Nginx
+2. **Upload Files**: Copy all files to production server
+3. **Configure Database**: Create production database
+4. **Set Environment**: Configure production environment variables
+5. **Restore Data**: Restore from backup file
+6. **Start Services**: Start with PM2 and Nginx
+7. **SSL Setup**: Configure SSL certificates
 
-- **Backend**: Node.js, Express
-- **Database**: PostgreSQL
-- **Blockchain**: Solana (via Helius API)
-- **Frontend**: Vanilla JavaScript, HTML, CSS
-- **Styling**: Custom CSS with Solana gradient theme
+See `DEPLOYMENT_GUIDE.md` for detailed instructions.
 
-## 📊 Database Schema
+## 📁 Project Structure
 
-### lotto_draws
-- Draw configuration and metadata
-- Status tracking (active, completed, cancelled)
-- Slot filling progress (0-69)
+```
+on-chain-lotto/
+├── public/                 # Frontend files
+│   ├── *.html             # Web pages
+│   ├── *.js               # Frontend JavaScript
+│   ├── *.css              # Stylesheets
+│   └── fonts/             # Custom fonts
+├── routes/                # API routes
+│   ├── auth.js            # Authentication
+│   ├── draws.js           # Lotto draws
+│   ├── users.js           # User management
+│   └── tokens.js          # Token management
+├── models/                # Database models
+├── services/              # Business logic
+├── middleware/            # Express middleware
+├── database/              # Database configuration
+├── backups/               # Database backups
+├── scripts/               # Utility scripts
+└── server.js              # Main server file
+```
 
-### lotto_entries
-- Qualified buyer entries
-- First-come, first-served number assignment
-- Transaction details and USD values
+## 🔒 Security Features
 
-### scan_history
-- Audit trail of blockchain scans
-- Last processed transaction tracking
+- **JWT Authentication**: Secure token-based auth
+- **Password Hashing**: bcrypt password security
+- **CORS Protection**: Configurable cross-origin policies
+- **Rate Limiting**: API request throttling
+- **Input Validation**: Comprehensive data validation
+- **SQL Injection Protection**: Parameterized queries
+- **XSS Protection**: Content Security Policy headers
 
-## 🔐 Security Notes
+## 📈 Monitoring & Maintenance
 
-- Never commit `.env` file to version control
-- Use Railway's secret management for production
-- Helius API key should be kept secure
-- Database credentials should use Railway's auto-generated values
+### Health Checks
+- `GET /health` - Application health status
+- Database connection monitoring
+- API endpoint availability
 
-## 🐛 Troubleshooting
+### Logging
+- Application logs via PM2
+- Nginx access/error logs
+- Database query logging
+- Security event logging
 
-### "Database connection failed"
-- Check your `DATABASE_URL` in `.env`
-- Ensure PostgreSQL is running
-- Verify network connectivity to Railway
-
-### "Could not fetch token price"
-- Token might not be listed on Jupiter
-- Check token address is correct
-- Ensure Helius API key is valid
-
-### "No qualifying buys found"
-- Verify token address is correct
-- Check start time is in the past
-- Ensure minimum USD amount is reasonable
-- Verify Helius API is working
-
-## 📝 License
-
-MIT License - feel free to use for your projects!
+### Backups
+- Automated daily backups
+- 30-day retention policy
+- One-click restore functionality
 
 ## 🤝 Contributing
 
-Pull requests are welcome! For major changes, please open an issue first.
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-## 📞 Support
+## 📄 License
 
-- GitHub Issues: [Create an issue](https://github.com/Maxxwell69/onchainlottoaf/issues)
-- Helius Docs: [helius.dev/docs](https://docs.helius.dev)
-- Solana Docs: [docs.solana.com](https://docs.solana.com)
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🆘 Support
+
+- **Documentation**: See `DEPLOYMENT_GUIDE.md` and `PRODUCTION_DEPLOYMENT_STEPS.md`
+- **Issues**: Report bugs via GitHub Issues
+- **Email**: Maxx@pantherpilot.com
+
+## 🎉 Acknowledgments
+
+- **Solana**: For the amazing blockchain platform
+- **Helius**: For Solana RPC and API services
+- **PostgreSQL**: For reliable database storage
+- **Express.js**: For the robust web framework
 
 ---
 
-Built with 💜 for the Solana ecosystem
+**Built with ❤️ for the Solana ecosystem**
 
+![Solana](https://img.shields.io/badge/Powered%20by-Solana-purple?style=for-the-badge&logo=solana)

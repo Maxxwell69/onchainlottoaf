@@ -110,7 +110,7 @@ function updateProgressBar() {
     progressText.textContent = `${currentDraw.filled_slots} / ${currentDraw.total_slots} slots filled (${percentage}%)`;
 }
 
-// Render numbers grid (1-69)
+// Render numbers grid (1-69) with balls and wallet addresses
 function renderNumbersGrid() {
     const grid = document.getElementById('numbersGrid');
     const filledNumbers = currentEntries.map(entry => entry.lotto_number);
@@ -118,10 +118,15 @@ function renderNumbersGrid() {
     let html = '';
     for (let i = 1; i <= 69; i++) {
         const isFilled = filledNumbers.includes(i);
+        const entry = currentEntries.find(entry => entry.lotto_number === i);
+        const walletDigits = entry ? entry.wallet_address.slice(-6) : '';
+        
         html += `
-            <div class="number-box ${isFilled ? 'filled' : 'available'}" 
-                 title="${isFilled ? 'Assigned' : 'Available'}">
-                ${i}
+            <div class="number-box" title="${isFilled ? 'Assigned' : 'Available'}">
+                <div class="number-ball ${isFilled ? 'filled' : 'available'}">
+                    ${i}
+                </div>
+                ${walletDigits ? `<div class="wallet-digits">${walletDigits}</div>` : ''}
             </div>
         `;
     }
