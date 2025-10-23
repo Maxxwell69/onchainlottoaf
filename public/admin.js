@@ -320,7 +320,15 @@ document.getElementById('tokenSelect').addEventListener('change', (e) => {
 });
 
 // Set default start time to now
+// Set default start time to current time
 document.getElementById('startTime').value = new Date().toISOString().slice(0, 16);
+
+// Start from now button functionality
+document.getElementById('startNowBtn').addEventListener('click', () => {
+    const now = new Date();
+    document.getElementById('startTime').value = now.toISOString().slice(0, 16);
+    showToast('✅ Start time set to current time', 'success');
+});
 
 // Initial load
 loadActiveDraws();

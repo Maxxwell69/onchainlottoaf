@@ -287,6 +287,61 @@ function setDefaultTimezone() {
     }
 }
 
+// Export functionality
+document.getElementById('exportBtn').addEventListener('click', () => {
+    if (!currentEntries || currentEntries.length === 0) {
+        showToast('❌ No entries to export', 'error');
+        return;
+    }
+    
+    exportToCSV();
+});
+
+function exportToCSV() {
+    try {
+        // Prepare CSV data
+        const csvData = [
+            ['Lotto Number', 'Wallet Address', 'USD Amount', 'Token Amount', 'Transaction Signature', 'Timestamp']
+        ];
+        
+        // Add entries data
+        currentEntries.forEach(entry => {
+            csvData.push([
+                entry.lotto_number,
+                entry.wallet_address,
+                entry.usd_amount,
+                entry.token_amount,
+                entry.transaction_signature,
+                entry.timestamp
+            ]);
+        });
+        
+        // Convert to CSV string
+        const csvString = csvData.map(row => 
+            row.map(field => `"${field}"`).join(',')
+        ).join('\n');
+        
+        // Create and download file
+        const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        
+        link.setAttribute('href', url);
+        link.setAttribute('download', `lotto-draw-${drawId}-${currentDraw.draw_name.replace(/[^a-zA-Z0-9]/g, '_')}.csv`);
+        link.style.visibility = 'hidden';
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        showToast(`✅ Exported ${currentEntries.length} entries to CSV`, 'success');
+        
+    } catch (error) {
+        console.error('Export error:', error);
+        showToast('❌ Export failed', 'error');
+    }
+}
+
 // Auto-refresh every 30 seconds
 setInterval(async () => {
     console.log('Auto-refreshing draw data...');

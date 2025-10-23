@@ -55,7 +55,10 @@
 
                 <div class="form-group">
                     <label for="startTime">Start Date & Time*</label>
-                    <input type="datetime-local" id="startTime" required>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="datetime-local" id="startTime" required style="flex: 1;">
+                        <button type="button" id="startNowBtn" class="btn btn-secondary" style="white-space: nowrap;">Start from Now</button>
+                    </div>
                     <small>When the draw begins accepting entries</small>
                 </div>
 
