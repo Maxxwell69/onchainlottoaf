@@ -328,7 +328,15 @@ document.getElementById('tokenSelect').addEventListener('change', (e) => {
 
 // Set default timezone and start time
 document.getElementById('timezoneSelect').value = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
-document.getElementById('startTime').value = new Date().toISOString().slice(0, 16);
+
+// Set start time to local computer time (not UTC)
+const now = new Date();
+const localTimeString = now.getFullYear() + '-' + 
+    String(now.getMonth() + 1).padStart(2, '0') + '-' + 
+    String(now.getDate()).padStart(2, '0') + 'T' + 
+    String(now.getHours()).padStart(2, '0') + ':' + 
+    String(now.getMinutes()).padStart(2, '0');
+document.getElementById('startTime').value = localTimeString;
 
 // Timezone conversion function
 function convertToUTC(localDateTime, timezone) {
@@ -367,12 +375,15 @@ document.getElementById('startNowBtn').addEventListener('click', () => {
     const timezone = document.getElementById('timezoneSelect').value;
     const now = new Date();
     
-    // Convert current time to the selected timezone
-    const localTime = new Date(now.toLocaleString("en-US", {timeZone: timezone}));
-    const localTimeString = localTime.toISOString().slice(0, 16);
+    // Use local computer time (not UTC)
+    const localTimeString = now.getFullYear() + '-' + 
+        String(now.getMonth() + 1).padStart(2, '0') + '-' + 
+        String(now.getDate()).padStart(2, '0') + 'T' + 
+        String(now.getHours()).padStart(2, '0') + ':' + 
+        String(now.getMinutes()).padStart(2, '0');
     
     document.getElementById('startTime').value = localTimeString;
-    showToast(`✅ Start time set to current time (${timezone})`, 'success');
+    showToast(`✅ Start time set to current local time (${timezone})`, 'success');
 });
 
 // Initial load
