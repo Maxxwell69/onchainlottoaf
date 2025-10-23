@@ -12,7 +12,6 @@ if (!drawId) {
 
 let currentDraw = null;
 let currentEntries = [];
-let selectedTimezone = 'America/New_York'; // Default to Eastern Time
 
 // Toast notification
 function showToast(message, type = 'info') {
@@ -25,29 +24,13 @@ function showToast(message, type = 'info') {
     }, 4000);
 }
 
-// Format functions with timezone support
+// Format functions - match admin page behavior (no timezone conversion)
 function formatDate(dateString) {
     if (!dateString) return 'N/A';
     const date = new Date(dateString);
     
-    // Debug logging
-    console.log('Formatting date:', dateString, 'to timezone:', selectedTimezone);
-    
-    const options = {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        timeZone: selectedTimezone,
-        timeZoneName: 'short'
-    };
-    
-    const formatted = date.toLocaleString('en-US', options);
-    console.log('Formatted result:', formatted);
-    
-    return formatted;
+    // Use same format as admin page - no timezone conversion
+    return date.toLocaleString();
 }
 
 function formatUSD(amount) {
@@ -267,32 +250,7 @@ document.getElementById('refreshBtn').addEventListener('click', async () => {
     showToast('✅ Results refreshed', 'success');
 });
 
-// Timezone selector change handler
-document.getElementById('timezoneSelect').addEventListener('change', (e) => {
-    selectedTimezone = e.target.value;
-    // Re-render everything with new timezone
-    updateDrawInfo();
-    renderEntriesTable();
-    showToast(`✅ Timezone changed to ${e.target.value}`, 'success');
-});
-
-// Set default timezone based on user's location
-function setDefaultTimezone() {
-    const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    const select = document.getElementById('timezoneSelect');
-    
-    // Try to match user's timezone to our options
-    if (userTimezone.includes('New_York') || userTimezone.includes('Eastern')) {
-        select.value = 'America/New_York';
-        selectedTimezone = 'America/New_York';
-    } else if (userTimezone.includes('Los_Angeles') || userTimezone.includes('Pacific')) {
-        select.value = 'America/Los_Angeles';
-        selectedTimezone = 'America/Los_Angeles';
-    } else {
-        select.value = 'UTC';
-        selectedTimezone = 'UTC';
-    }
-}
+// Timezone functionality removed - using local time display like admin page
 
 // Export functionality
 document.getElementById('exportBtn').addEventListener('click', () => {
@@ -356,6 +314,5 @@ setInterval(async () => {
 }, 30000);
 
 // Initial load
-setDefaultTimezone();
 loadDrawData();
 
