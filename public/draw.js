@@ -12,6 +12,7 @@ if (!drawId) {
 
 let currentDraw = null;
 let currentEntries = [];
+let selectedTimezone = 'America/New_York'; // Default to Eastern Time
 
 // Toast notification
 function showToast(message, type = 'info') {
@@ -29,6 +30,9 @@ function formatDate(dateString) {
     if (!dateString) return 'N/A';
     const date = new Date(dateString);
     
+    // Debug logging
+    console.log('Formatting date:', dateString, 'to timezone:', selectedTimezone);
+    
     const options = {
         year: 'numeric',
         month: '2-digit',
@@ -40,7 +44,10 @@ function formatDate(dateString) {
         timeZoneName: 'short'
     };
     
-    return date.toLocaleString('en-US', options);
+    const formatted = date.toLocaleString('en-US', options);
+    console.log('Formatted result:', formatted);
+    
+    return formatted;
 }
 
 function formatUSD(amount) {
