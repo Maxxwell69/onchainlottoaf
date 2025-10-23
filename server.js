@@ -74,15 +74,15 @@ app.use((req, res) => {
   });
 });
 
-// Scheduled job to scan active draws every 2 minutes
-cron.schedule('*/2 * * * *', async () => {
-  console.log('\n⏰ Running scheduled scan of active draws...');
-  try {
-    await scanService.scanAllActiveDraws();
-  } catch (error) {
-    console.error('Error in scheduled scan:', error);
-  }
-});
+// Scheduled job to scan active draws every 2 minutes - TEMPORARILY DISABLED
+// cron.schedule('*/2 * * * *', async () => {
+//   console.log('\n⏰ Running scheduled scan of active draws...');
+//   try {
+//     await scanService.scanAllActiveDraws();
+//   } catch (error) {
+//     console.error('Error in scheduled scan:', error);
+//   }
+// });
 
 // Start server
 app.listen(PORT, async () => {
