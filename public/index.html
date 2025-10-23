@@ -54,6 +54,23 @@
                 </div>
 
                 <div class="form-group">
+                    <label for="timezoneSelect">Timezone*</label>
+                    <select id="timezoneSelect" required>
+                        <option value="UTC">UTC (Coordinated Universal Time)</option>
+                        <option value="America/New_York">EST/EDT (Eastern Time)</option>
+                        <option value="America/Chicago">CST/CDT (Central Time)</option>
+                        <option value="America/Denver">MST/MDT (Mountain Time)</option>
+                        <option value="America/Los_Angeles">PST/PDT (Pacific Time)</option>
+                        <option value="Europe/London">GMT/BST (London)</option>
+                        <option value="Europe/Paris">CET/CEST (Central European)</option>
+                        <option value="Asia/Tokyo">JST (Japan Standard Time)</option>
+                        <option value="Asia/Shanghai">CST (China Standard Time)</option>
+                        <option value="Australia/Sydney">AEST/AEDT (Sydney)</option>
+                    </select>
+                    <small>Select your timezone for accurate scheduling</small>
+                </div>
+
+                <div class="form-group">
                     <label for="startTime">Start Date & Time*</label>
                     <div style="display: flex; gap: 10px; align-items: center;">
                         <input type="datetime-local" id="startTime" required style="flex: 1;">

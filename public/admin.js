@@ -47,12 +47,19 @@ document.getElementById('createDrawForm').addEventListener('submit', async (e) =
     btnSpinner.style.display = 'inline-block';
     
     try {
+        const timezone = document.getElementById('timezoneSelect').value;
+        const startTimeValue = document.getElementById('startTime').value;
+        
+        // Convert local time to UTC based on selected timezone
+        const startTimeUTC = convertToUTC(startTimeValue, timezone);
+        
         const formData = {
             draw_name: document.getElementById('drawName').value,
             token_address: document.getElementById('tokenAddress').value,
             token_symbol: document.getElementById('tokenSymbol').value || null,
             min_usd_amount: parseFloat(document.getElementById('minUsdAmount').value),
-            start_time: new Date(document.getElementById('startTime').value).toISOString()
+            start_time: startTimeUTC,
+            timezone: timezone
         };
         
         const response = await fetch(`${API_URL}/api/draws`, {
@@ -319,15 +326,53 @@ document.getElementById('tokenSelect').addEventListener('change', (e) => {
     }
 });
 
-// Set default start time to now
-// Set default start time to current time
+// Set default timezone and start time
+document.getElementById('timezoneSelect').value = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
 document.getElementById('startTime').value = new Date().toISOString().slice(0, 16);
+
+// Timezone conversion function
+function convertToUTC(localDateTime, timezone) {
+    try {
+        // Create a date object in the specified timezone
+        const date = new Date(localDateTime);
+        
+        // Get the timezone offset for the selected timezone
+        const utcTime = date.getTime() + (date.getTimezoneOffset() * 60000);
+        
+        // Create a new date object for the target timezone
+        const targetTime = new Date(utcTime + (getTimezoneOffset(timezone) * 60000));
+        
+        return targetTime.toISOString();
+    } catch (error) {
+        console.error('Timezone conversion error:', error);
+        // Fallback to treating as UTC
+        return new Date(localDateTime).toISOString();
+    }
+}
+
+// Get timezone offset in minutes
+function getTimezoneOffset(timezone) {
+    const now = new Date();
+    const utc = new Date(now.getTime() + (now.getTimezoneOffset() * 60000));
+    
+    // Create a date in the target timezone
+    const targetDate = new Date(utc.toLocaleString("en-US", {timeZone: timezone}));
+    const localDate = new Date(utc.toLocaleString("en-US"));
+    
+    return (targetDate.getTime() - localDate.getTime()) / 60000;
+}
 
 // Start from now button functionality
 document.getElementById('startNowBtn').addEventListener('click', () => {
+    const timezone = document.getElementById('timezoneSelect').value;
     const now = new Date();
-    document.getElementById('startTime').value = now.toISOString().slice(0, 16);
-    showToast('✅ Start time set to current time', 'success');
+    
+    // Convert current time to the selected timezone
+    const localTime = new Date(now.toLocaleString("en-US", {timeZone: timezone}));
+    const localTimeString = localTime.toISOString().slice(0, 16);
+    
+    document.getElementById('startTime').value = localTimeString;
+    showToast(`✅ Start time set to current time (${timezone})`, 'success');
 });
 
 // Initial load
