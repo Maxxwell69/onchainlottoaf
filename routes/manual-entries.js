@@ -48,6 +48,16 @@ router.post('/add', async (req, res) => {
       return res.status(400).json({ error: `USD amount must be at least $${draw.min_usd_amount}` });
     }
 
+    // Validate transaction time is after draw start time
+    const transactionTimeMs = new Date(transactionTime).getTime();
+    const drawStartTimeMs = new Date(draw.start_time).getTime();
+    
+    if (transactionTimeMs < drawStartTimeMs) {
+      return res.status(400).json({ 
+        error: `Transaction time (${transactionTime}) must be after draw start time (${draw.start_time})` 
+      });
+    }
+
     // Get all existing entries sorted by timestamp
     const allEntries = await LottoEntry.getByDrawId(drawId);
     allEntries.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
