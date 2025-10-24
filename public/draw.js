@@ -221,9 +221,9 @@ async function submitManualAddTransaction() {
         
         // Convert EST time to proper format
         // The datetime-local input gives us a string like "2025-10-17T23:30"
-        // We need to treat this as EST time and convert it to UTC for storage
-        const estDate = new Date(transactionTime + '-05:00'); // EST is UTC-5
-        const timestamp = estDate.toISOString();
+        // We need to store it exactly as provided (no conversion)
+        // The database stores it as-is and displays it correctly
+        const timestamp = transactionTime;
         
         // Show loading state
         const submitBtn = document.getElementById('submitManualAdd');
