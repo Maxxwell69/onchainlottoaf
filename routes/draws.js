@@ -28,13 +28,13 @@ router.post('/', async (req, res) => {
       finalTokenSymbol = metadata?.symbol || 'UNKNOWN';
     }
 
-    // Create draw
+    // Create draw - store start_time exactly as provided (no timezone conversion)
     const draw = await LottoDraw.create({
       draw_name,
       token_address,
       token_symbol: finalTokenSymbol,
       min_usd_amount,
-      start_time
+      start_time: start_time // Store exactly as provided
     });
 
     res.status(201).json({
@@ -164,6 +164,7 @@ router.post('/:id/scan-dex', async (req, res) => {
         continue;
       }
       
+      // Skip if signature already exists (optional validation)
       const exists = await LottoEntry.existsBySignature(buy.signature, id);
       if (exists) continue;
 

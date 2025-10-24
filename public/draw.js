@@ -29,8 +29,16 @@ function formatDate(dateString) {
     if (!dateString) return 'N/A';
     const date = new Date(dateString);
     
-    // Use same format as admin page - no timezone conversion
-    return date.toLocaleString();
+    // Display time in EST/EDT timezone
+    return date.toLocaleString('en-US', {
+        timeZone: 'America/New_York',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+    });
 }
 
 function formatUSD(amount) {
@@ -110,28 +118,167 @@ function updateProgressBar() {
     progressText.textContent = `${currentDraw.filled_slots} / ${currentDraw.total_slots} slots filled (${percentage}%)`;
 }
 
-// Render numbers grid (1-69) with balls and wallet addresses
+// Render numbers grid (1-69) with balls and wallet addresses - sorted by purchase time
 function renderNumbersGrid() {
     const grid = document.getElementById('numbersGrid');
-    const filledNumbers = currentEntries.map(entry => entry.lotto_number);
+    
+    // Sort entries by timestamp (chronological order by purchase time)
+    const sortedEntries = [...currentEntries].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
     
     let html = '';
-    for (let i = 1; i <= 69; i++) {
-        const isFilled = filledNumbers.includes(i);
-        const entry = currentEntries.find(entry => entry.lotto_number === i);
-        const walletDigits = entry ? entry.wallet_address.slice(-6) : '';
+    
+    // First, render all filled balls in chronological order by purchase time
+    sortedEntries.forEach((entry, index) => {
+        const walletDigits = entry.wallet_address.slice(-6);
+        
+        // Calculate time from draw start
+        let timeFromStart = '';
+        if (currentDraw) {
+            const drawStart = new Date(currentDraw.start_time);
+            const purchaseTime = new Date(entry.timestamp);
+            const diffMs = purchaseTime.getTime() - drawStart.getTime();
+            const diffMinutes = Math.floor(diffMs / (1000 * 60));
+            
+            if (diffMinutes < 0) {
+                timeFromStart = `${Math.abs(diffMinutes)} minutes before draw start`;
+            } else if (diffMinutes === 0) {
+                timeFromStart = 'At draw start';
+            } else {
+                timeFromStart = `${diffMinutes} minutes after draw start`;
+            }
+        }
         
         html += `
-            <div class="number-box" title="${isFilled ? 'Assigned' : 'Available'}">
-                <div class="number-ball ${isFilled ? 'filled' : 'available'}">
-                    ${i}
+            <div class="number-ball-container">
+                <div class="number-ball filled" 
+                     title="Purchased ${timeFromStart} - $${entry.usd_amount}">
+                    ${entry.lotto_number}
                 </div>
-                ${walletDigits ? `<div class="wallet-digits">${walletDigits}</div>` : ''}
+                <div class="wallet-digits">${walletDigits}</div>
             </div>
         `;
+    });
+    
+    // Then, render available balls (not yet purchased) in lotto number order
+    const filledNumbers = currentEntries.map(entry => entry.lotto_number);
+    for (let i = 1; i <= 69; i++) {
+        if (!filledNumbers.includes(i)) {
+            html += `
+                <div class="number-ball-container">
+                    <div class="number-ball available" title="Available">
+                        ${i}
+                    </div>
+                </div>
+            `;
+        }
     }
     
     grid.innerHTML = html;
+}
+
+// Manual Add Transaction functionality
+function openManualAddModal() {
+    const modal = document.getElementById('manualAddModal');
+    modal.style.display = 'flex';
+    
+    // Set default time to current time in EST
+    const now = new Date();
+    const estTime = new Date(now.toLocaleString("en-US", {timeZone: "America/New_York"}));
+    const timeString = estTime.toISOString().slice(0, 16);
+    document.getElementById('transactionTime').value = timeString;
+}
+
+function closeManualAddModal() {
+    const modal = document.getElementById('manualAddModal');
+    modal.style.display = 'none';
+    
+    // Clear form
+    document.getElementById('manualAddForm').reset();
+}
+
+async function submitManualAddTransaction() {
+    try {
+        const form = document.getElementById('manualAddForm');
+        const formData = new FormData(form);
+        
+        const transactionTime = document.getElementById('transactionTime').value;
+        const walletAddress = document.getElementById('walletAddress').value.trim();
+        const transactionSignature = document.getElementById('transactionSignature').value.trim();
+        const tokenAmount = parseFloat(document.getElementById('tokenAmount').value);
+        const usdAmount = parseFloat(document.getElementById('usdAmount').value);
+        const notes = document.getElementById('notes').value.trim();
+        
+        // Validation
+        if (!transactionTime || !walletAddress || !transactionSignature || !tokenAmount || !usdAmount) {
+            showToast('Please fill in all required fields', 'error');
+            return;
+        }
+        
+        if (usdAmount < currentDraw.min_usd_amount) {
+            showToast(`USD amount must be at least $${currentDraw.min_usd_amount}`, 'error');
+            return;
+        }
+        
+        // Convert EST time to proper format
+        const estDate = new Date(transactionTime);
+        const timestamp = estDate.toISOString();
+        
+        // Show loading state
+        const submitBtn = document.getElementById('submitManualAdd');
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = 'Adding...';
+        submitBtn.disabled = true;
+        
+        // Submit to API
+        const response = await fetch('/api/manual-entries/add', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                drawId: currentDraw.id,
+                walletAddress: walletAddress,
+                transactionSignature: transactionSignature,
+                tokenAmount: tokenAmount,
+                usdAmount: usdAmount,
+                transactionTime: timestamp,
+                notes: notes
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            showToast('Transaction added successfully!', 'success');
+            closeManualAddModal();
+            
+            // Refresh the page to show the new transaction
+            await loadDrawData();
+        } else {
+            showToast(result.error || 'Failed to add transaction', 'error');
+        }
+        
+    } catch (error) {
+        console.error('Error adding manual transaction:', error);
+        showToast('Error adding transaction', 'error');
+    } finally {
+        // Reset button state
+        const submitBtn = document.getElementById('submitManualAdd');
+        submitBtn.textContent = 'Add Transaction';
+        submitBtn.disabled = false;
+    }
+}
+
+// Toast notification function
+function showToast(message, type = 'info') {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.className = `toast ${type}`;
+    toast.classList.add('show');
+    
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, 3000);
 }
 
 // Copy wallet address to clipboard
@@ -265,6 +412,19 @@ document.getElementById('exportBtn').addEventListener('click', () => {
     }
     
     exportToCSV();
+});
+
+// Manual Add Transaction event listeners
+document.getElementById('manualAddBtn').addEventListener('click', openManualAddModal);
+document.getElementById('closeManualAddModal').addEventListener('click', closeManualAddModal);
+document.getElementById('cancelManualAdd').addEventListener('click', closeManualAddModal);
+document.getElementById('submitManualAdd').addEventListener('click', submitManualAddTransaction);
+
+// Close modal when clicking outside
+document.getElementById('manualAddModal').addEventListener('click', (e) => {
+    if (e.target.id === 'manualAddModal') {
+        closeManualAddModal();
+    }
 });
 
 function exportToCSV() {

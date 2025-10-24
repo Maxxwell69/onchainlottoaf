@@ -100,46 +100,69 @@ class DexScreenerService {
       
       console.log(`📅 Fetching all transactions since ${new Date(startTime).toLocaleString()}...`);
       
+      let retryCount = 0;
+      const maxRetries = 3;
+      
       while (true) {
-        const options = { limit: 100 };
-        if (lastSignature) {
-          options.before = lastSignature;
-        }
-        
-        const batch = await connection.getSignaturesForAddress(
-          new PublicKey(pairAddress),
-          options
-        );
-        
-        if (batch.length === 0) break;
-        
-        // Check if we've gone past the start time
-        const oldestInBatch = batch[batch.length - 1];
-        const oldestTime = oldestInBatch.blockTime ? oldestInBatch.blockTime * 1000 : 0;
-        
-        // Add all signatures from this batch
-        for (const sig of batch) {
-          if (sig.blockTime && sig.blockTime * 1000 >= startTimeMs) {
-            allSignatures.push(sig);
+        try {
+          const options = { 
+            limit: 50, // Reduced limit to avoid rate limiting
+            commitment: 'confirmed'
+          };
+          if (lastSignature) {
+            options.before = lastSignature;
           }
+          
+          const batch = await connection.getSignaturesForAddress(
+            new PublicKey(pairAddress),
+            options
+          );
+          
+          if (batch.length === 0) break;
+          
+          // Check if we've gone past the start time
+          const oldestInBatch = batch[batch.length - 1];
+          const oldestTime = oldestInBatch.blockTime ? oldestInBatch.blockTime * 1000 : 0;
+          
+          // Add all signatures from this batch
+          for (const sig of batch) {
+            if (sig.blockTime && sig.blockTime * 1000 >= startTimeMs) {
+              allSignatures.push(sig);
+            }
+          }
+          
+          // If oldest transaction in batch is before start time, we're done
+          if (oldestTime < startTimeMs) {
+            console.log(`✅ Reached start time. Total signatures: ${allSignatures.length}`);
+            break;
+          }
+          
+          // If we got less than 50, we've reached the end
+          if (batch.length < 50) {
+            console.log(`✅ Reached end of transaction history. Total signatures: ${allSignatures.length}`);
+            break;
+          }
+          
+          lastSignature = batch[batch.length - 1].signature;
+          retryCount = 0; // Reset retry count on success
+          
+          // Improved rate limiting with exponential backoff
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+        } catch (error) {
+          retryCount++;
+          console.log(`⚠️  Error fetching signatures (attempt ${retryCount}/${maxRetries}): ${error.message}`);
+          
+          if (retryCount >= maxRetries) {
+            console.log('❌ Max retries reached, stopping signature fetch');
+            break;
+          }
+          
+          // Exponential backoff: 1s, 2s, 4s
+          const delay = Math.pow(2, retryCount) * 1000;
+          console.log(`⏳ Waiting ${delay}ms before retry...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
         }
-        
-        // If oldest transaction in batch is before start time, we're done
-        if (oldestTime < startTimeMs) {
-          console.log(`✅ Reached start time. Total signatures: ${allSignatures.length}`);
-          break;
-        }
-        
-        // If we got less than 100, we've reached the end
-        if (batch.length < 100) {
-          console.log(`✅ Reached end of transaction history. Total signatures: ${allSignatures.length}`);
-          break;
-        }
-        
-        lastSignature = batch[batch.length - 1].signature;
-        
-        // Rate limiting
-        await new Promise(resolve => setTimeout(resolve, 200));
       }
 
       console.log(`✅ Found ${allSignatures.length} pair transactions since start time\n`);
@@ -160,10 +183,26 @@ class DexScreenerService {
         processedSignatures.add(sig.signature);
 
         try {
-          // Parse the transaction
-          const tx = await connection.getParsedTransaction(sig.signature, {
-            maxSupportedTransactionVersion: 0
-          });
+          // Parse the transaction with retry logic
+          let tx = null;
+          let txRetryCount = 0;
+          const maxTxRetries = 2;
+          
+          while (txRetryCount < maxTxRetries) {
+            try {
+              tx = await connection.getParsedTransaction(sig.signature, {
+                maxSupportedTransactionVersion: 0
+              });
+              break;
+            } catch (txError) {
+              txRetryCount++;
+              if (txRetryCount >= maxTxRetries) {
+                console.log(`  ⚠️  Failed to parse transaction ${sig.signature}: ${txError.message}`);
+                break;
+              }
+              await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+          }
 
           if (!tx || !tx.meta || tx.meta.err) {
             continue;
@@ -195,7 +234,7 @@ class DexScreenerService {
             }
           }
         } catch (error) {
-          // Skip parsing errors
+          console.log(`  ⚠️  Error processing transaction ${sig.signature}: ${error.message}`);
         }
 
         // Optimized rate limiting for paid Helius plan

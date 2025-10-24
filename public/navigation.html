@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://api.helius.xyz https://price.jup.ag https://mainnet.helius-rpc.com;">
+    <title>On Chain Lotto - Navigation</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎰 On Chain Lotto</h1>
+            <p class="subtitle">Solana Meme Coin Lotto System</p>
+        </header>
+
+        <!-- Main Navigation Menu -->
+        <div class="card">
+            <h2>📋 System Navigation</h2>
+            <p>Choose a page to access:</p>
+            
+            <div class="nav-grid">
+                <!-- Public Pages -->
+                <div class="nav-section">
+                    <h3>🌐 Public Pages</h3>
+                    <div class="nav-buttons">
+                        <a href="home.html" class="nav-button">
+                            <div class="nav-icon">🏠</div>
+                            <div class="nav-content">
+                                <h4>Home Page</h4>
+                                <p>Public landing page</p>
+                            </div>
+                        </a>
+                        
+                        <a href="register.html" class="nav-button">
+                            <div class="nav-icon">📝</div>
+                            <div class="nav-content">
+                                <h4>User Registration</h4>
+                                <p>Register new users</p>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Admin Pages -->
+                <div class="nav-section">
+                    <h3>⚙️ Admin Pages</h3>
+                    <div class="nav-buttons">
+                        <a href="index.html" class="nav-button">
+                            <div class="nav-icon">🎯</div>
+                            <div class="nav-content">
+                                <h4>Admin Dashboard</h4>
+                                <p>Create and manage lotto draws</p>
+                            </div>
+                        </a>
+                        
+                        <a href="users.html" class="nav-button">
+                            <div class="nav-icon">👥</div>
+                            <div class="nav-content">
+                                <h4>User Management</h4>
+                                <p>Manage users and roles</p>
+                            </div>
+                        </a>
+                        
+                        <a href="tokens.html" class="nav-button">
+                            <div class="nav-icon">🎫</div>
+                            <div class="nav-content">
+                                <h4>Token Manager</h4>
+                                <p>Manage supported tokens</p>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Authentication Pages -->
+                <div class="nav-section">
+                    <h3>🔐 Authentication</h3>
+                    <div class="nav-buttons">
+                        <a href="login.html" class="nav-button">
+                            <div class="nav-icon">🔑</div>
+                            <div class="nav-content">
+                                <h4>Login Page</h4>
+                                <p>User authentication</p>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card">
+            <h2>⚡ Quick Actions</h2>
+            <div class="quick-actions">
+                <button class="btn btn-primary" onclick="window.open('index.html', '_blank')">
+                    🎯 Open Admin Dashboard
+                </button>
+                <button class="btn btn-secondary" onclick="window.open('users.html', '_blank')">
+                    👥 Manage Users
+                </button>
+                <button class="btn btn-secondary" onclick="window.open('register.html', '_blank')">
+                    📝 Register User
+                </button>
+                <button class="btn btn-secondary" onclick="window.open('home.html', '_blank')">
+                    🏠 View Home Page
+                </button>
+            </div>
+        </div>
+
+        <!-- System Status -->
+        <div class="card">
+            <h2>📊 System Status</h2>
+            <div class="status-grid">
+                <div class="status-item">
+                    <div class="status-icon">✅</div>
+                    <div class="status-content">
+                        <h4>Server Running</h4>
+                        <p>Port 3000</p>
+                    </div>
+                </div>
+                <div class="status-item">
+                    <div class="status-icon">🗄️</div>
+                    <div class="status-content">
+                        <h4>Database Connected</h4>
+                        <p>PostgreSQL</p>
+                    </div>
+                </div>
+                <div class="status-item">
+                    <div class="status-icon">🔓</div>
+                    <div class="status-content">
+                        <h4>Authentication</h4>
+                        <p>Disabled for testing</p>
+                    </div>
+                </div>
+                <div class="status-item">
+                    <div class="status-icon">🎰</div>
+                    <div class="status-content">
+                        <h4>Lotto System</h4>
+                        <p>Ready</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Add some interactivity
+        document.addEventListener('DOMContentLoaded', () => {
+            // Add click effects to nav buttons
+            const navButtons = document.querySelectorAll('.nav-button');
+            navButtons.forEach(button => {
+                button.addEventListener('click', (e) => {
+                    // Add a small animation
+                    button.style.transform = 'scale(0.95)';
+                    setTimeout(() => {
+                        button.style.transform = 'scale(1)';
+                    }, 150);
+                });
+            });
+        });
+    </script>
+</body>
+</html>

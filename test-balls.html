@@ -1,0 +1,33 @@
+console.log('🎯 Testing ball rendering...');
+
+// Test if the page loads correctly
+window.addEventListener('load', () => {
+    console.log('✅ Page loaded');
+    
+    // Check if the grid element exists
+    const grid = document.getElementById('numbersGrid');
+    if (grid) {
+        console.log('✅ Numbers grid found');
+        console.log('Grid children:', grid.children.length);
+        
+        // Check if balls are rendered
+        const balls = grid.querySelectorAll('.number-ball');
+        console.log('Number of balls:', balls.length);
+        
+        if (balls.length > 0) {
+            console.log('✅ Balls are rendering!');
+            console.log('First ball:', balls[0].textContent);
+        } else {
+            console.log('❌ No balls found');
+        }
+    } else {
+        console.log('❌ Numbers grid not found');
+    }
+    
+    // Check if data is loaded
+    if (typeof currentEntries !== 'undefined') {
+        console.log('✅ Current entries loaded:', currentEntries.length);
+    } else {
+        console.log('❌ Current entries not loaded');
+    }
+});

@@ -8,6 +8,8 @@ const drawsRoutes = require('./routes/draws');
 const tokensRoutes = require('./routes/tokens');
 const authRoutes = require('./routes/auth');
 const usersRoutes = require('./routes/users');
+const manualEntriesRoutes = require('./routes/manual-entries');
+const transactionsRoutes = require('./routes/transactions');
 const { authenticateToken, requireAdmin } = require('./middleware/auth');
 const scanService = require('./services/scanService');
 const { pool } = require('./database/db');
@@ -46,6 +48,17 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/draws', drawsRoutes);
 app.use('/api/tokens', tokensRoutes);
+app.use('/api/manual-entries', manualEntriesRoutes);
+app.use('/api/transactions', transactionsRoutes);
+
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
+  });
+});
 
 // Root route
 app.get('/', (req, res) => {

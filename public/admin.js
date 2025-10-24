@@ -16,7 +16,15 @@ function showToast(message, type = 'info') {
 function formatDate(dateString) {
     if (!dateString) return 'N/A';
     const date = new Date(dateString);
-    return date.toLocaleString();
+    return date.toLocaleString('en-US', {
+        timeZone: 'America/New_York',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+    });
 }
 
 // Format USD
@@ -50,15 +58,17 @@ document.getElementById('createDrawForm').addEventListener('submit', async (e) =
         const timezone = document.getElementById('timezoneSelect').value;
         const startTimeValue = document.getElementById('startTime').value;
         
-        // Use local time directly - no timezone conversion
-        const startTimeUTC = new Date(startTimeValue).toISOString();
+        // Convert EST time to proper format for storage
+        // The datetime-local input gives us a string like "2025-10-17T23:30"
+        // We need to treat this as EST time and store it properly
+        const startTimeEST = startTimeValue;
         
         const formData = {
             draw_name: document.getElementById('drawName').value,
             token_address: document.getElementById('tokenAddress').value,
             token_symbol: document.getElementById('tokenSymbol').value || null,
             min_usd_amount: parseFloat(document.getElementById('minUsdAmount').value),
-            start_time: startTimeUTC,
+            start_time: startTimeEST,
             timezone: timezone
         };
         
