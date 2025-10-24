@@ -223,12 +223,27 @@ class DexScreenerService {
 
               // Check if meets minimum
               if (usdValue >= parseFloat(minUsdAmount)) {
+                // Convert UTC blockTime to EST for storage
+                // sig.blockTime is Unix timestamp in seconds (UTC)
+                // Convert to EST (UTC-5) for proper display
+                const utcDate = new Date(sig.blockTime * 1000);
+                const estDate = new Date(utcDate.getTime() - (5 * 60 * 60 * 1000)); // Subtract 5 hours for EST
+                
+                const year = estDate.getUTCFullYear();
+                const month = String(estDate.getUTCMonth() + 1).padStart(2, '0');
+                const day = String(estDate.getUTCDate()).padStart(2, '0');
+                const hour = String(estDate.getUTCHours()).padStart(2, '0');
+                const minute = String(estDate.getUTCMinutes()).padStart(2, '0');
+                const second = String(estDate.getUTCSeconds()).padStart(2, '0');
+                
+                const timestampString = `${year}-${month}-${day} ${hour}:${minute}:${second}`;
+                
                 qualifyingBuys.push({
                   signature: sig.signature,
                   walletAddress: buyer,
                   tokenAmount: tokenAmount, // Keep as UI amount
                   usdAmount: usdValue,
-                  timestamp: new Date(sig.blockTime * 1000)
+                  timestamp: timestampString
                 });
               }
             }

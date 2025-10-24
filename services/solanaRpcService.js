@@ -131,11 +131,24 @@ class SolanaRpcService {
         recipients.sort((a, b) => b.change - a.change);
         const buyer = recipients[0];
 
+        // Convert UTC blockTime to EST for storage
+        const utcDate = new Date(tx.blockTime * 1000);
+        const estDate = new Date(utcDate.getTime() - (5 * 60 * 60 * 1000)); // Subtract 5 hours for EST
+        
+        const year = estDate.getUTCFullYear();
+        const month = String(estDate.getUTCMonth() + 1).padStart(2, '0');
+        const day = String(estDate.getUTCDate()).padStart(2, '0');
+        const hour = String(estDate.getUTCHours()).padStart(2, '0');
+        const minute = String(estDate.getUTCMinutes()).padStart(2, '0');
+        const second = String(estDate.getUTCSeconds()).padStart(2, '0');
+        
+        const timestampString = `${year}-${month}-${day} ${hour}:${minute}:${second}`;
+
         return {
           signature: signature,
           buyer: buyer.owner,
           tokenAmount: buyer.change * Math.pow(10, buyer.decimals),
-          timestamp: new Date(tx.blockTime * 1000),
+          timestamp: timestampString,
           slot: tx.slot
         };
       }
