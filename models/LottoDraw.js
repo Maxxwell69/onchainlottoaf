@@ -30,41 +30,28 @@ class LottoDraw {
 
   // Get draw by ID
   static async getById(drawId) {
-    const sql = 'SELECT *, start_time::text as start_time_text FROM lotto_draws WHERE id = $1';
+    const sql = 'SELECT * FROM lotto_draws WHERE id = $1';
     const result = await query(sql, [drawId]);
-    const draw = result.rows[0];
-    if (draw) {
-      draw.start_time = draw.start_time_text; // Use the text version
-      delete draw.start_time_text;
-    }
-    return draw;
+    return result.rows[0];
   }
 
   // Get all draws
   static async getAll() {
-    const sql = 'SELECT *, start_time::text as start_time_text FROM lotto_draws ORDER BY created_at DESC';
+    const sql = 'SELECT * FROM lotto_draws ORDER BY created_at DESC';
     const result = await query(sql);
-    return result.rows.map(draw => {
-      draw.start_time = draw.start_time_text;
-      delete draw.start_time_text;
-      return draw;
-    });
+    return result.rows;
   }
 
   // Get active draws
   static async getActive() {
     const sql = `
-      SELECT *, start_time::text as start_time_text FROM lotto_draws 
+      SELECT * FROM lotto_draws 
       WHERE status = 'active' 
       AND filled_slots < total_slots
       ORDER BY created_at DESC
     `;
     const result = await query(sql);
-    return result.rows.map(draw => {
-      draw.start_time = draw.start_time_text;
-      delete draw.start_time_text;
-      return draw;
-    });
+    return result.rows;
   }
 
   // Update draw status
