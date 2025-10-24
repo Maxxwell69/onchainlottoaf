@@ -59,9 +59,9 @@ document.getElementById('createDrawForm').addEventListener('submit', async (e) =
         
         // Convert EST time to proper format for storage
         // The datetime-local input gives us a string like "2025-10-17T23:30"
-        // We need to treat this as EST time and store it exactly as provided (no conversion)
-        // The database stores it as-is and displays it correctly
-        const startTimeEST = startTimeValue;
+        // We need to store it as a timezone-naive timestamp
+        // Format: YYYY-MM-DD HH:MM:SS (space instead of T)
+        const startTimeEST = startTimeValue.replace('T', ' ') + ':00';
         
         const formData = {
             draw_name: document.getElementById('drawName').value,

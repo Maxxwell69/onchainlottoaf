@@ -13,7 +13,7 @@ class LottoDraw {
 
     const sql = `
       INSERT INTO lotto_draws (draw_name, token_address, token_symbol, min_usd_amount, start_time)
-      VALUES ($1, $2, $3, $4, $5)
+      VALUES ($1, $2, $3, $4, $5::timestamp without time zone)
       RETURNING *
     `;
 
@@ -30,28 +30,42 @@ class LottoDraw {
 
   // Get draw by ID
   static async getById(drawId) {
-    const sql = 'SELECT * FROM lotto_draws WHERE id = $1';
+    const sql = 'SELECT *, start_time::text as start_time_text FROM lotto_draws WHERE id = $1';
     const result = await query(sql, [drawId]);
-    return result.rows[0];
+    const draw = result.rows[0];
+    if (draw) {
+      // Convert the text timestamp back to a proper format
+      draw.start_time = draw.start_time_text;
+      delete draw.start_time_text;
+    }
+    return draw;
   }
 
   // Get all draws
   static async getAll() {
-    const sql = 'SELECT * FROM lotto_draws ORDER BY created_at DESC';
+    const sql = 'SELECT *, start_time::text as start_time_text FROM lotto_draws ORDER BY created_at DESC';
     const result = await query(sql);
-    return result.rows;
+    return result.rows.map(draw => {
+      draw.start_time = draw.start_time_text;
+      delete draw.start_time_text;
+      return draw;
+    });
   }
 
   // Get active draws
   static async getActive() {
     const sql = `
-      SELECT * FROM lotto_draws 
+      SELECT *, start_time::text as start_time_text FROM lotto_draws 
       WHERE status = 'active' 
       AND filled_slots < total_slots
       ORDER BY created_at DESC
     `;
     const result = await query(sql);
-    return result.rows;
+    return result.rows.map(draw => {
+      draw.start_time = draw.start_time_text;
+      delete draw.start_time_text;
+      return draw;
+    });
   }
 
   // Update draw status
