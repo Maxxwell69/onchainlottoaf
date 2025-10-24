@@ -88,6 +88,10 @@ class ScanService {
           const transactionTime = new Date(buy.timestamp);
           const drawStartTime = new Date(draw.start_time);
           
+          console.log(`🔍 Validating: Transaction ${buy.timestamp} vs Draw Start ${draw.start_time}`);
+          console.log(`   Transaction Time: ${transactionTime.toISOString()}`);
+          console.log(`   Draw Start Time: ${drawStartTime.toISOString()}`);
+          
           if (transactionTime < drawStartTime) {
             filtered++;
             console.log(`⏰ Filtered transaction before draw start: ${buy.signature.substring(0, 8)}... (${buy.timestamp} < ${draw.start_time})`);
