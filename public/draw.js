@@ -28,9 +28,20 @@ function showToast(message, type = 'info') {
 function formatDate(dateString) {
     if (!dateString) return 'N/A';
     
-    // Parse the timestamp correctly - it's stored as "YYYY-MM-DD HH:MM:SS"
-    // We need to create a Date object that represents this exact time without conversion
-    const [datePart, timePart] = dateString.split(' ');
+    // Handle both formats: "YYYY-MM-DD HH:MM:SS" and "YYYY-MM-DDTHH:MM:SS.sssZ"
+    let datePart, timePart;
+    
+    if (dateString.includes('T')) {
+        // ISO format: "2025-10-17T23:30:00.000Z"
+        const isoDate = dateString.split('T')[0];
+        const isoTime = dateString.split('T')[1].split('.')[0]; // Remove milliseconds and Z
+        datePart = isoDate;
+        timePart = isoTime;
+    } else {
+        // Space format: "2025-10-17 23:30:00"
+        [datePart, timePart] = dateString.split(' ');
+    }
+    
     const [year, month, day] = datePart.split('-');
     const [hour, minute, second] = timePart.split(':');
     
