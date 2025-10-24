@@ -24,14 +24,13 @@ function showToast(message, type = 'info') {
     }, 4000);
 }
 
-// Format functions - match admin page behavior (no timezone conversion)
+// Format functions - display times exactly as stored (no timezone conversion)
 function formatDate(dateString) {
     if (!dateString) return 'N/A';
     const date = new Date(dateString);
     
-    // Display time in EST/EDT timezone
+    // Display time exactly as stored (no timezone conversion)
     return date.toLocaleString('en-US', {
-        timeZone: 'America/New_York',
         year: 'numeric',
         month: '2-digit',
         day: '2-digit',
