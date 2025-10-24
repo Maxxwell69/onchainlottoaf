@@ -27,7 +27,15 @@ function showToast(message, type = 'info') {
 // Format functions - display times exactly as stored (no timezone conversion)
 function formatDate(dateString) {
     if (!dateString) return 'N/A';
-    const date = new Date(dateString);
+    
+    // Parse the timestamp correctly - it's stored as "YYYY-MM-DD HH:MM:SS"
+    // We need to create a Date object that represents this exact time without conversion
+    const [datePart, timePart] = dateString.split(' ');
+    const [year, month, day] = datePart.split('-');
+    const [hour, minute, second] = timePart.split(':');
+    
+    // Create date using local timezone but with the exact values
+    const date = new Date(year, month - 1, day, hour, minute, second || 0);
     
     // Display time exactly as stored (no timezone conversion)
     return date.toLocaleString('en-US', {
