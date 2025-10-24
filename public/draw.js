@@ -28,37 +28,42 @@ function showToast(message, type = 'info') {
 function formatDate(dateString) {
     if (!dateString) return 'N/A';
     
-    // Handle both formats: "YYYY-MM-DD HH:MM:SS" and "YYYY-MM-DDTHH:MM:SS.sssZ"
-    let datePart, timePart;
-    
-    if (dateString.includes('T')) {
-        // ISO format: "2025-10-17T23:30:00.000Z"
-        // The Z means UTC, but we want to treat this as local time
-        const isoDate = dateString.split('T')[0];
-        const isoTime = dateString.split('T')[1].split('.')[0]; // Remove milliseconds and Z
-        datePart = isoDate;
-        timePart = isoTime;
-    } else {
-        // Space format: "2025-10-17 23:30:00"
-        [datePart, timePart] = dateString.split(' ');
+    try {
+        // Handle both formats: "YYYY-MM-DD HH:MM:SS" and "YYYY-MM-DDTHH:MM:SS.sssZ"
+        let datePart, timePart;
+        
+        if (dateString.includes('T')) {
+            // ISO format: "2025-10-17T23:30:00.000Z"
+            // The Z means UTC, but we want to treat this as local time
+            const isoDate = dateString.split('T')[0];
+            const isoTime = dateString.split('T')[1].split('.')[0]; // Remove milliseconds and Z
+            datePart = isoDate;
+            timePart = isoTime;
+        } else {
+            // Space format: "2025-10-17 23:30:00"
+            [datePart, timePart] = dateString.split(' ');
+        }
+        
+        const [year, month, day] = datePart.split('-');
+        const [hour, minute, second] = timePart.split(':');
+        
+        // Create date using local timezone but with the exact values
+        // This treats the time as if it's already in the correct timezone
+        const date = new Date(year, month - 1, day, hour, minute, second || 0);
+        
+        // Display time exactly as stored (no timezone conversion)
+        return date.toLocaleString('en-US', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+        });
+    } catch (error) {
+        console.error('Error formatting date:', error, 'Input:', dateString);
+        return 'Invalid Date';
     }
-    
-    const [year, month, day] = datePart.split('-');
-    const [hour, minute, second] = timePart.split(':');
-    
-    // Create date using local timezone but with the exact values
-    // This treats the time as if it's already in the correct timezone
-    const date = new Date(year, month - 1, day, hour, minute, second || 0);
-    
-    // Display time exactly as stored (no timezone conversion)
-    return date.toLocaleString('en-US', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true
-    });
 }
 
 function formatUSD(amount) {
