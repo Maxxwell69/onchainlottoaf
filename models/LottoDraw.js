@@ -91,7 +91,7 @@ class LottoDraw {
 
   // Get draw with entries
   static async getWithEntries(drawId) {
-    const drawSql = 'SELECT * FROM lotto_draws WHERE id = $1';
+    const drawSql = 'SELECT *, start_time::text as start_time_text FROM lotto_draws WHERE id = $1';
     const entriesSql = `
       SELECT * FROM lotto_entries 
       WHERE draw_id = $1 
@@ -107,9 +107,16 @@ class LottoDraw {
       return null;
     }
 
+    const draw = drawResult.rows[0];
+    const entries = entriesResult.rows;
+
+    // Convert the text timestamp back to a proper format
+    draw.start_time = draw.start_time_text;
+    delete draw.start_time_text;
+
     return {
-      ...drawResult.rows[0],
-      entries: entriesResult.rows
+      ...draw,
+      entries
     };
   }
 }

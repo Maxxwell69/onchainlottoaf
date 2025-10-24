@@ -33,6 +33,7 @@ function formatDate(dateString) {
     
     if (dateString.includes('T')) {
         // ISO format: "2025-10-17T23:30:00.000Z"
+        // The Z means UTC, but we want to treat this as local time
         const isoDate = dateString.split('T')[0];
         const isoTime = dateString.split('T')[1].split('.')[0]; // Remove milliseconds and Z
         datePart = isoDate;
@@ -46,6 +47,7 @@ function formatDate(dateString) {
     const [hour, minute, second] = timePart.split(':');
     
     // Create date using local timezone but with the exact values
+    // This treats the time as if it's already in the correct timezone
     const date = new Date(year, month - 1, day, hour, minute, second || 0);
     
     // Display time exactly as stored (no timezone conversion)
