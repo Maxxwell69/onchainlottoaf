@@ -60,8 +60,22 @@ document.getElementById('createDrawForm').addEventListener('submit', async (e) =
         
         // Convert EST time to proper format for storage
         // The datetime-local input gives us a string like "2025-10-17T23:30"
-        // We need to treat this as EST time and store it properly
-        const startTimeEST = startTimeValue;
+        // We need to treat this as EST time and convert it to UTC for storage
+        let startTimeEST;
+        
+        if (timezone === 'EST') {
+            // Create a date object treating the input as EST
+            const estDate = new Date(startTimeValue + '-05:00'); // EST is UTC-5
+            startTimeEST = estDate.toISOString();
+        } else if (timezone === 'EDT') {
+            // Create a date object treating the input as EDT
+            const edtDate = new Date(startTimeValue + '-04:00'); // EDT is UTC-4
+            startTimeEST = edtDate.toISOString();
+        } else {
+            // Default to EST if no timezone specified
+            const estDate = new Date(startTimeValue + '-05:00');
+            startTimeEST = estDate.toISOString();
+        }
         
         const formData = {
             draw_name: document.getElementById('drawName').value,

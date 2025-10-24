@@ -220,7 +220,9 @@ async function submitManualAddTransaction() {
         }
         
         // Convert EST time to proper format
-        const estDate = new Date(transactionTime);
+        // The datetime-local input gives us a string like "2025-10-17T23:30"
+        // We need to treat this as EST time and convert it to UTC for storage
+        const estDate = new Date(transactionTime + '-05:00'); // EST is UTC-5
         const timestamp = estDate.toISOString();
         
         // Show loading state
