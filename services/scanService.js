@@ -84,6 +84,16 @@ class ScanService {
             continue;
           }
           
+          // Validate transaction time is after draw start time
+          const transactionTime = new Date(buy.timestamp);
+          const drawStartTime = new Date(draw.start_time);
+          
+          if (transactionTime < drawStartTime) {
+            filtered++;
+            console.log(`⏰ Filtered transaction before draw start: ${buy.signature.substring(0, 8)}... (${buy.timestamp} < ${draw.start_time})`);
+            continue;
+          }
+          
           // Check if transaction already processed in this draw only
           const exists = await LottoEntry.existsBySignature(buy.signature, drawId);
           if (exists) {

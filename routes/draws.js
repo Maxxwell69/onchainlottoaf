@@ -164,6 +164,16 @@ router.post('/:id/scan-dex', async (req, res) => {
         continue;
       }
       
+      // Validate transaction time is after draw start time
+      const transactionTime = new Date(buy.timestamp);
+      const drawStartTime = new Date(draw.start_time);
+      
+      if (transactionTime < drawStartTime) {
+        filtered++;
+        console.log(`⏰ Filtered transaction before draw start: ${buy.signature.substring(0, 8)}... (${buy.timestamp} < ${draw.start_time})`);
+        continue;
+      }
+      
       // Skip if signature already exists (optional validation)
       const exists = await LottoEntry.existsBySignature(buy.signature, id);
       if (exists) continue;
