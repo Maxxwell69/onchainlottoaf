@@ -152,13 +152,31 @@ class LottoEntry {
 
   // Get next available lotto number for a draw
   static async getNextLottoNumber(drawId) {
+    // First get the draw's total slots
+    const drawSql = 'SELECT total_slots FROM lotto_draws WHERE id = $1';
+    const drawResult = await query(drawSql, [drawId]);
+    
+    if (drawResult.rows.length === 0) {
+      return null; // Draw not found
+    }
+    
+    const totalSlots = drawResult.rows[0].total_slots;
+    
+    // Get the next available number
     const sql = `
       SELECT COALESCE(MAX(lotto_number), 0) + 1 as next_number 
       FROM lotto_entries 
       WHERE draw_id = $1
     `;
     const result = await query(sql, [drawId]);
-    return parseInt(result.rows[0].next_number);
+    const nextNumber = parseInt(result.rows[0].next_number);
+    
+    // Check if we've exceeded the total slots limit
+    if (nextNumber > totalSlots) {
+      return null; // No more slots available
+    }
+    
+    return nextNumber;
   }
 
   // Update lotto number for an entry
