@@ -50,7 +50,15 @@ router.post('/login', async (req, res) => {
         );
 
         // Generate token
-        const token = generateToken(user);
+        let token;
+        try {
+            token = generateToken(user);
+        } catch (tokenError) {
+            console.error('Token generation error:', tokenError);
+            return res.status(500).json({
+                error: 'Server configuration error. Please contact administrator.'
+            });
+        }
 
         res.json({
             success: true,
@@ -203,7 +211,7 @@ router.get('/verify', async (req, res) => {
 
         const jwt = require('jsonwebtoken');
         const jwtSecret = process.env.JWT_SECRET;
-        if (!jwtSecret || jwtSecret === 'your-secret-key') {
+        if (!jwtSecret) {
             return res.status(500).json({ error: 'Server configuration error' });
         }
         const decoded = jwt.verify(token, jwtSecret);

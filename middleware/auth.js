@@ -11,8 +11,8 @@ const authenticateToken = (req, res, next) => {
     }
 
     const jwtSecret = process.env.JWT_SECRET;
-    if (!jwtSecret || jwtSecret === 'your-secret-key') {
-        console.error('⚠️  WARNING: JWT_SECRET is not set or using default value!');
+    if (!jwtSecret) {
+        console.error('⚠️  WARNING: JWT_SECRET is not set!');
         return res.status(500).json({ error: 'Server configuration error' });
     }
     
@@ -52,8 +52,13 @@ const requireSuperAdmin = requireRole(['super_admin']);
 // Generate JWT token
 const generateToken = (user) => {
     const jwtSecret = process.env.JWT_SECRET;
-    if (!jwtSecret || jwtSecret === 'your-secret-key') {
+    if (!jwtSecret) {
         throw new Error('JWT_SECRET must be set in environment variables');
+    }
+    
+    // Only reject the exact old default value from code
+    if (jwtSecret === 'your-secret-key') {
+        throw new Error('JWT_SECRET cannot use the default value. Please set a secure secret in .env');
     }
     
     return jwt.sign(
