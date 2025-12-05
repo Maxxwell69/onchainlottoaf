@@ -416,6 +416,35 @@
     color: var(--text-secondary);
 }
 
+/* Archive Draws Section */
+.archive-draws {
+    padding: 6rem 2rem;
+    background: var(--background);
+}
+
+.archive-draws-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.archive-card {
+    opacity: 0.9;
+}
+
+.archive-card:hover {
+    opacity: 1;
+}
+
+.home-draw-status.completed {
+    background: var(--primary);
+    color: var(--background);
+}
+
+.home-draw-status.cancelled {
+    background: var(--text-secondary);
+    color: var(--background);
+}
+
 /* Stats Section */
 .stats {
     padding: 6rem 2rem;
