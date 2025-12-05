@@ -201,6 +201,18 @@ h3 {
     color: var(--secondary);
 }
 
+.btn-warning {
+    background: var(--warning);
+    color: var(--background);
+    border: none;
+}
+
+.btn-warning:hover {
+    background: #FF8C00;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 165, 0, 0.4);
+}
+
 .btn-danger {
     background: var(--danger);
     color: white;

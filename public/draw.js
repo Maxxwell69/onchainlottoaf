@@ -138,6 +138,22 @@ function updateDrawInfo() {
     
     document.getElementById('startTime').textContent = formatDate(currentDraw.start_time);
     document.getElementById('endTime').textContent = formatDate(currentDraw.end_time);
+    
+    // Show/hide management buttons based on status
+    const completeBtn = document.getElementById('completeDrawBtn');
+    const deactivateBtn = document.getElementById('deactivateDrawBtn');
+    const deleteBtn = document.getElementById('deleteDrawBtn');
+    
+    if (currentDraw.status === 'active') {
+        if (completeBtn) completeBtn.style.display = 'inline-block';
+        if (deactivateBtn) deactivateBtn.style.display = 'inline-block';
+    } else {
+        if (completeBtn) completeBtn.style.display = 'none';
+        if (deactivateBtn) deactivateBtn.style.display = 'none';
+    }
+    
+    // Delete button always visible
+    if (deleteBtn) deleteBtn.style.display = 'inline-block';
 }
 
 // Update progress bar
@@ -505,6 +521,103 @@ function exportToCSV() {
         showToast('❌ Export failed', 'error');
     }
 }
+
+// Draw Management Functions
+async function updateDrawStatus(newStatus) {
+    if (!currentDraw) return;
+    
+    const statusLabels = {
+        'completed': 'Complete',
+        'cancelled': 'Deactivate',
+        'active': 'Activate'
+    };
+    
+    const confirmMessage = `Are you sure you want to ${statusLabels[newStatus]?.toLowerCase()} this draw?`;
+    if (!confirm(confirmMessage)) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${API_URL}/api/draws/${drawId}/status`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                ...authManager.getAuthHeaders()
+            },
+            body: JSON.stringify({ status: newStatus })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            showToast(`✅ Draw status updated to ${newStatus}`, 'success');
+            await loadDrawData(); // Reload to show updated status
+        } else {
+            showToast(`❌ ${data.error || 'Failed to update status'}`, 'error');
+        }
+    } catch (error) {
+        console.error('Error updating draw status:', error);
+        showToast('❌ Failed to update draw status', 'error');
+    }
+}
+
+async function deleteDraw() {
+    if (!currentDraw) return;
+    
+    const confirmMessage = `⚠️ WARNING: Are you sure you want to DELETE this draw?\n\nThis will permanently delete:\n- The draw "${currentDraw.draw_name}"\n- All ${currentEntries.length} lotto entries\n- All scan history\n\nThis action CANNOT be undone!`;
+    
+    if (!confirm(confirmMessage)) {
+        return;
+    }
+    
+    // Double confirmation
+    if (!confirm('Are you absolutely sure? This cannot be undone!')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${API_URL}/api/draws/${drawId}`, {
+            method: 'DELETE',
+            headers: {
+                ...authManager.getAuthHeaders()
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            showToast('✅ Draw deleted successfully', 'success');
+            // Redirect to admin page after a short delay
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 1500);
+        } else {
+            showToast(`❌ ${data.error || 'Failed to delete draw'}`, 'error');
+        }
+    } catch (error) {
+        console.error('Error deleting draw:', error);
+        showToast('❌ Failed to delete draw', 'error');
+    }
+}
+
+// Event Listeners for Draw Management
+document.addEventListener('DOMContentLoaded', () => {
+    const completeBtn = document.getElementById('completeDrawBtn');
+    const deactivateBtn = document.getElementById('deactivateDrawBtn');
+    const deleteBtn = document.getElementById('deleteDrawBtn');
+    
+    if (completeBtn) {
+        completeBtn.addEventListener('click', () => updateDrawStatus('completed'));
+    }
+    
+    if (deactivateBtn) {
+        deactivateBtn.addEventListener('click', () => updateDrawStatus('cancelled'));
+    }
+    
+    if (deleteBtn) {
+        deleteBtn.addEventListener('click', deleteDraw);
+    }
+});
 
 // Auto-refresh every 30 seconds
 setInterval(async () => {

@@ -51,14 +51,26 @@
 
         <!-- Actions -->
         <div class="card actions-card">
-            <button class="btn btn-primary" id="scanDexBtn">
-                <span id="scanDexBtnText">🔍 Scan for New Buys</span>
-                <span id="scanDexBtnSpinner" class="spinner" style="display: none;"></span>
-            </button>
-            <button class="btn btn-success" id="manualAddBtn">➕ Manual Add Transaction</button>
-            <button class="btn btn-secondary" id="refreshBtn">🔄 Refresh Results</button>
-            <a href="#" id="publicDrawLink" class="btn btn-secondary" target="_blank" style="display: none;">🌐 Public View</a>
-            <a href="navigation.html" class="btn btn-secondary">📋 Navigation Menu</a>
+            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem;">
+                <button class="btn btn-primary" id="scanDexBtn">
+                    <span id="scanDexBtnText">Scan for New Buys</span>
+                    <span id="scanDexBtnSpinner" class="spinner" style="display: none;"></span>
+                </button>
+                <button class="btn btn-success" id="manualAddBtn">Manual Add Transaction</button>
+                <button class="btn btn-secondary" id="refreshBtn">Refresh Results</button>
+                <a href="#" id="publicDrawLink" class="btn btn-secondary" target="_blank" style="display: none;">Public View</a>
+                <a href="navigation.html" class="btn btn-secondary">Navigation Menu</a>
+            </div>
+            
+            <!-- Draw Management Actions -->
+            <div style="border-top: 1px solid var(--border); padding-top: 1rem; margin-top: 1rem;">
+                <h3 style="margin-bottom: 0.75rem; color: var(--text);">Draw Management</h3>
+                <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                    <button class="btn btn-success" id="completeDrawBtn" style="display: none;">Mark as Complete</button>
+                    <button class="btn btn-warning" id="deactivateDrawBtn" style="display: none;">Deactivate Draw</button>
+                    <button class="btn btn-danger" id="deleteDrawBtn">Delete Draw</button>
+                </div>
+            </div>
         </div>
 
         <!-- Progress Bar -->
