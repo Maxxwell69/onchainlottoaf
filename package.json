@@ -8,7 +8,8 @@
     "dev": "nodemon server.js",
     "init-db": "node scripts/initDatabase.js",
     "init-token-manager": "node scripts/initTokenManager.js",
-    "test-helius": "node scripts/testHelius.js"
+    "test-helius": "node scripts/testHelius.js",
+    "create-superadmin": "node scripts/create-superadmin.js"
   },
   "keywords": [
     "solana",

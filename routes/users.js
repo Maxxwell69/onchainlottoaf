@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const { pool } = require('../database/db');
-const { hashPassword, comparePassword } = require('../middleware/auth');
+const { hashPassword, comparePassword, authenticateToken, requireSuperAdmin } = require('../middleware/auth');
 
-// Get all users (admin only)
-router.get('/', async (req, res) => {
+// Get all users (superadmin only)
+router.get('/', authenticateToken, requireSuperAdmin, async (req, res) => {
     try {
         const { page = 1, limit = 10, search = '', role = '', status = '' } = req.query;
         const offset = (page - 1) * limit;
@@ -84,8 +84,8 @@ router.get('/', async (req, res) => {
     }
 });
 
-// Get single user
-router.get('/:id', async (req, res) => {
+// Get single user (superadmin only)
+router.get('/:id', authenticateToken, requireSuperAdmin, async (req, res) => {
     try {
         const { id } = req.params;
         
@@ -109,8 +109,8 @@ router.get('/:id', async (req, res) => {
     }
 });
 
-// Create new user
-router.post('/', async (req, res) => {
+// Create new user (superadmin only)
+router.post('/', authenticateToken, requireSuperAdmin, async (req, res) => {
     try {
         const { username, email, password, role = 'user', status = 'active' } = req.body;
         const createdBy = req.user.id;
@@ -157,8 +157,8 @@ router.post('/', async (req, res) => {
     }
 });
 
-// Update user
-router.put('/:id', async (req, res) => {
+// Update user (superadmin only)
+router.put('/:id', authenticateToken, requireSuperAdmin, async (req, res) => {
     try {
         const { id } = req.params;
         const { username, email, role, status, password } = req.body;
@@ -235,8 +235,8 @@ router.put('/:id', async (req, res) => {
     }
 });
 
-// Delete user
-router.delete('/:id', async (req, res) => {
+// Delete user (superadmin only)
+router.delete('/:id', authenticateToken, requireSuperAdmin, async (req, res) => {
     try {
         const { id } = req.params;
         const deletedBy = req.user.id;
@@ -274,8 +274,8 @@ router.delete('/:id', async (req, res) => {
     }
 });
 
-// Get user activity log
-router.get('/:id/activity', async (req, res) => {
+// Get user activity log (superadmin only)
+router.get('/:id/activity', authenticateToken, requireSuperAdmin, async (req, res) => {
     try {
         const { id } = req.params;
         const { page = 1, limit = 20 } = req.query;

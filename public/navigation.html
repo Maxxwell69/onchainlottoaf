@@ -10,6 +10,10 @@
 <body>
     <div class="container">
         <header>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <div></div>
+                <button class="btn btn-danger" onclick="authManager.logout()">🚪 Logout</button>
+            </div>
             <h1>🎰 On Chain Lotto</h1>
             <p class="subtitle">Solana Meme Coin Lotto System</p>
         </header>
@@ -159,5 +163,6 @@
             });
         });
     </script>
+    <script src="/auth.js"></script>
 </body>
 </html>

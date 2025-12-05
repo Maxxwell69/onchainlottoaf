@@ -106,6 +106,13 @@ async function loadDrawData() {
         renderNumbersGrid();
         renderEntriesTable();
         
+        // Set public draw link
+        const publicDrawLink = document.getElementById('publicDrawLink');
+        if (publicDrawLink && currentDraw.id) {
+            publicDrawLink.href = `/public-draw/${currentDraw.id}`;
+            publicDrawLink.style.display = 'inline-block';
+        }
+        
     } catch (error) {
         console.error('Error loading draw:', error);
         showToast('❌ Failed to load draw data', 'error');

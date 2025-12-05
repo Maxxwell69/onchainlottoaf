@@ -27,7 +27,9 @@ async function loadUsers(page = 1, search = '', role = '', status = '') {
             status: status
         });
 
-        const response = await fetch(`${API_URL}/api/users?${params}`);
+        const response = await fetch(`${API_URL}/api/users?${params}`, {
+            headers: authManager.getAuthHeaders()
+        });
         const data = await response.json();
 
         if (response.ok) {
@@ -149,7 +151,8 @@ async function deleteUser(userId, username) {
 
     try {
         const response = await fetch(`${API_URL}/api/users/${userId}`, {
-            method: 'DELETE'
+            method: 'DELETE',
+            headers: authManager.getAuthHeaders()
         });
 
         const data = await response.json();
@@ -197,6 +200,7 @@ async function saveUser(event) {
         const response = await fetch(url, {
             method: method,
             headers: {
+                ...authManager.getAuthHeaders(),
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(formData)

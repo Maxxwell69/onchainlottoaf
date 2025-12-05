@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { pool } = require('../database/db');
-const { generateToken, hashPassword, comparePassword } = require('../middleware/auth');
+const { generateToken, hashPassword, comparePassword, authenticateToken, requireSuperAdmin } = require('../middleware/auth');
 
 // Login endpoint
 router.post('/login', async (req, res) => {
@@ -28,6 +28,13 @@ router.post('/login', async (req, res) => {
 
         const user = result.rows[0];
 
+        // Check if user is active
+        if (user.status !== 'active') {
+            return res.status(403).json({
+                error: 'Account is not active. Please contact an administrator.'
+            });
+        }
+
         // Check password
         const isValidPassword = await comparePassword(password, user.password_hash);
         if (!isValidPassword) {
@@ -35,6 +42,12 @@ router.post('/login', async (req, res) => {
                 error: 'Invalid credentials'
             });
         }
+
+        // Update last login
+        await pool.query(
+            'UPDATE users SET last_login = NOW() WHERE id = $1',
+            [user.id]
+        );
 
         // Generate token
         const token = generateToken(user);
@@ -57,8 +70,11 @@ router.post('/login', async (req, res) => {
     }
 });
 
-// Public registration endpoint
+// Public registration endpoint - DISABLED (admin-only access)
 router.post('/register', async (req, res) => {
+    return res.status(403).json({
+        error: 'Registration is disabled. Admin access only.'
+    });
     try {
         const { username, email, password } = req.body;
 
@@ -118,8 +134,8 @@ router.post('/register', async (req, res) => {
     }
 });
 
-// Admin-only registration endpoint (for creating users with specific roles)
-router.post('/admin-register', async (req, res) => {
+// Admin-only registration endpoint (for creating users with specific roles) - SUPERADMIN ONLY
+router.post('/admin-register', authenticateToken, requireSuperAdmin, async (req, res) => {
     try {
         const { username, email, password, role = 'user', status = 'active' } = req.body;
         const createdBy = req.user.id;
@@ -186,7 +202,11 @@ router.get('/verify', async (req, res) => {
         }
 
         const jwt = require('jsonwebtoken');
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+        const jwtSecret = process.env.JWT_SECRET;
+        if (!jwtSecret || jwtSecret === 'your-secret-key') {
+            return res.status(500).json({ error: 'Server configuration error' });
+        }
+        const decoded = jwt.verify(token, jwtSecret);
 
         res.json({
             success: true,

@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://api.helius.xyz https://price.jup.ag https://mainnet.helius-rpc.com;">
+    <title>Active Draws - On Chain Lotto</title>
+    <link rel="stylesheet" href="/styles.css">
+    <style>
+        .public-header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+        .public-header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+        .public-header h1 {
+            color: #ffd700;
+            font-size: 2.5em;
+            margin: 0 0 0.5rem 0;
+            text-align: center;
+        }
+        .public-header .subtitle {
+            color: #fff;
+            text-align: center;
+            font-size: 1.2em;
+            margin: 0;
+        }
+        .public-nav {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1rem 0;
+            margin-top: 1.5rem;
+            border-top: 1px solid rgba(255, 215, 0, 0.3);
+        }
+        .public-nav-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+        .public-nav-links a {
+            color: #ffd700;
+            text-decoration: none;
+            font-weight: bold;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+        .public-nav-links a:hover {
+            background: rgba(255, 215, 0, 0.2);
+        }
+        .draws-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        .draw-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 1.5rem;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+        }
+        .draw-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(255, 215, 0, 0.3);
+            border-color: #ffd700;
+        }
+        .draw-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        .draw-card-title {
+            color: #ffd700;
+            font-size: 1.5em;
+            margin: 0;
+        }
+        .draw-card-status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: bold;
+        }
+        .draw-card-status.active {
+            background: #4caf50;
+            color: #fff;
+        }
+        .draw-card-info {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        .draw-info-item {
+            text-align: center;
+        }
+        .draw-info-label {
+            color: #ffd700;
+            font-size: 0.85em;
+            margin-bottom: 0.25rem;
+        }
+        .draw-info-value {
+            color: #fff;
+            font-size: 1.1em;
+            font-weight: bold;
+        }
+        .draw-progress {
+            margin: 1rem 0;
+        }
+        .draw-progress-bar {
+            width: 100%;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 0.5rem 0;
+        }
+        .draw-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ffd700 0%, #ffed4e 100%);
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #1a1a2e;
+            font-size: 0.75em;
+            font-weight: bold;
+        }
+        .draw-progress-text {
+            color: #fff;
+            text-align: center;
+            font-size: 0.9em;
+        }
+        .draw-card-footer {
+            margin-top: 1rem;
+            text-align: center;
+        }
+        .view-draw-btn {
+            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+            color: #1a1a2e;
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 25px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .view-draw-btn:hover {
+            transform: scale(1.05);
+        }
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: #fff;
+        }
+        .empty-state h2 {
+            color: #ffd700;
+            font-size: 2em;
+            margin-bottom: 1rem;
+        }
+        .loading {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: #ffd700;
+            font-size: 1.2em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Public Header with Menu -->
+        <header class="public-header">
+            <div class="public-header-content">
+                <h1>🎰 On Chain Lotto</h1>
+                <p class="subtitle">Premium Solana Meme Coin Lotto System</p>
+                
+                <nav class="public-nav">
+                    <div class="public-nav-links">
+                        <a href="/public-draws.html">🏠 Active Draws</a>
+                        <a href="/home.html">ℹ️ About</a>
+                    </div>
+                </nav>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="public-header-content">
+            <h2 style="color: #ffd700; text-align: center; margin-bottom: 2rem;">Active Lotto Draws</h2>
+            
+            <div id="drawsContainer">
+                <div class="loading">Loading active draws...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+
+    <script src="/public-draws.js"></script>
+</body>
+</html>
+

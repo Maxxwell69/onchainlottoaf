@@ -2,10 +2,11 @@ const express = require('express');
 const router = express.Router();
 const LottoEntry = require('../models/LottoEntry');
 const LottoDraw = require('../models/LottoDraw');
+const { authenticateToken, requireSuperAdmin } = require('../middleware/auth');
 
 // POST /api/manual-entries/add
-// Add a manual transaction entry with automatic chronological positioning
-router.post('/add', async (req, res) => {
+// Add a manual transaction entry with automatic chronological positioning (superadmin only)
+router.post('/add', authenticateToken, requireSuperAdmin, async (req, res) => {
   try {
     const {
       drawId,

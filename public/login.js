@@ -39,12 +39,19 @@ document.addEventListener('DOMContentLoaded', () => {
             const result = await authManager.login(usernameOrEmail, password);
             
             if (result.success) {
-                showToast('✅ Login successful! Redirecting...', 'success');
-                
-                // Redirect to admin dashboard after short delay
-                setTimeout(() => {
-                    window.location.href = '/index.html';
-                }, 1000);
+                // Check if user is superadmin
+                if (result.user.role === 'super_admin') {
+                    showToast('✅ Login successful! Redirecting to admin panel...', 'success');
+                    
+                    // Redirect to admin dashboard after short delay
+                    setTimeout(() => {
+                        window.location.href = '/index.html';
+                    }, 1000);
+                } else {
+                    showToast('❌ Access denied. Superadmin access required.', 'error');
+                    // Logout the user
+                    authManager.logout();
+                }
             } else {
                 showToast(`❌ ${result.error}`, 'error');
             }

@@ -25,6 +25,17 @@ app.use(cors({
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+// Public draws listing page
+app.get('/public-draws.html', (req, res) => {
+    res.sendFile(__dirname + '/public/public-draws.html');
+});
+
+// Public draw page route - must be before static files to catch numeric IDs only
+// This route only matches numeric IDs, so .js files will be served by static middleware
+app.get('/public-draw/:id(\\d+)', (req, res) => {
+    res.sendFile(__dirname + '/public/public-draw.html');
+});
+
 // Serve static files
 app.use(express.static('public'));
 

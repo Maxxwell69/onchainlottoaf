@@ -2,12 +2,13 @@ const express = require('express');
 const router = express.Router();
 const LottoEntry = require('../models/LottoEntry');
 const LottoDraw = require('../models/LottoDraw');
+const { authenticateToken, requireSuperAdmin } = require('../middleware/auth');
 
 /**
  * Add transaction with automatic time and ball assignment
- * POST /api/transactions/add
+ * POST /api/transactions/add (SUPERADMIN ONLY)
  */
-router.post('/add', async (req, res) => {
+router.post('/add', authenticateToken, requireSuperAdmin, async (req, res) => {
   try {
     const { 
       drawId, 
@@ -203,9 +204,9 @@ router.get('/:drawId/history', async (req, res) => {
 
 /**
  * Bulk add transactions
- * POST /api/transactions/bulk-add
+ * POST /api/transactions/bulk-add (SUPERADMIN ONLY)
  */
-router.post('/bulk-add', async (req, res) => {
+router.post('/bulk-add', authenticateToken, requireSuperAdmin, async (req, res) => {
   try {
     const { drawId, transactions } = req.body;
     

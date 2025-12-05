@@ -100,9 +100,11 @@ const authManager = new AuthManager();
 
 // Check authentication on page load
 document.addEventListener('DOMContentLoaded', async () => {
-    // Skip auth check for login page
+    // Skip auth check for public pages
     if (window.location.pathname.includes('login.html') || 
-        window.location.pathname.includes('home.html')) {
+        window.location.pathname.includes('home.html') ||
+        window.location.pathname.includes('public-draw') ||
+        window.location.pathname.includes('public-draws.html')) {
         return;
     }
 
@@ -117,6 +119,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!isValid) {
         window.location.href = '/login.html';
         return;
+    }
+
+    // Check if user is superadmin for admin pages
+    if (window.location.pathname.includes('index.html') || 
+        window.location.pathname.includes('draw.html') ||
+        window.location.pathname.includes('tokens.html') ||
+        window.location.pathname.includes('users.html')) {
+        const user = authManager.getCurrentUser();
+        if (!user || user.role !== 'super_admin') {
+            alert('Access denied. Superadmin privileges required.');
+            authManager.logout();
+            return;
+        }
     }
 
     // Add user info to page if needed
