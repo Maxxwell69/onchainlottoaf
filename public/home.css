@@ -254,7 +254,28 @@
 /* Active Draws Section */
 .active-draws {
     padding: 6rem 2rem;
-    background: var(--background);
+    background: var(--card-bg);
+}
+
+.active-draws-hero {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    align-items: start;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.active-draws-content {
+    width: 100%;
+}
+
+.active-draws-visual {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: sticky;
+    top: 100px;
 }
 
 .active-draws-container {
@@ -270,7 +291,7 @@
 }
 
 .home-draw-card {
-    background: var(--card-bg);
+    background: var(--background);
     border: 1px solid var(--border);
     border-radius: 12px;
     padding: 1.5rem;
@@ -597,5 +618,15 @@
 
     .home-draws-grid {
         grid-template-columns: 1fr;
+    }
+
+    .active-draws-hero {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+    }
+
+    .active-draws-visual {
+        position: relative;
+        top: 0;
     }
 }

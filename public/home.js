@@ -130,13 +130,12 @@ function displayActiveDraws(draws) {
                     </div>
                 </div>
             </div>
-            
-            <div class="home-draw-card-footer">
-                <a href="/public-draw/${draw.id}" class="home-draw-link">
-                    View Details →
-                </a>
-            </div>
         `;
+        
+        // Make entire card clickable
+        drawCard.onclick = () => {
+            window.location.href = `/public-draw/${draw.id}`;
+        };
         
         drawsGrid.appendChild(drawCard);
     });
