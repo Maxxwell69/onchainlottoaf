@@ -270,9 +270,9 @@
 }
 
 .home-draw-card {
-    background: var(--background);
-    border: 1px solid var(--border);
-    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    border-radius: 15px;
     padding: 1.5rem;
     transition: all 0.3s;
     cursor: pointer;
@@ -281,7 +281,7 @@
 .home-draw-card:hover {
     transform: translateY(-5px);
     border-color: var(--primary);
-    box-shadow: 0 10px 25px rgba(255, 215, 0, 0.2);
+    box-shadow: 0 8px 20px rgba(255, 215, 0, 0.3);
 }
 
 .home-draw-card-header {
@@ -289,91 +289,102 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 1rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid var(--border);
 }
 
-.home-draw-card-header h3 {
-    font-size: 1.25rem;
+.home-draw-card-title {
+    color: var(--primary);
+    font-size: 1.5em;
     margin: 0;
-    color: var(--text);
+    font-weight: bold;
 }
 
 .home-draw-status {
     padding: 0.25rem 0.75rem;
     border-radius: 20px;
-    font-size: 0.75rem;
-    font-weight: 600;
+    font-size: 0.85em;
+    font-weight: bold;
     text-transform: uppercase;
 }
 
 .home-draw-status.active {
-    background: var(--success);
-    color: var(--background);
+    background: #4caf50;
+    color: #fff;
 }
 
-.home-draw-card-body {
-    margin-bottom: 1rem;
+.home-draw-card-info {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin: 1rem 0;
 }
 
-.home-draw-info-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 0.75rem;
-    font-size: 0.9rem;
+.home-draw-info-item {
+    text-align: center;
 }
 
-.home-draw-label {
-    color: var(--text-secondary);
+.home-draw-info-label {
+    color: var(--primary);
+    font-size: 0.85em;
+    margin-bottom: 0.25rem;
 }
 
-.home-draw-value {
+.home-draw-info-value {
     color: var(--text);
-    font-weight: 600;
+    font-size: 1.1em;
+    font-weight: bold;
 }
 
 .home-draw-progress {
-    margin-top: 1rem;
+    margin: 1rem 0;
 }
 
 .home-draw-progress-bar {
     width: 100%;
-    height: 8px;
-    background: var(--background);
-    border-radius: 4px;
+    height: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
     overflow: hidden;
-    margin-bottom: 0.5rem;
+    margin: 0.5rem 0;
 }
 
 .home-draw-progress-fill {
     height: 100%;
-    background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+    background: linear-gradient(90deg, var(--primary) 0%, #ffed4e 100%);
     transition: width 0.3s;
-    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--background);
+    font-size: 0.75em;
+    font-weight: bold;
 }
 
 .home-draw-progress-text {
-    font-size: 0.85rem;
-    color: var(--text-secondary);
+    color: var(--text);
     text-align: center;
+    font-size: 0.9em;
 }
 
 .home-draw-card-footer {
-    padding-top: 1rem;
-    border-top: 1px solid var(--border);
+    margin-top: 1rem;
+    text-align: center;
 }
 
 .home-draw-link {
-    display: inline-block;
-    color: var(--primary);
+    background: linear-gradient(135deg, var(--primary) 0%, #ffed4e 100%);
+    color: var(--background);
+    border: none;
+    padding: 0.75rem 2rem;
+    border-radius: 25px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.2s;
     text-decoration: none;
-    font-weight: 600;
-    transition: color 0.3s;
+    display: inline-block;
 }
 
 .home-draw-link:hover {
-    color: var(--secondary);
+    transform: scale(1.05);
 }
 
 .empty-state {

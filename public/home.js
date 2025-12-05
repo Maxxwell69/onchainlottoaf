@@ -91,8 +91,8 @@ function displayActiveDraws(draws) {
         return;
     }
     
-    // Show only first 3 draws on home page
-    const displayDraws = draws.slice(0, 3);
+    // Show all draws on home page (no limit)
+    const displayDraws = draws;
     
     const drawsGrid = document.createElement('div');
     drawsGrid.className = 'home-draws-grid';
@@ -106,29 +106,41 @@ function displayActiveDraws(draws) {
         
         drawCard.innerHTML = `
             <div class="home-draw-card-header">
-                <h3>${draw.draw_name || 'Lotto Draw'}</h3>
+                <h3 class="home-draw-card-title">${draw.draw_name || 'Lotto Draw'}</h3>
                 <span class="home-draw-status active">${draw.status?.toUpperCase() || 'ACTIVE'}</span>
             </div>
             
-            <div class="home-draw-card-body">
-                <div class="home-draw-info-row">
-                    <span class="home-draw-label">Token:</span>
-                    <span class="home-draw-value">${draw.token_symbol || truncateAddress(draw.token_address)}</span>
+            <div class="home-draw-card-info">
+                <div class="home-draw-info-item">
+                    <div class="home-draw-info-label">Token</div>
+                    <div class="home-draw-info-value">${draw.token_symbol || truncateAddress(draw.token_address)}</div>
                 </div>
-                
-                <div class="home-draw-info-row">
-                    <span class="home-draw-label">Min Purchase:</span>
-                    <span class="home-draw-value">${formatUSD(draw.min_usd_amount || 0)}</span>
+                <div class="home-draw-info-item">
+                    <div class="home-draw-info-label">Filled Slots</div>
+                    <div class="home-draw-info-value">${draw.filled_slots || 0} / ${draw.total_slots || 69}</div>
                 </div>
-                
-                <div class="home-draw-progress">
-                    <div class="home-draw-progress-bar">
-                        <div class="home-draw-progress-fill" style="width: ${progressPercent}%"></div>
-                    </div>
-                    <div class="home-draw-progress-text">
-                        ${draw.filled_slots || 0} / ${draw.total_slots || 69} slots filled
-                    </div>
+            </div>
+            
+            <div class="home-draw-progress">
+                <div class="home-draw-progress-bar">
+                    <div class="home-draw-progress-fill" style="width: ${progressPercent}%">${progressPercent}%</div>
                 </div>
+                <div class="home-draw-progress-text">
+                    ${draw.filled_slots || 0} of ${draw.total_slots || 69} slots filled
+                </div>
+            </div>
+            
+            <div class="home-draw-card-info">
+                <div class="home-draw-info-item">
+                    <div class="home-draw-info-label">Start Time</div>
+                    <div class="home-draw-info-value" style="font-size: 0.9em;">${formatDate(draw.start_time)}</div>
+                </div>
+            </div>
+            
+            <div class="home-draw-card-footer">
+                <a href="/public-draw/${draw.id}" class="home-draw-link" onclick="event.stopPropagation();">
+                    View Draw Details →
+                </a>
             </div>
         `;
         
