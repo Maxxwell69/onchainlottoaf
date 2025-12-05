@@ -15,10 +15,18 @@ router.post('/login', async (req, res) => {
         }
 
         // Find user in database (by username or email)
-        const result = await pool.query(
-            'SELECT * FROM users WHERE username = $1 OR email = $1',
-            [username]
-        );
+        let result;
+        try {
+            result = await pool.query(
+                'SELECT * FROM users WHERE username = $1 OR email = $1',
+                [username]
+            );
+        } catch (dbError) {
+            console.error('Database query error during login:', dbError);
+            return res.status(500).json({
+                error: 'Database error. Please try again later.'
+            });
+        }
 
         if (result.rows.length === 0) {
             console.log(`Login attempt failed: User not found for ${username}`);
@@ -39,7 +47,16 @@ router.post('/login', async (req, res) => {
         }
 
         // Check password
-        const isValidPassword = await comparePassword(password, user.password_hash);
+        let isValidPassword;
+        try {
+            isValidPassword = await comparePassword(password, user.password_hash);
+        } catch (compareError) {
+            console.error('Password comparison error:', compareError);
+            return res.status(500).json({
+                error: 'Internal server error during authentication'
+            });
+        }
+        
         if (!isValidPassword) {
             console.log(`Login attempt failed: Invalid password for user ${user.username}`);
             return res.status(401).json({
