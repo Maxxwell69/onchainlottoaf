@@ -22,6 +22,11 @@ class AuthManager {
             const data = await response.json();
 
             if (response.ok) {
+                if (!data.token) {
+                    console.error('Login response missing token:', data);
+                    return { success: false, error: 'Server error: No token received' };
+                }
+                
                 this.token = data.token;
                 this.user = data.user;
                 
@@ -31,11 +36,12 @@ class AuthManager {
                 
                 return { success: true, user: this.user };
             } else {
-                return { success: false, error: data.error };
+                console.error('Login failed:', response.status, data);
+                return { success: false, error: data.error || 'Login failed' };
             }
         } catch (error) {
-            console.error('Login error:', error);
-            return { success: false, error: 'Network error' };
+            console.error('Login network error:', error);
+            return { success: false, error: 'Network error: ' + error.message };
         }
     }
 

@@ -21,6 +21,7 @@ router.post('/login', async (req, res) => {
         );
 
         if (result.rows.length === 0) {
+            console.log(`Login attempt failed: User not found for ${username}`);
             return res.status(401).json({
                 error: 'Invalid credentials'
             });
@@ -28,8 +29,10 @@ router.post('/login', async (req, res) => {
 
         const user = result.rows[0];
 
-        // Check if user is active
-        if (user.status !== 'active') {
+        // Check if user is active (handle enum types)
+        const userStatus = user.status?.toString().toLowerCase();
+        if (userStatus !== 'active') {
+            console.log(`Login attempt for inactive user: ${user.username}, status: ${userStatus}`);
             return res.status(403).json({
                 error: 'Account is not active. Please contact an administrator.'
             });
@@ -38,10 +41,13 @@ router.post('/login', async (req, res) => {
         // Check password
         const isValidPassword = await comparePassword(password, user.password_hash);
         if (!isValidPassword) {
+            console.log(`Login attempt failed: Invalid password for user ${user.username}`);
             return res.status(401).json({
                 error: 'Invalid credentials'
             });
         }
+        
+        console.log(`✅ Successful login: ${user.username} (${user.role})`);
 
         // Update last login
         await pool.query(
