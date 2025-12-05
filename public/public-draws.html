@@ -9,8 +9,7 @@
     <style>
         .public-header {
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            padding: 2rem 0;
-            margin-bottom: 2rem;
+            padding: 1rem 0;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
         }
         .public-header-content {
@@ -18,32 +17,52 @@
             margin: 0 auto;
             padding: 0 2rem;
         }
-        .public-header-hero {
+        .public-hero {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 3rem;
+            gap: 4rem;
             align-items: center;
-            margin-bottom: 1rem;
+            padding: 6rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            background: linear-gradient(135deg, var(--background) 0%, #1a1a2e 50%, var(--background) 100%);
         }
-        .public-header-text {
+        .public-hero-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+            width: 100%;
+        }
+        .public-hero-text {
             text-align: left;
         }
-        .public-header-visual {
+        .public-hero-visual {
             display: flex;
             justify-content: center;
             align-items: center;
         }
-        .public-header h1 {
-            color: #ffd700;
-            font-size: 2.5em;
-            margin: 0 0 0.5rem 0;
-            text-align: left;
+        .public-hero-title {
+            font-family: 'Beefcakes', 'Orbitron', monospace;
+            font-size: 4rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #ffd700 0%, #14F195 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
         }
-        .public-header .subtitle {
-            color: #fff;
-            text-align: left;
-            font-size: 1.2em;
-            margin: 0;
+        .public-hero-subtitle {
+            font-size: 2rem;
+            color: #14F195;
+            margin-bottom: 1rem;
+            font-family: 'Beefcakes', 'Orbitron', monospace;
+        }
+        .public-hero-description {
+            font-size: 1.25rem;
+            color: #B0B0B0;
+            margin-bottom: 2rem;
+            line-height: 1.6;
         }
         .lotto-balls-demo {
             display: flex;
@@ -226,19 +245,24 @@
             font-size: 1.2em;
         }
         @media (max-width: 768px) {
-            .public-header-hero {
+            .public-hero {
                 grid-template-columns: 1fr;
                 gap: 2rem;
+                padding: 3rem 1rem;
                 text-align: center;
             }
-            .public-header-text {
+            .public-hero-content {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+            .public-hero-text {
                 text-align: center;
             }
-            .public-header h1 {
-                text-align: center;
+            .public-hero-title {
+                font-size: 2.5rem;
             }
-            .public-header .subtitle {
-                text-align: center;
+            .public-hero-subtitle {
+                font-size: 1.5rem;
             }
             .demo-ball {
                 width: 60px;
@@ -253,22 +277,6 @@
         <!-- Public Header with Menu -->
         <header class="public-header">
             <div class="public-header-content">
-                <div class="public-header-hero">
-                    <div class="public-header-text">
-                        <h1>🎰 On Chain Lotto</h1>
-                        <p class="subtitle">Premium Solana Meme Coin Lotto System</p>
-                    </div>
-                    <div class="public-header-visual">
-                        <div class="lotto-balls-demo">
-                            <div class="demo-ball filled">1</div>
-                            <div class="demo-ball filled">7</div>
-                            <div class="demo-ball filled">23</div>
-                            <div class="demo-ball filled">42</div>
-                            <div class="demo-ball filled">69</div>
-                        </div>
-                    </div>
-                </div>
-                
                 <nav class="public-nav">
                     <div class="public-nav-links">
                         <a href="/public-draws.html">🏠 Active Draws</a>
@@ -278,9 +286,32 @@
             </div>
         </header>
 
+        <!-- Hero Section -->
+        <section class="public-hero">
+            <div class="public-hero-content">
+                <div class="public-hero-text">
+                    <h1 class="public-hero-title">On Chain Lotto</h1>
+                    <h2 class="public-hero-subtitle">Premium Movement</h2>
+                    <p class="public-hero-description">
+                        The ultimate Solana meme coin lotto system. Join the elite community 
+                        and win life-changing prizes with transparent, on-chain draw.
+                    </p>
+                </div>
+                <div class="public-hero-visual">
+                    <div class="lotto-balls-demo">
+                        <div class="demo-ball filled">1</div>
+                        <div class="demo-ball filled">7</div>
+                        <div class="demo-ball filled">23</div>
+                        <div class="demo-ball filled">42</div>
+                        <div class="demo-ball filled">69</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <!-- Main Content -->
-        <div class="public-header-content">
-            <h2 style="color: #ffd700; text-align: center; margin-bottom: 2rem;">Active Lotto Draws</h2>
+        <div class="public-header-content" style="padding-top: 2rem;">
+            <h2 style="color: #ffd700; text-align: center; margin-bottom: 2rem; font-size: 2.5em;">Active Lotto Draws</h2>
             
             <div id="drawsContainer">
                 <div class="loading">Loading active draws...</div>
