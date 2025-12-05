@@ -84,8 +84,7 @@ function displayActiveDraws(draws) {
     if (draws.length === 0) {
         container.innerHTML = `
             <div class="empty-state">
-                <h3>No Active Draws</h3>
-                <p>There are currently no active lotto draws. Check back soon!</p>
+                <h1 class="empty-state-title">More Draws Coming Soon</h1>
             </div>
         `;
         return;
