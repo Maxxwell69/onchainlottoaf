@@ -257,27 +257,6 @@
     background: var(--card-bg);
 }
 
-.active-draws-hero {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 4rem;
-    align-items: start;
-    max-width: 1200px;
-    margin: 0 auto;
-}
-
-.active-draws-content {
-    width: 100%;
-}
-
-.active-draws-visual {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    position: sticky;
-    top: 100px;
-}
-
 .active-draws-container {
     max-width: 1200px;
     margin: 0 auto;
@@ -618,15 +597,5 @@
 
     .home-draws-grid {
         grid-template-columns: 1fr;
-    }
-
-    .active-draws-hero {
-        grid-template-columns: 1fr;
-        gap: 2rem;
-    }
-
-    .active-draws-visual {
-        position: relative;
-        top: 0;
     }
 }

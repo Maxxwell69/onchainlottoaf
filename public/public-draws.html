@@ -18,17 +18,68 @@
             margin: 0 auto;
             padding: 0 2rem;
         }
+        .public-header-hero {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        .public-header-text {
+            text-align: left;
+        }
+        .public-header-visual {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
         .public-header h1 {
             color: #ffd700;
             font-size: 2.5em;
             margin: 0 0 0.5rem 0;
-            text-align: center;
+            text-align: left;
         }
         .public-header .subtitle {
             color: #fff;
-            text-align: center;
+            text-align: left;
             font-size: 1.2em;
             margin: 0;
+        }
+        .lotto-balls-demo {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .demo-ball {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Beefcakes', 'Orbitron', monospace;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: black;
+            background: linear-gradient(135deg, #ffd700 0%, #b8860b 50%, #ffd700 100%);
+            box-shadow: 
+                0 8px 16px rgba(0, 0, 0, 0.3),
+                inset 0 -2px 10px rgba(0, 0, 0, 0.3),
+                inset 0 2px 10px rgba(255, 255, 255, 0.3);
+            animation: ballFloat 3s ease-in-out infinite;
+        }
+        .demo-ball.filled {
+            background: linear-gradient(135deg, #ffd700 0%, #b8860b 50%, #ffd700 100%);
+        }
+        .demo-ball:nth-child(1) { animation-delay: 0s; }
+        .demo-ball:nth-child(2) { animation-delay: 0.5s; }
+        .demo-ball:nth-child(3) { animation-delay: 1s; }
+        .demo-ball:nth-child(4) { animation-delay: 1.5s; }
+        .demo-ball:nth-child(5) { animation-delay: 2s; }
+        @keyframes ballFloat {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
         }
         .public-nav {
             background: rgba(255, 255, 255, 0.1);
@@ -174,6 +225,27 @@
             color: #ffd700;
             font-size: 1.2em;
         }
+        @media (max-width: 768px) {
+            .public-header-hero {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+                text-align: center;
+            }
+            .public-header-text {
+                text-align: center;
+            }
+            .public-header h1 {
+                text-align: center;
+            }
+            .public-header .subtitle {
+                text-align: center;
+            }
+            .demo-ball {
+                width: 60px;
+                height: 60px;
+                font-size: 1.25rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -181,8 +253,21 @@
         <!-- Public Header with Menu -->
         <header class="public-header">
             <div class="public-header-content">
-                <h1>🎰 On Chain Lotto</h1>
-                <p class="subtitle">Premium Solana Meme Coin Lotto System</p>
+                <div class="public-header-hero">
+                    <div class="public-header-text">
+                        <h1>🎰 On Chain Lotto</h1>
+                        <p class="subtitle">Premium Solana Meme Coin Lotto System</p>
+                    </div>
+                    <div class="public-header-visual">
+                        <div class="lotto-balls-demo">
+                            <div class="demo-ball filled">1</div>
+                            <div class="demo-ball filled">7</div>
+                            <div class="demo-ball filled">23</div>
+                            <div class="demo-ball filled">42</div>
+                            <div class="demo-ball filled">69</div>
+                        </div>
+                    </div>
+                </div>
                 
                 <nav class="public-nav">
                     <div class="public-nav-links">
