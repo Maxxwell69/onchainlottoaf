@@ -168,9 +168,9 @@ async function loadArchiveDraws() {
             throw new Error(data.error || 'Failed to load draws');
         }
         
-        // Filter for completed draws
+        // Filter for completed draws only (exclude cancelled)
         const completedDraws = (data.draws || []).filter(draw => 
-            draw.status === 'completed' || draw.status === 'cancelled'
+            draw.status === 'completed'
         );
         
         displayArchiveDraws(completedDraws);
