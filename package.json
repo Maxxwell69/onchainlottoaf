@@ -9,7 +9,8 @@
     "init-db": "node scripts/initDatabase.js",
     "init-token-manager": "node scripts/initTokenManager.js",
     "test-helius": "node scripts/testHelius.js",
-    "create-superadmin": "node scripts/create-superadmin.js"
+    "create-superadmin": "node scripts/create-superadmin.js",
+    "postinstall": "npm run init-db || true"
   },
   "keywords": [
     "solana",
