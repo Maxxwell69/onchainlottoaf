@@ -251,6 +251,149 @@
     line-height: 1.6;
 }
 
+/* Active Draws Section */
+.active-draws {
+    padding: 6rem 2rem;
+    background: var(--background);
+}
+
+.active-draws-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.home-draws-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.home-draw-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: all 0.3s;
+    cursor: pointer;
+}
+
+.home-draw-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--primary);
+    box-shadow: 0 10px 25px rgba(255, 215, 0, 0.2);
+}
+
+.home-draw-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.home-draw-card-header h3 {
+    font-size: 1.25rem;
+    margin: 0;
+    color: var(--text);
+}
+
+.home-draw-status {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.home-draw-status.active {
+    background: var(--success);
+    color: var(--background);
+}
+
+.home-draw-card-body {
+    margin-bottom: 1rem;
+}
+
+.home-draw-info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    font-size: 0.9rem;
+}
+
+.home-draw-label {
+    color: var(--text-secondary);
+}
+
+.home-draw-value {
+    color: var(--text);
+    font-weight: 600;
+}
+
+.home-draw-progress {
+    margin-top: 1rem;
+}
+
+.home-draw-progress-bar {
+    width: 100%;
+    height: 8px;
+    background: var(--background);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+}
+
+.home-draw-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+    transition: width 0.3s;
+    border-radius: 4px;
+}
+
+.home-draw-progress-text {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    text-align: center;
+}
+
+.home-draw-card-footer {
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+}
+
+.home-draw-link {
+    display: inline-block;
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.3s;
+}
+
+.home-draw-link:hover {
+    color: var(--secondary);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: var(--text-secondary);
+}
+
+.empty-state h3 {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    color: var(--text);
+}
+
+.loading-state {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: var(--text-secondary);
+}
+
 /* Stats Section */
 .stats {
     padding: 6rem 2rem;
@@ -450,5 +593,9 @@
 
     .footer-links {
         justify-content: center;
+    }
+
+    .home-draws-grid {
+        grid-template-columns: 1fr;
     }
 }
