@@ -109,8 +109,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Skip auth check for public pages
     if (window.location.pathname.includes('login.html') || 
         window.location.pathname.includes('home.html') ||
-        window.location.pathname.includes('public-draw') ||
-        window.location.pathname.includes('public-draws.html')) {
+        window.location.pathname.includes('public-draw')) {
         return;
     }
 
