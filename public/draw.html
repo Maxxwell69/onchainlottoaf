@@ -21,6 +21,39 @@
 
         <!-- Time display now matches admin page (local time) -->
 
+        <!-- Prize Description Card -->
+        <div class="card" id="prizeDescriptionCard" style="display: none; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); color: white; margin-bottom: 2rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3 style="margin: 0; color: white;">🏆 Prize Information</h3>
+                <button class="btn btn-secondary" id="editPrizeBtn" style="background: rgba(255, 255, 255, 0.2); color: white; border: 1px solid rgba(255, 255, 255, 0.3);">
+                    ✏️ Edit Prize
+                </button>
+            </div>
+            <div id="prizeDescriptionLong" style="font-size: 1.1rem; line-height: 1.6; white-space: pre-wrap;"></div>
+            
+            <!-- Edit Prize Form (hidden by default) -->
+            <div id="editPrizeForm" style="display: none; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(255, 255, 255, 0.3);">
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; color: white; font-weight: 600;">Short Description (for cards)</label>
+                    <textarea id="editPrizeShort" rows="2" maxlength="150" style="width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.3); background: rgba(255, 255, 255, 0.1); color: white; font-size: 1rem;" placeholder="Brief prize description for cards (max 150 characters)"></textarea>
+                    <small style="color: rgba(255, 255, 255, 0.8); font-size: 0.875rem;">Shown on draw cards</small>
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; color: white; font-weight: 600;">Long Description (for draw page)</label>
+                    <textarea id="editPrizeLong" rows="5" style="width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.3); background: rgba(255, 255, 255, 0.1); color: white; font-size: 1rem;" placeholder="Detailed prize description for draw page"></textarea>
+                    <small style="color: rgba(255, 255, 255, 0.8); font-size: 0.875rem;">Shown on the full draw page</small>
+                </div>
+                <div style="display: flex; gap: 0.75rem;">
+                    <button class="btn btn-primary" id="savePrizeBtn" style="background: white; color: var(--primary); border: none;">
+                        💾 Save Changes
+                    </button>
+                    <button class="btn btn-secondary" id="cancelPrizeEditBtn" style="background: rgba(255, 255, 255, 0.2); color: white; border: 1px solid rgba(255, 255, 255, 0.3);">
+                        ❌ Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- Draw Info Card -->
         <div class="card draw-info">
             <div class="info-grid">
@@ -51,7 +84,26 @@
             </button>
             <button class="btn btn-success" id="manualAddBtn">➕ Manual Add Transaction</button>
             <button class="btn btn-secondary" id="refreshBtn">🔄 Refresh Results</button>
+            <a href="#" class="btn btn-secondary" id="publicLinkBtn" style="background: var(--primary); color: white;">
+                🌐 Public View
+            </a>
             <a href="navigation.html" class="btn btn-secondary">📋 Navigation Menu</a>
+        </div>
+
+        <!-- Draw Management -->
+        <div class="card" style="margin-top: 2rem; border-top: 2px solid var(--border); padding-top: 2rem;">
+            <h3 style="margin-bottom: 1.5rem; color: var(--primary);">DRAW MANAGEMENT</h3>
+            <div class="actions-card">
+                <button class="btn btn-primary" id="markCompleteBtn" style="display: none;">
+                    ✅ Mark as Complete
+                </button>
+                <button class="btn" id="deactivateBtn" style="display: none; background: linear-gradient(135deg, #FF8C00 0%, #FF4500 100%); color: white;">
+                    ⏸️ Deactivate Draw
+                </button>
+                <button class="btn" id="deleteDrawBtn" style="display: none; background: linear-gradient(135deg, #FF4757 0%, #DC143C 100%); color: white;">
+                    🗑️ Delete Draw
+                </button>
+            </div>
         </div>
 
         <!-- Progress Bar -->
@@ -145,6 +197,8 @@
     <!-- Toast Notification -->
     <div id="toast" class="toast"></div>
 
+    <script src="themes.js"></script>
+    <script src="theme-selector.js"></script>
     <script src="auth.js"></script>
     <script src="navigation.js"></script>
     <script src="draw.js"></script>

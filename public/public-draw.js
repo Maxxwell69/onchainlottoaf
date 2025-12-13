@@ -120,6 +120,18 @@ function updateDrawInfo() {
     document.getElementById('drawTitle').textContent = currentDraw.draw_name;
     document.getElementById('drawSubtitle').textContent = `Draw #${currentDraw.id}`;
     
+    // Display prize description if available
+    const prizeDescriptionCard = document.getElementById('prizeDescriptionCard');
+    const prizeDescriptionLong = document.getElementById('prizeDescriptionLong');
+    if (prizeDescriptionCard && prizeDescriptionLong) {
+        if (currentDraw.prize_description_long) {
+            prizeDescriptionLong.textContent = currentDraw.prize_description_long;
+            prizeDescriptionCard.style.display = 'block';
+        } else {
+            prizeDescriptionCard.style.display = 'none';
+        }
+    }
+    
     document.getElementById('tokenInfo').textContent = 
         `${currentDraw.token_symbol || 'Unknown'} (${truncateAddress(currentDraw.token_address)})`;
     
@@ -203,7 +215,46 @@ function renderNumbersGrid() {
     }
     
     grid.innerHTML = html;
+    
+    // Apply theme styles to all balls (with a small delay to ensure DOM is ready)
+    setTimeout(() => {
+        applyThemeToBalls();
+    }, 50);
 }
+
+// Apply theme styles to number balls
+function applyThemeToBalls() {
+    if (!window.themeManager) {
+        // Fallback: ensure default golden style is applied
+        const filledBalls = document.querySelectorAll('.number-ball.filled');
+        filledBalls.forEach(ball => {
+            if (!ball.style.background || ball.style.background === 'none') {
+                ball.style.background = 'linear-gradient(135deg, #FFD700 0%, #B8860B 50%, #FFD700 100%)';
+                ball.style.color = '#000000';
+                ball.style.borderColor = '#FFD700';
+            }
+        });
+        return;
+    }
+    
+    const filledBalls = document.querySelectorAll('.number-ball.filled');
+    const availableBalls = document.querySelectorAll('.number-ball.available');
+    
+    filledBalls.forEach(ball => {
+        window.themeManager.applyBallStyles(ball, 'filled');
+    });
+    
+    availableBalls.forEach(ball => {
+        window.themeManager.applyBallStyles(ball, 'available');
+    });
+}
+
+// Listen for theme changes to re-render balls
+window.addEventListener('themeChanged', () => {
+    if (currentEntries && currentEntries.length > 0) {
+        applyThemeToBalls();
+    }
+});
 
 // Auto-refresh every 30 seconds
 setInterval(async () => {

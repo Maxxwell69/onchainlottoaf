@@ -9,13 +9,17 @@ function renderNavigation() {
     return `
         <nav class="main-nav">
             <div class="nav-brand">
-                <h2>🎰 On Chain Lotto</h2>
+                <a href="home.html" style="text-decoration: none; color: inherit; display: flex; align-items: center;">
+                    <img src="images/logo.png" alt="On Chain Lotto" class="site-logo" style="height: 50px; width: auto;" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    <h2 style="display: none; margin: 0;">On Chain Lotto</h2>
+                </a>
             </div>
             <div class="nav-menu">
                 <a href="index.html" class="nav-link">🎯 Dashboard</a>
-                ${isModerator ? '<a href="draw.html" class="nav-link">📊 Draws</a>' : ''}
+                ${isModerator ? '<a href="draws.html" class="nav-link">📊 Draws</a>' : ''}
                 ${isAdmin ? '<a href="tokens.html" class="nav-link">🎫 Tokens</a>' : ''}
                 ${isAdmin ? '<a href="users.html" class="nav-link">👥 Users</a>' : ''}
+                <a href="theme-manager.html" class="nav-link">🎨 Themes</a>
             </div>
             <div class="nav-user">
                 <span class="user-info">

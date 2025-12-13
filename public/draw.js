@@ -112,6 +112,9 @@ function getTimezoneAbbreviation(timezone) {
 // Load draw data
 async function loadDrawData() {
     try {
+        // Display prize description if available
+        const prizeDescriptionCard = document.getElementById('prizeDescriptionCard');
+        const prizeDescriptionLong = document.getElementById('prizeDescriptionLong');
         const response = await fetch(`${API_URL}/api/draws/${drawId}`);
         const data = await response.json();
         
@@ -127,6 +130,9 @@ async function loadDrawData() {
         updateProgressBar();
         renderNumbersGrid();
         renderEntriesTable();
+        updateDrawManagementButtons();
+        setupDrawManagementButtons();
+        setupPrizeEdit();
         
     } catch (error) {
         console.error('Error loading draw:', error);
@@ -139,10 +145,44 @@ function updateDrawInfo() {
     document.getElementById('drawTitle').textContent = currentDraw.draw_name;
     document.getElementById('drawSubtitle').textContent = `Draw #${currentDraw.id}`;
     
+    // Display prize description if available
+    const prizeDescriptionCard = document.getElementById('prizeDescriptionCard');
+    const prizeDescriptionLong = document.getElementById('prizeDescriptionLong');
+    const editPrizeBtn = document.getElementById('editPrizeBtn');
+    const editPrizeForm = document.getElementById('editPrizeForm');
+    
+    if (prizeDescriptionCard && prizeDescriptionLong) {
+        if (currentDraw.prize_description_short || currentDraw.prize_description_long) {
+            // Show long description if available, otherwise show short
+            if (currentDraw.prize_description_long) {
+                prizeDescriptionLong.textContent = currentDraw.prize_description_long;
+            } else if (currentDraw.prize_description_short) {
+                prizeDescriptionLong.textContent = currentDraw.prize_description_short;
+            }
+            prizeDescriptionCard.style.display = 'block';
+            
+            // Ensure form is hidden and button is visible
+            if (editPrizeForm) editPrizeForm.style.display = 'none';
+            if (prizeDescriptionLong) prizeDescriptionLong.style.display = 'block';
+            if (editPrizeBtn) editPrizeBtn.style.display = 'inline-block';
+        } else {
+            // Show card even if no description, so admin can add one
+            prizeDescriptionCard.style.display = 'block';
+            prizeDescriptionLong.textContent = 'No prize description set. Click "Edit Prize" to add one.';
+            prizeDescriptionLong.style.opacity = '0.7';
+            
+            // Ensure form is hidden and button is visible
+            if (editPrizeForm) editPrizeForm.style.display = 'none';
+            if (prizeDescriptionLong) prizeDescriptionLong.style.display = 'block';
+            if (editPrizeBtn) editPrizeBtn.style.display = 'inline-block';
+        }
+    }
+    
     // Update public link button
     const publicLinkBtn = document.getElementById('publicLinkBtn');
     if (publicLinkBtn) {
         publicLinkBtn.href = `public-draw.html?id=${drawId}`;
+        publicLinkBtn.target = '_blank';
     }
     
     document.getElementById('tokenInfo').textContent = 
@@ -228,6 +268,11 @@ function renderNumbersGrid() {
     }
     
     grid.innerHTML = html;
+    
+    // Apply theme styles to all balls (with a small delay to ensure DOM is ready)
+    setTimeout(() => {
+        applyThemeToBalls();
+    }, 50);
 }
 
 // Manual Add Transaction functionality
@@ -280,12 +325,19 @@ async function submitManualAddTransaction() {
         submitBtn.textContent = 'Adding...';
         submitBtn.disabled = true;
         
+        // Get auth headers
+        if (!authManager.isAuthenticated()) {
+            showToast('❌ You must be logged in to add entries', 'error');
+            window.location.href = '/login.html';
+            return;
+        }
+        
+        const authHeaders = authManager.getAuthHeaders();
+        
         // Submit to API
         const response = await fetch('/api/manual-entries/add', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: authHeaders,
             body: JSON.stringify({
                 drawId: currentDraw.id,
                 walletAddress: walletAddress,
@@ -397,6 +449,68 @@ function renderEntriesTable() {
             </div>
         </div>
     `).join('');
+    
+    // Apply theme styles to lotto balls (with delay to ensure DOM is ready)
+    setTimeout(() => {
+        applyThemeToLottoBalls();
+    }, 50);
+}
+
+// Apply theme styles to number balls
+function applyThemeToBalls() {
+    if (!window.themeManager) {
+        // Fallback: ensure default golden style is applied
+        const filledBalls = document.querySelectorAll('.number-ball.filled');
+        filledBalls.forEach(ball => {
+            if (!ball.style.background || ball.style.background === 'none') {
+                ball.style.background = 'linear-gradient(135deg, #FFD700 0%, #B8860B 50%, #FFD700 100%)';
+                ball.style.color = '#000000';
+                ball.style.borderColor = '#FFD700';
+            }
+        });
+        return;
+    }
+    
+    const filledBalls = document.querySelectorAll('.number-ball.filled');
+    const availableBalls = document.querySelectorAll('.number-ball.available');
+    
+    filledBalls.forEach(ball => {
+        window.themeManager.applyBallStyles(ball, 'filled');
+    });
+    
+    availableBalls.forEach(ball => {
+        window.themeManager.applyBallStyles(ball, 'available');
+    });
+}
+
+// Apply theme styles to lotto balls in entry list
+function applyThemeToLottoBalls() {
+    const lottoBalls = document.querySelectorAll('.lotto-ball');
+    
+    if (!window.themeManager) {
+        // Fallback: ensure default golden style is applied
+        lottoBalls.forEach(ball => {
+            if (!ball.style.background || ball.style.background === 'none' || ball.style.background === 'transparent') {
+                ball.style.background = 'linear-gradient(135deg, #FFD700 0%, #B8860B 50%, #FFD700 100%)';
+                ball.style.color = '#000000';
+                ball.style.borderColor = '#FFD700';
+                ball.style.borderWidth = '2px';
+                ball.style.borderStyle = 'solid';
+            }
+        });
+        return;
+    }
+    
+    lottoBalls.forEach(ball => {
+        window.themeManager.applyBallStyles(ball, 'filled');
+        
+        // Ensure ball is visible even if theme application fails
+        if (!ball.style.background || ball.style.background === 'none' || ball.style.background === 'transparent') {
+            ball.style.background = 'linear-gradient(135deg, #FFD700 0%, #B8860B 50%, #FFD700 100%)';
+            ball.style.color = '#000000';
+            ball.style.borderColor = '#FFD700';
+        }
+    });
 }
 
 // Scan for new buys using DexScreener (ALWAYS works)
@@ -412,8 +526,18 @@ document.getElementById('scanDexBtn').addEventListener('click', async () => {
     showToast('🔍 Scanning for new qualifying buys...', 'info');
     
     try {
+        // Get auth headers
+        if (!authManager.isAuthenticated()) {
+            showToast('❌ You must be logged in to scan', 'error');
+            window.location.href = '/login.html';
+            return;
+        }
+        
+        const authHeaders = authManager.getAuthHeaders();
+        
         const response = await fetch(`${API_URL}/api/draws/${drawId}/scan-dex`, {
-            method: 'POST'
+            method: 'POST',
+            headers: authHeaders
         });
         
         const data = await response.json();
@@ -523,11 +647,271 @@ function exportToCSV() {
     }
 }
 
+// Listen for theme changes to re-render balls
+window.addEventListener('themeChanged', () => {
+    if (currentEntries && currentEntries.length > 0) {
+        applyThemeToBalls();
+        applyThemeToLottoBalls();
+    }
+});
+
 // Auto-refresh every 30 seconds
 setInterval(async () => {
     console.log('Auto-refreshing draw data...');
     await loadDrawData();
 }, 30000);
+
+// Draw Management Functions
+async function markDrawAsComplete() {
+    if (!confirm('Are you sure you want to mark this draw as complete? This will end the draw.')) {
+        return;
+    }
+
+    try {
+        if (!authManager.isAuthenticated()) {
+            showToast('❌ You must be logged in', 'error');
+            return;
+        }
+
+        const authHeaders = authManager.getAuthHeaders();
+        const response = await fetch(`${API_URL}/api/draws/${drawId}/status`, {
+            method: 'PUT',
+            headers: authHeaders,
+            body: JSON.stringify({ status: 'completed' })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            showToast('✅ Draw marked as complete!', 'success');
+            await loadDrawData();
+        } else {
+            showToast(`❌ Error: ${data.error || 'Failed to update status'}`, 'error');
+        }
+    } catch (error) {
+        console.error('Error marking draw as complete:', error);
+        showToast('❌ Failed to update draw status', 'error');
+    }
+}
+
+async function deactivateDraw() {
+    if (!confirm('Are you sure you want to deactivate this draw? It will be marked as cancelled.')) {
+        return;
+    }
+
+    try {
+        if (!authManager.isAuthenticated()) {
+            showToast('❌ You must be logged in', 'error');
+            return;
+        }
+
+        const authHeaders = authManager.getAuthHeaders();
+        const response = await fetch(`${API_URL}/api/draws/${drawId}/status`, {
+            method: 'PUT',
+            headers: authHeaders,
+            body: JSON.stringify({ status: 'cancelled' })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            showToast('✅ Draw deactivated!', 'success');
+            await loadDrawData();
+        } else {
+            showToast(`❌ Error: ${data.error || 'Failed to update status'}`, 'error');
+        }
+    } catch (error) {
+        console.error('Error deactivating draw:', error);
+        showToast('❌ Failed to deactivate draw', 'error');
+    }
+}
+
+async function deleteDraw() {
+    if (!confirm(`⚠️ Are you sure you want to DELETE this draw?\n\nThis will permanently delete:\n- The draw\n- All entries (lotto numbers)\n- All scan history\n\nThis action cannot be undone!`)) {
+        return;
+    }
+
+    try {
+        if (!authManager.isAuthenticated()) {
+            showToast('❌ You must be logged in', 'error');
+            return;
+        }
+
+        const authHeaders = authManager.getAuthHeaders();
+        const response = await fetch(`${API_URL}/api/draws/${drawId}`, {
+            method: 'DELETE',
+            headers: authHeaders
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            showToast('✅ Draw deleted successfully!', 'success');
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 1500);
+        } else {
+            showToast(`❌ Error: ${data.error || 'Failed to delete draw'}`, 'error');
+        }
+    } catch (error) {
+        console.error('Error deleting draw:', error);
+        showToast('❌ Failed to delete draw', 'error');
+    }
+}
+
+// Update draw info to show/hide management buttons based on status
+function updateDrawManagementButtons() {
+    if (!currentDraw) return;
+
+    const markCompleteBtn = document.getElementById('markCompleteBtn');
+    const deactivateBtn = document.getElementById('deactivateBtn');
+    const deleteDrawBtn = document.getElementById('deleteDrawBtn');
+
+    // Show buttons based on draw status
+    if (currentDraw.status === 'active') {
+        markCompleteBtn.style.display = 'inline-flex';
+        deactivateBtn.style.display = 'inline-flex';
+    } else {
+        markCompleteBtn.style.display = 'none';
+        deactivateBtn.style.display = 'none';
+    }
+
+    // Delete button always available (admin only)
+    deleteDrawBtn.style.display = 'inline-flex';
+}
+
+// Setup event listeners for management buttons
+function setupDrawManagementButtons() {
+    const markCompleteBtn = document.getElementById('markCompleteBtn');
+    const deactivateBtn = document.getElementById('deactivateBtn');
+    const deleteDrawBtn = document.getElementById('deleteDrawBtn');
+
+    if (markCompleteBtn && !markCompleteBtn.hasAttribute('data-listener')) {
+        markCompleteBtn.addEventListener('click', markDrawAsComplete);
+        markCompleteBtn.setAttribute('data-listener', 'true');
+    }
+    if (deactivateBtn && !deactivateBtn.hasAttribute('data-listener')) {
+        deactivateBtn.addEventListener('click', deactivateDraw);
+        deactivateBtn.setAttribute('data-listener', 'true');
+    }
+    if (deleteDrawBtn && !deleteDrawBtn.hasAttribute('data-listener')) {
+        deleteDrawBtn.addEventListener('click', deleteDraw);
+        deleteDrawBtn.setAttribute('data-listener', 'true');
+    }
+}
+
+// Prize Edit Functions
+function setupPrizeEdit() {
+    const editPrizeBtn = document.getElementById('editPrizeBtn');
+    const cancelPrizeEditBtn = document.getElementById('cancelPrizeEditBtn');
+    const savePrizeBtn = document.getElementById('savePrizeBtn');
+    const editPrizeForm = document.getElementById('editPrizeForm');
+    const prizeDescriptionLong = document.getElementById('prizeDescriptionLong');
+    
+    if (!editPrizeBtn || !editPrizeForm) return;
+    
+    // Edit button click - show form
+    if (editPrizeBtn && !editPrizeBtn.hasAttribute('data-listener')) {
+        editPrizeBtn.addEventListener('click', () => {
+            // Populate form with current values
+            document.getElementById('editPrizeShort').value = currentDraw.prize_description_short || '';
+            document.getElementById('editPrizeLong').value = currentDraw.prize_description_long || '';
+            
+            // Show form, hide display
+            editPrizeForm.style.display = 'block';
+            prizeDescriptionLong.style.display = 'none';
+            editPrizeBtn.style.display = 'none';
+        });
+        editPrizeBtn.setAttribute('data-listener', 'true');
+    }
+    
+    // Cancel button
+    if (cancelPrizeEditBtn && !cancelPrizeEditBtn.hasAttribute('data-listener')) {
+        cancelPrizeEditBtn.addEventListener('click', () => {
+            editPrizeForm.style.display = 'none';
+            prizeDescriptionLong.style.display = 'block';
+            editPrizeBtn.style.display = 'inline-block';
+        });
+        cancelPrizeEditBtn.setAttribute('data-listener', 'true');
+    }
+    
+    // Save button
+    if (savePrizeBtn && !savePrizeBtn.hasAttribute('data-listener')) {
+        savePrizeBtn.addEventListener('click', async () => {
+            const prizeShort = document.getElementById('editPrizeShort').value.trim();
+            const prizeLong = document.getElementById('editPrizeLong').value.trim();
+            
+            if (!prizeShort && !prizeLong) {
+                showToast('❌ At least one prize description must be provided', 'error');
+                return;
+            }
+            
+            if (prizeShort && prizeShort.length > 150) {
+                showToast('❌ Short description must be 150 characters or less', 'error');
+                return;
+            }
+            
+            // Disable button and show loading
+            savePrizeBtn.disabled = true;
+            savePrizeBtn.textContent = '💾 Saving...';
+            
+            try {
+                if (!authManager.isAuthenticated()) {
+                    showToast('❌ You must be logged in to edit prizes', 'error');
+                    window.location.href = '/login.html';
+                    return;
+                }
+                
+                const authHeaders = authManager.getAuthHeaders();
+                
+                const response = await fetch(`${API_URL}/api/draws/${drawId}/prizes`, {
+                    method: 'PUT',
+                    headers: {
+                        ...authHeaders,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        prize_description_short: prizeShort || null,
+                        prize_description_long: prizeLong || null
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showToast('✅ Prize descriptions updated successfully!', 'success');
+                    
+                    // Update current draw data
+                    currentDraw.prize_description_short = prizeShort || null;
+                    currentDraw.prize_description_long = prizeLong || null;
+                    
+                    // Update display
+                    if (currentDraw.prize_description_long) {
+                        prizeDescriptionLong.textContent = currentDraw.prize_description_long;
+                    } else if (currentDraw.prize_description_short) {
+                        prizeDescriptionLong.textContent = currentDraw.prize_description_short;
+                    } else {
+                        prizeDescriptionLong.textContent = '';
+                    }
+                    
+                    // Hide form, show display
+                    editPrizeForm.style.display = 'none';
+                    prizeDescriptionLong.style.display = 'block';
+                    editPrizeBtn.style.display = 'inline-block';
+                } else {
+                    showToast(`❌ Error: ${data.error || 'Failed to update prizes'}`, 'error');
+                }
+            } catch (error) {
+                console.error('Error updating prizes:', error);
+                showToast('❌ Failed to update prizes. Check console for details.', 'error');
+            } finally {
+                savePrizeBtn.disabled = false;
+                savePrizeBtn.textContent = '💾 Save Changes';
+            }
+        });
+        savePrizeBtn.setAttribute('data-listener', 'true');
+    }
+}
 
 // Initial load
 loadDrawData();

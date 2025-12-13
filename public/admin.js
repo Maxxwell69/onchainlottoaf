@@ -104,20 +104,54 @@ if (createDrawForm) {
         // Format: YYYY-MM-DD HH:MM:SS (space instead of T)
         const startTimeEST = startTimeValue.replace('T', ' ') + ':00';
         
+        // Validate required fields
+        const drawName = document.getElementById('drawName').value.trim();
+        const tokenAddress = document.getElementById('tokenAddress').value.trim();
+        const tokenSymbol = document.getElementById('tokenSymbol').value.trim() || null;
+        const minUsdAmount = parseFloat(document.getElementById('minUsdAmount').value);
+
+        if (!drawName || !tokenAddress || !minUsdAmount || isNaN(minUsdAmount) || !startTimeEST) {
+            showToast('❌ Please fill in all required fields', 'error');
+            createBtn.disabled = false;
+            btnText.style.display = 'inline';
+            btnSpinner.style.display = 'none';
+            return;
+        }
+
+        const prizeDescriptionShort = document.getElementById('prizeDescriptionShort').value.trim();
+        const prizeDescriptionLong = document.getElementById('prizeDescriptionLong').value.trim();
+
+        if (!prizeDescriptionShort) {
+            showToast('❌ Please enter a short prize description', 'error');
+            createBtn.disabled = false;
+            btnText.style.display = 'inline';
+            btnSpinner.style.display = 'none';
+            return;
+        }
+
         const formData = {
-            draw_name: document.getElementById('drawName').value,
-            token_address: document.getElementById('tokenAddress').value,
-            token_symbol: document.getElementById('tokenSymbol').value || null,
-            min_usd_amount: parseFloat(document.getElementById('minUsdAmount').value),
+            draw_name: drawName,
+            token_address: tokenAddress,
+            token_symbol: tokenSymbol,
+            min_usd_amount: minUsdAmount,
             start_time: startTimeEST,
-            timezone: timezone
+            timezone: timezone || null,
+            prize_description_short: prizeDescriptionShort,
+            prize_description_long: prizeDescriptionLong || null
         };
+        
+        // Get auth headers - check if user is authenticated
+        if (!authManager.isAuthenticated()) {
+            showToast('❌ You must be logged in to create a draw', 'error');
+            window.location.href = '/login.html';
+            return;
+        }
+        
+        const authHeaders = authManager.getAuthHeaders();
         
         const response = await fetch(`${API_URL}/api/draws`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: authHeaders,
             body: JSON.stringify(formData)
         });
         
@@ -132,7 +166,9 @@ if (createDrawForm) {
                 window.location.href = `draw.html?id=${data.draw.id}`;
             }, 1500);
         } else {
-            showToast(`❌ Error: ${data.error || 'Failed to create draw'}`, 'error');
+            const errorMsg = data.details || data.error || 'Failed to create draw';
+            showToast(`❌ Error: ${errorMsg}`, 'error');
+            console.error('Draw creation error:', data);
         }
     } catch (error) {
         console.error('Error creating draw:', error);
@@ -170,11 +206,11 @@ function renderDrawItem(draw) {
                 </div>
             </div>
                 <div class="draw-actions">
-                <button class="btn btn-primary" onclick="window.location.href='draw.html?id=${draw.id}'">
-                    🔧 Admin View →
+                <button class="btn btn-primary" onclick="window.location.href='public-draw.html?id=${draw.id}'">
+                    🌐 View Draw →
                 </button>
-                <button class="btn btn-secondary" onclick="window.location.href='public-draw.html?id=${draw.id}'" style="background: var(--primary); color: white;">
-                    🌐 Public View →
+                <button class="btn btn-secondary" onclick="window.location.href='draw.html?id=${draw.id}'">
+                    🔧 Admin View →
                 </button>
                 ${draw.status === 'active' ? `
                     <button class="btn btn-secondary" onclick="scanDraw(${draw.id})">
@@ -197,7 +233,10 @@ async function loadActiveDraws() {
     const container = document.getElementById('activeDrawsList');
     
     try {
-        const response = await fetch(`${API_URL}/api/draws/active`);
+        const authHeaders = authManager.getAuthHeaders();
+        const response = await fetch(`${API_URL}/api/draws/active`, {
+            headers: authHeaders
+        });
         const data = await response.json();
         
         if (data.draws && data.draws.length > 0) {
@@ -226,7 +265,10 @@ async function loadAllDraws() {
     const container = document.getElementById('allDrawsList');
     
     try {
-        const response = await fetch(`${API_URL}/api/draws`);
+        const authHeaders = authManager.getAuthHeaders();
+        const response = await fetch(`${API_URL}/api/draws`, {
+            headers: authHeaders
+        });
         const data = await response.json();
         
         if (data.draws && data.draws.length > 0) {
@@ -255,8 +297,10 @@ async function scanDraw(drawId) {
   showToast('🔍 Scanning for new buys...', 'info');
   
   try {
+    const authHeaders = authManager.getAuthHeaders();
     const response = await fetch(`${API_URL}/api/draws/${drawId}/scan`, {
-      method: 'POST'
+      method: 'POST',
+      headers: authHeaders
     });
     
     const data = await response.json();
@@ -283,8 +327,10 @@ async function deleteDraw(drawId, drawName) {
   showToast('🗑️ Deleting draw...', 'info');
   
   try {
+    const authHeaders = authManager.getAuthHeaders();
     const response = await fetch(`${API_URL}/api/draws/${drawId}`, {
-      method: 'DELETE'
+      method: 'DELETE',
+      headers: authHeaders
     });
     
     const data = await response.json();
@@ -311,8 +357,10 @@ async function clearScanHistory(drawId, drawName) {
   showToast('🧹 Clearing scan history...', 'info');
   
   try {
+    const authHeaders = authManager.getAuthHeaders();
     const response = await fetch(`${API_URL}/api/draws/${drawId}/scan-history`, {
-      method: 'DELETE'
+      method: 'DELETE',
+      headers: authHeaders
     });
     
     const data = await response.json();
@@ -338,7 +386,10 @@ document.getElementById('refreshDrawsBtn').addEventListener('click', () => {
 // Load managed tokens for dropdown
 async function loadManagedTokens() {
     try {
-        const response = await fetch(`${API_URL}/api/tokens`);
+        const authHeaders = authManager.getAuthHeaders();
+        const response = await fetch(`${API_URL}/api/tokens`, {
+            headers: authHeaders
+        });
         const data = await response.json();
         
         const select = document.getElementById('tokenSelect');
@@ -424,7 +475,20 @@ if (startNowBtn) {
 }
 
 // Initialize role-based UI and load data
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    // Check authentication first
+    if (!authManager.isAuthenticated()) {
+        // Try to verify token
+        const isValid = await authManager.verifyToken();
+        if (!isValid) {
+            showToast('❌ Please log in to continue', 'error');
+            setTimeout(() => {
+                window.location.href = '/login.html';
+            }, 1500);
+            return;
+        }
+    }
+    
     initRoleBasedUI();
     loadActiveDraws();
     loadAllDraws();

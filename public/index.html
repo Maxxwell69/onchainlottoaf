@@ -11,7 +11,8 @@
     <div class="container">
         <div id="main-navigation"></div>
         <header>
-            <h1>🎰 On Chain Lotto Draw</h1>
+            <img src="images/logo.png" alt="On Chain Lotto" class="site-logo" style="height: 60px; width: auto;" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+            <h1 style="display: none; margin: 0;">🎰 On Chain Lotto Draw</h1>
             <p class="subtitle">Solana Meme Coin Lotto System</p>
         </header>
 
@@ -77,6 +78,18 @@
                     <small>When the draw begins accepting entries</small>
                 </div>
 
+                <div class="form-group">
+                    <label for="prizeDescriptionShort">Prize Description (Short)*</label>
+                    <textarea id="prizeDescriptionShort" rows="2" maxlength="150" placeholder="Brief prize description for cards (max 150 characters)" required></textarea>
+                    <small>Short description shown on draw cards (e.g., "Win $10,000 in BONK tokens!")</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="prizeDescriptionLong">Prize Description (Long)</label>
+                    <textarea id="prizeDescriptionLong" rows="5" placeholder="Detailed prize description for draw page (optional)"></textarea>
+                    <small>Detailed description shown on the full draw page. Can include prize breakdown, rules, etc.</small>
+                </div>
+
                 <button type="submit" class="btn btn-primary" id="createBtn">
                     <span id="createBtnText">Create Lotto Draw</span>
                     <span id="createBtnSpinner" class="spinner" style="display: none;"></span>
@@ -85,7 +98,7 @@
         </div>
 
         <!-- Active Draws -->
-        <div class="card">
+        <div class="card" id="draws-section">
             <div class="card-header">
                 <h2>Active Draws</h2>
                 <button class="btn btn-secondary" id="refreshDrawsBtn">🔄 Refresh</button>
@@ -109,6 +122,8 @@
     <!-- Toast Notification -->
     <div id="toast" class="toast"></div>
 
+    <script src="themes.js"></script>
+    <script src="theme-selector.js"></script>
     <script src="auth.js"></script>
     <script src="navigation.js"></script>
     <script src="admin.js"></script>

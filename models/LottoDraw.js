@@ -9,23 +9,48 @@ class LottoDraw {
       token_symbol,
       min_usd_amount,
       timezone,
-      start_time
+      start_time,
+      prize_description_short,
+      prize_description_long
     } = drawData;
 
+    // Validate and format start_time
+    let formattedStartTime = start_time;
+    if (typeof start_time === 'string') {
+      // Handle format: "YYYY-MM-DD HH:MM:SS"
+      if (start_time.includes(' ')) {
+        formattedStartTime = start_time;
+      } 
+      // Handle format: "YYYY-MM-DDTHH:MM:SS"
+      else if (start_time.includes('T')) {
+        formattedStartTime = start_time.replace('T', ' ').replace(/\.\d{3}Z?$/, '');
+      }
+    }
+
     const sql = `
-      INSERT INTO lotto_draws (draw_name, token_address, token_symbol, min_usd_amount, timezone, start_time)
-      VALUES ($1, $2, $3, $4, $5, $6::timestamp without time zone)
+      INSERT INTO lotto_draws (draw_name, token_address, token_symbol, min_usd_amount, timezone, start_time, prize_description_short, prize_description_long)
+      VALUES ($1, $2, $3, $4, $5, $6::timestamp without time zone, $7, $8)
       RETURNING *
     `;
 
-    const result = await query(sql, [
-      draw_name,
-      token_address,
-      token_symbol,
-      min_usd_amount,
-      timezone || null,
-      start_time
-    ]);
+    try {
+      const result = await query(sql, [
+        draw_name,
+        token_address,
+        token_symbol || null,
+        min_usd_amount,
+        timezone || null,
+        formattedStartTime,
+        prize_description_short || null,
+        prize_description_long || null
+      ]);
+      return result.rows[0];
+    } catch (dbError) {
+      console.error('Database error creating draw:', dbError);
+      console.error('SQL:', sql);
+      console.error('Parameters:', [draw_name, token_address, token_symbol, min_usd_amount, timezone, formattedStartTime, prize_description_short, prize_description_long]);
+      throw dbError;
+    }
 
     return result.rows[0];
   }
@@ -88,6 +113,19 @@ class LottoDraw {
       RETURNING *
     `;
     const result = await query(sql, [filledSlots, drawId]);
+    return result.rows[0];
+  }
+
+  // Update prize descriptions
+  static async updatePrizes(drawId, prizeDescriptionShort, prizeDescriptionLong) {
+    const sql = `
+      UPDATE lotto_draws 
+      SET prize_description_short = $1, 
+          prize_description_long = $2
+      WHERE id = $3 
+      RETURNING *
+    `;
+    const result = await query(sql, [prizeDescriptionShort || null, prizeDescriptionLong || null, drawId]);
     return result.rows[0];
   }
 
