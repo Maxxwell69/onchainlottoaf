@@ -8,10 +8,15 @@
 </head>
 <body>
     <div class="container">
+        <div id="main-navigation"></div>
         <header>
-            <a href="index.html" class="back-link">← Back to Admin</a>
+            <div style="display: flex; gap: 10px; align-items: center; margin-top: 10px;">
+                <a href="#" class="btn btn-secondary" id="publicLinkBtn" style="background: var(--primary); color: white;">
+                    🌐 View Public Page
+                </a>
+            </div>
             <h1 id="drawTitle">Loading...</h1>
-            <p class="subtitle" id="drawSubtitle"></p>
+            <p class="subtitle" id="drawSubtitle">Admin View</p>
         </header>
 
         <!-- Time display now matches admin page (local time) -->
@@ -24,10 +29,6 @@
                     <span class="value" id="tokenInfo">-</span>
                 </div>
                 <div class="info-item">
-                    <span class="label">Min Purchase</span>
-                    <span class="value" id="minPurchase">-</span>
-                </div>
-                <div class="info-item">
                     <span class="label">Status</span>
                     <span class="value" id="drawStatus">-</span>
                 </div>
@@ -38,10 +39,6 @@
                 <div class="info-item">
                     <span class="label">Start Time</span>
                     <span class="value" id="startTime">-</span>
-                </div>
-                <div class="info-item">
-                    <span class="label">End Time</span>
-                    <span class="value" id="endTime">-</span>
                 </div>
             </div>
         </div>
@@ -148,6 +145,8 @@
     <!-- Toast Notification -->
     <div id="toast" class="toast"></div>
 
+    <script src="auth.js"></script>
+    <script src="navigation.js"></script>
     <script src="draw.js"></script>
 </body>
 </html>

@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const { pool } = require('../database/db');
-const { hashPassword, comparePassword } = require('../middleware/auth');
+const { hashPassword, comparePassword, authenticateToken, requireAdmin } = require('../middleware/auth');
 
 // Get all users (admin only)
-router.get('/', async (req, res) => {
+router.get('/', authenticateToken, requireAdmin, async (req, res) => {
     try {
         const { page = 1, limit = 10, search = '', role = '', status = '' } = req.query;
         const offset = (page - 1) * limit;
@@ -110,7 +110,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // Create new user
-router.post('/', async (req, res) => {
+router.post('/', authenticateToken, requireAdmin, async (req, res) => {
     try {
         const { username, email, password, role = 'user', status = 'active' } = req.body;
         const createdBy = req.user.id;
@@ -158,7 +158,7 @@ router.post('/', async (req, res) => {
 });
 
 // Update user
-router.put('/:id', async (req, res) => {
+router.put('/:id', authenticateToken, requireAdmin, async (req, res) => {
     try {
         const { id } = req.params;
         const { username, email, role, status, password } = req.body;
@@ -236,7 +236,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // Delete user
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', authenticateToken, requireAdmin, async (req, res) => {
     try {
         const { id } = req.params;
         const deletedBy = req.user.id;

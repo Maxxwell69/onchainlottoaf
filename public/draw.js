@@ -87,6 +87,28 @@ function truncateAddress(address) {
     return `${address.substring(0, 8)}...${address.substring(address.length - 6)}`;
 }
 
+// Get timezone abbreviation
+function getTimezoneAbbreviation(timezone) {
+    if (!timezone) return 'UTC';
+    
+    try {
+        // Get current date in the specified timezone
+        const date = new Date();
+        const formatter = new Intl.DateTimeFormat('en-US', {
+            timeZone: timezone,
+            timeZoneName: 'short'
+        });
+        
+        const parts = formatter.formatToParts(date);
+        const timeZoneName = parts.find(part => part.type === 'timeZoneName');
+        
+        return timeZoneName ? timeZoneName.value : timezone;
+    } catch (error) {
+        // If timezone is invalid, return the timezone string or a shortened version
+        return timezone.split('/').pop() || 'UTC';
+    }
+}
+
 // Load draw data
 async function loadDrawData() {
     try {
@@ -117,10 +139,14 @@ function updateDrawInfo() {
     document.getElementById('drawTitle').textContent = currentDraw.draw_name;
     document.getElementById('drawSubtitle').textContent = `Draw #${currentDraw.id}`;
     
+    // Update public link button
+    const publicLinkBtn = document.getElementById('publicLinkBtn');
+    if (publicLinkBtn) {
+        publicLinkBtn.href = `public-draw.html?id=${drawId}`;
+    }
+    
     document.getElementById('tokenInfo').textContent = 
         `${currentDraw.token_symbol || 'Unknown'} (${truncateAddress(currentDraw.token_address)})`;
-    
-    document.getElementById('minPurchase').textContent = formatUSD(currentDraw.min_usd_amount);
     
     const statusEl = document.getElementById('drawStatus');
     statusEl.textContent = currentDraw.status.toUpperCase();
@@ -129,8 +155,11 @@ function updateDrawInfo() {
     document.getElementById('filledSlots').textContent = 
         `${currentDraw.filled_slots} / ${currentDraw.total_slots}`;
     
-    document.getElementById('startTime').textContent = formatDate(currentDraw.start_time);
-    document.getElementById('endTime').textContent = formatDate(currentDraw.end_time);
+    // Display start time with timezone
+    const startTimeDisplay = formatDate(currentDraw.start_time);
+    const timezone = currentDraw.timezone || 'UTC';
+    const timezoneAbbr = getTimezoneAbbreviation(timezone);
+    document.getElementById('startTime').textContent = `${startTimeDisplay} (${timezoneAbbr})`;
 }
 
 // Update progress bar
@@ -236,11 +265,6 @@ async function submitManualAddTransaction() {
         // Validation
         if (!transactionTime || !walletAddress || !transactionSignature || !tokenAmount || !usdAmount) {
             showToast('Please fill in all required fields', 'error');
-            return;
-        }
-        
-        if (usdAmount < currentDraw.min_usd_amount) {
-            showToast(`USD amount must be at least $${currentDraw.min_usd_amount}`, 'error');
             return;
         }
         

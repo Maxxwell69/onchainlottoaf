@@ -4,14 +4,15 @@ const LottoDraw = require('../models/LottoDraw');
 const LottoEntry = require('../models/LottoEntry');
 const scanService = require('../services/scanService');
 const heliusService = require('../services/heliusService');
+const { authenticateToken, requireModerator, requireAdmin } = require('../middleware/auth');
 
 /**
  * POST /api/draws
- * Create a new lotto draw
+ * Create a new lotto draw (Moderator+ required)
  */
-router.post('/', async (req, res) => {
+router.post('/', authenticateToken, requireModerator, async (req, res) => {
   try {
-    const { draw_name, token_address, token_symbol, min_usd_amount, start_time } = req.body;
+    const { draw_name, token_address, token_symbol, min_usd_amount, timezone, start_time } = req.body;
 
     // Validation
     if (!draw_name || !token_address || !min_usd_amount || !start_time) {
@@ -34,6 +35,7 @@ router.post('/', async (req, res) => {
       token_address,
       token_symbol: finalTokenSymbol,
       min_usd_amount,
+      timezone: timezone || null,
       start_time: start_time // Store exactly as provided
     });
 
@@ -123,7 +125,7 @@ router.get('/:id', async (req, res) => {
  * POST /api/draws/:id/scan-dex
  * Force DexScreener scan method
  */
-router.post('/:id/scan-dex', async (req, res) => {
+router.post('/:id/scan-dex', authenticateToken, requireModerator, async (req, res) => {
   try {
     const { id } = req.params;
     
@@ -228,7 +230,7 @@ router.post('/:id/scan-dex', async (req, res) => {
  * POST /api/draws/:id/scan
  * Manually trigger a scan for a specific draw
  */
-router.post('/:id/scan', async (req, res) => {
+router.post('/:id/scan', authenticateToken, requireModerator, async (req, res) => {
   try {
     const { id } = req.params;
     
@@ -283,7 +285,7 @@ router.get('/:id/entries', async (req, res) => {
  * PUT /api/draws/:id/status
  * Update draw status
  */
-router.put('/:id/status', async (req, res) => {
+router.put('/:id/status', authenticateToken, requireModerator, async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
@@ -320,7 +322,7 @@ router.put('/:id/status', async (req, res) => {
  * DELETE /api/draws/:id
  * Delete a draw and all its entries
  */
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', authenticateToken, requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     
@@ -357,7 +359,7 @@ router.delete('/:id', async (req, res) => {
  * POST /api/draws/:id/clean-blacklisted
  * Remove entries that are now blacklisted
  */
-router.post('/:id/clean-blacklisted', async (req, res) => {
+router.post('/:id/clean-blacklisted', authenticateToken, requireModerator, async (req, res) => {
   try {
     const { id } = req.params;
     
@@ -418,7 +420,7 @@ router.post('/:id/clean-blacklisted', async (req, res) => {
  * DELETE /api/draws/:id/scan-history
  * Clear scan history for a draw
  */
-router.delete('/:id/scan-history', async (req, res) => {
+router.delete('/:id/scan-history', authenticateToken, requireModerator, async (req, res) => {
   try {
     const { id } = req.params;
     

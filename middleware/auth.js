@@ -40,6 +40,9 @@ const requireRole = (roles) => {
 // Admin only middleware
 const requireAdmin = requireRole(['admin', 'super_admin']);
 
+// Moderator or Admin middleware
+const requireModerator = requireRole(['moderator', 'admin', 'super_admin']);
+
 // Super admin only middleware
 const requireSuperAdmin = requireRole(['super_admin']);
 
@@ -71,6 +74,7 @@ module.exports = {
     authenticateToken,
     requireRole,
     requireAdmin,
+    requireModerator,
     requireSuperAdmin,
     generateToken,
     hashPassword,

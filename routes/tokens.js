@@ -3,12 +3,13 @@ const router = express.Router();
 const ManagedToken = require('../models/ManagedToken');
 const WalletBlacklist = require('../models/WalletBlacklist');
 const heliusService = require('../services/heliusService');
+const { authenticateToken, requireAdmin } = require('../middleware/auth');
 
 /**
  * POST /api/tokens
  * Create a new managed token
  */
-router.post('/', async (req, res) => {
+router.post('/', authenticateToken, requireAdmin, async (req, res) => {
   try {
     const { token_address, token_symbol, token_name, notes } = req.body;
 
@@ -108,7 +109,7 @@ router.get('/:id', async (req, res) => {
  * PUT /api/tokens/:id
  * Update a managed token
  */
-router.put('/:id', async (req, res) => {
+router.put('/:id', authenticateToken, requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const updates = req.body;
@@ -139,7 +140,7 @@ router.put('/:id', async (req, res) => {
  * DELETE /api/tokens/:id
  * Delete a managed token
  */
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', authenticateToken, requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     await ManagedToken.delete(id);
@@ -161,7 +162,7 @@ router.delete('/:id', async (req, res) => {
  * POST /api/tokens/:id/blacklist
  * Add wallet(s) to blacklist
  */
-router.post('/:id/blacklist', async (req, res) => {
+router.post('/:id/blacklist', authenticateToken, requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { wallet_address, wallets, reason, notes } = req.body;
@@ -209,7 +210,7 @@ router.post('/:id/blacklist', async (req, res) => {
  * DELETE /api/tokens/:id/blacklist/:walletAddress
  * Remove wallet from blacklist
  */
-router.delete('/:id/blacklist/:walletAddress', async (req, res) => {
+router.delete('/:id/blacklist/:walletAddress', authenticateToken, requireAdmin, async (req, res) => {
   try {
     const { id, walletAddress } = req.params;
     await WalletBlacklist.remove(id, walletAddress);

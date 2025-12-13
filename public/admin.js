@@ -65,8 +65,24 @@ function truncateAddress(address) {
     return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
 }
 
-// Create Draw Form Handler
-document.getElementById('createDrawForm').addEventListener('submit', async (e) => {
+// Initialize role-based UI
+function initRoleBasedUI() {
+    const user = authManager.getCurrentUser();
+    if (!user) return;
+    
+    const isModerator = user.role === 'moderator' || user.role === 'admin' || user.role === 'super_admin';
+    
+    // Show/hide create draw form based on role
+    const createDrawCard = document.getElementById('createDrawCard');
+    if (createDrawCard) {
+        createDrawCard.style.display = isModerator ? 'block' : 'none';
+    }
+}
+
+// Create Draw Form Handler (only if form exists)
+const createDrawForm = document.getElementById('createDrawForm');
+if (createDrawForm) {
+    createDrawForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     
     const createBtn = document.getElementById('createBtn');
@@ -126,7 +142,8 @@ document.getElementById('createDrawForm').addEventListener('submit', async (e) =
         btnText.style.display = 'inline';
         btnSpinner.style.display = 'none';
     }
-});
+    });
+}
 
 // Render draw item
 function renderDrawItem(draw) {
@@ -144,10 +161,6 @@ function renderDrawItem(draw) {
                     <span class="detail-value">${draw.token_symbol || 'Unknown'}</span>
                 </div>
                 <div class="detail-item">
-                    <span class="detail-label">Min Purchase</span>
-                    <span class="detail-value">${formatUSD(draw.min_usd_amount)}</span>
-                </div>
-                <div class="detail-item">
                     <span class="detail-label">Progress</span>
                     <span class="detail-value">${draw.filled_slots}/${draw.total_slots} (${progress}%)</span>
                 </div>
@@ -156,9 +169,12 @@ function renderDrawItem(draw) {
                     <span class="detail-value">${formatDate(draw.start_time)}</span>
                 </div>
             </div>
-            <div class="draw-actions">
+                <div class="draw-actions">
                 <button class="btn btn-primary" onclick="window.location.href='draw.html?id=${draw.id}'">
-                    View Draw →
+                    🔧 Admin View →
+                </button>
+                <button class="btn btn-secondary" onclick="window.location.href='public-draw.html?id=${draw.id}'" style="background: var(--primary); color: white;">
+                    🌐 Public View →
                 </button>
                 ${draw.status === 'active' ? `
                     <button class="btn btn-secondary" onclick="scanDraw(${draw.id})">
@@ -326,7 +342,7 @@ async function loadManagedTokens() {
         const data = await response.json();
         
         const select = document.getElementById('tokenSelect');
-        if (data.tokens && data.tokens.length > 0) {
+        if (select && data.tokens && data.tokens.length > 0) {
             // Add managed tokens to dropdown
             data.tokens.forEach(token => {
                 const option = document.createElement('option');
@@ -344,54 +360,79 @@ async function loadManagedTokens() {
     }
 }
 
-// Token dropdown change handler
-document.getElementById('tokenSelect').addEventListener('change', (e) => {
-    const value = e.target.value;
-    if (value) {
-        const token = JSON.parse(value);
-        document.getElementById('tokenAddress').value = token.address;
-        document.getElementById('tokenSymbol').value = token.symbol || '';
-        
-        // Auto-generate draw name if empty
-        const drawNameField = document.getElementById('drawName');
-        if (!drawNameField.value && token.symbol) {
-            const now = new Date();
-            drawNameField.value = `${token.symbol} Draw - ${now.toLocaleDateString()}`;
+// Token dropdown change handler (only if element exists)
+const tokenSelect = document.getElementById('tokenSelect');
+if (tokenSelect) {
+    tokenSelect.addEventListener('change', (e) => {
+        const value = e.target.value;
+        if (value) {
+            const token = JSON.parse(value);
+            const tokenAddressField = document.getElementById('tokenAddress');
+            const tokenSymbolField = document.getElementById('tokenSymbol');
+            
+            if (tokenAddressField) tokenAddressField.value = token.address;
+            if (tokenSymbolField) tokenSymbolField.value = token.symbol || '';
+            
+            // Auto-generate draw name if empty
+            const drawNameField = document.getElementById('drawName');
+            if (drawNameField && !drawNameField.value && token.symbol) {
+                const now = new Date();
+                drawNameField.value = `${token.symbol} Draw - ${now.toLocaleDateString()}`;
+            }
         }
-    }
-});
+    });
+}
 
 // Set default timezone and start time
-document.getElementById('timezoneSelect').value = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+// Initialize form elements (only if they exist - for moderators+)
+const timezoneSelect = document.getElementById('timezoneSelect');
+const startTimeInput = document.getElementById('startTime');
+const startNowBtn = document.getElementById('startNowBtn');
 
-// Set start time to local computer time (not UTC)
-const now = new Date();
-const localTimeString = now.getFullYear() + '-' + 
-    String(now.getMonth() + 1).padStart(2, '0') + '-' + 
-    String(now.getDate()).padStart(2, '0') + 'T' + 
-    String(now.getHours()).padStart(2, '0') + ':' + 
-    String(now.getMinutes()).padStart(2, '0');
-document.getElementById('startTime').value = localTimeString;
+if (timezoneSelect) {
+    timezoneSelect.value = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+}
 
-// Timezone conversion removed - using local time directly
-
-// Start from now button functionality
-document.getElementById('startNowBtn').addEventListener('click', () => {
+if (startTimeInput) {
+    // Set start time to local computer time (not UTC)
     const now = new Date();
-    
-    // Use local computer time (not UTC)
     const localTimeString = now.getFullYear() + '-' + 
         String(now.getMonth() + 1).padStart(2, '0') + '-' + 
         String(now.getDate()).padStart(2, '0') + 'T' + 
         String(now.getHours()).padStart(2, '0') + ':' + 
         String(now.getMinutes()).padStart(2, '0');
-    
-    document.getElementById('startTime').value = localTimeString;
-    showToast('✅ Start time set to current local time', 'success');
-});
+    startTimeInput.value = localTimeString;
+}
 
-// Initial load
-loadActiveDraws();
-loadAllDraws();
-loadManagedTokens();
+// Start from now button functionality (only if button exists)
+if (startNowBtn) {
+    startNowBtn.addEventListener('click', () => {
+        const now = new Date();
+        
+        // Use local computer time (not UTC)
+        const localTimeString = now.getFullYear() + '-' + 
+            String(now.getMonth() + 1).padStart(2, '0') + '-' + 
+            String(now.getDate()).padStart(2, '0') + 'T' + 
+            String(now.getHours()).padStart(2, '0') + ':' + 
+            String(now.getMinutes()).padStart(2, '0');
+        
+        if (startTimeInput) {
+            startTimeInput.value = localTimeString;
+        }
+        showToast('✅ Start time set to current local time', 'success');
+    });
+}
+
+// Initialize role-based UI and load data
+document.addEventListener('DOMContentLoaded', () => {
+    initRoleBasedUI();
+    loadActiveDraws();
+    loadAllDraws();
+    
+    // Only load tokens if user is moderator+ (for the form dropdown)
+    const user = authManager.getCurrentUser();
+    if (user && (user.role === 'moderator' || user.role === 'admin' || user.role === 'super_admin')) {
+        loadManagedTokens();
+    }
+});
 

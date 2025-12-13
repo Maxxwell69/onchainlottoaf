@@ -8,12 +8,13 @@ class LottoDraw {
       token_address,
       token_symbol,
       min_usd_amount,
+      timezone,
       start_time
     } = drawData;
 
     const sql = `
-      INSERT INTO lotto_draws (draw_name, token_address, token_symbol, min_usd_amount, start_time)
-      VALUES ($1, $2, $3, $4, $5::timestamp without time zone)
+      INSERT INTO lotto_draws (draw_name, token_address, token_symbol, min_usd_amount, timezone, start_time)
+      VALUES ($1, $2, $3, $4, $5, $6::timestamp without time zone)
       RETURNING *
     `;
 
@@ -22,6 +23,7 @@ class LottoDraw {
       token_address,
       token_symbol,
       min_usd_amount,
+      timezone || null,
       start_time
     ]);
 

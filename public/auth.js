@@ -98,11 +98,24 @@ class AuthManager {
 // Global auth manager instance
 const authManager = new AuthManager();
 
+// Public pages that don't require authentication
+const PUBLIC_PAGES = [
+    'login.html',
+    'register.html',
+    'home.html',
+    'public-draw.html'
+];
+
+// Check if current page is public
+function isPublicPage() {
+    const pathname = window.location.pathname;
+    return PUBLIC_PAGES.some(page => pathname.includes(page));
+}
+
 // Check authentication on page load
 document.addEventListener('DOMContentLoaded', async () => {
-    // Skip auth check for login page
-    if (window.location.pathname.includes('login.html') || 
-        window.location.pathname.includes('home.html')) {
+    // Skip auth check for public pages
+    if (isPublicPage()) {
         return;
     }
 
