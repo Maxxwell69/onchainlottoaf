@@ -83,7 +83,7 @@ function renderDrawCard(draw, isLoggedIn = false) {
                 ` : ''}
                 <div>
                     <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.25rem;">Token</div>
-                    <div style="font-weight: 600; color: var(--text);">${draw.token_symbol || 'Unknown'}</div>
+                    <div style="font-weight: 600; color: var(--text);">$AF</div>
                 </div>
                 <div>
                     <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.25rem;">Progress</div>
