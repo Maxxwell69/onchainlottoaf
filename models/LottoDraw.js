@@ -80,7 +80,7 @@ class LottoDraw {
   }
 
   // Get active draws
-  // Draws remain visible (including completed) until admin explicitly deactivates (cancelled) or deletes them
+  // Draws remain visible (including completed) until admin explicitly marks as drawn, deactivates (cancelled), or deletes them
   static async getActive() {
     const sql = `
       SELECT *, start_time::text as start_time_text FROM lotto_draws 

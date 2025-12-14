@@ -24,42 +24,115 @@ function showToast(message, type = 'info') {
     }, 4000);
 }
 
-// Format functions - display times exactly as stored (no timezone conversion)
-function formatDate(dateString) {
+// Format start_time - it's stored as timezone-naive in the draw's timezone (not UTC)
+// The stored time is already in EST/EDT, so we just display it as-is
+function formatDateInTimezone(dateString, drawTimezone) {
     if (!dateString) return 'N/A';
     
     try {
-        // Handle both formats: "YYYY-MM-DD HH:MM:SS" and "YYYY-MM-DDTHH:MM:SS.sssZ"
+        // Parse the date string (timezone-naive, already in the draw's timezone)
         let datePart, timePart;
-        
         if (dateString.includes('T')) {
-            // ISO format: "2025-10-17T23:30:00.000Z"
-            // The Z means UTC, but we want to treat this as local time
             const isoDate = dateString.split('T')[0];
-            const isoTime = dateString.split('T')[1].split('.')[0]; // Remove milliseconds and Z
+            const isoTime = dateString.split('T')[1].split('.')[0].replace('Z', '');
             datePart = isoDate;
             timePart = isoTime;
         } else {
-            // Space format: "2025-10-17 23:30:00"
             [datePart, timePart] = dateString.split(' ');
         }
         
         const [year, month, day] = datePart.split('-');
         const [hour, minute, second] = timePart.split(':');
         
-        // Create date using local timezone but with the exact values
-        // This treats the time as if it's already in the correct timezone
-        const date = new Date(year, month - 1, day, hour, minute, second || 0);
+        // The stored time is already in the draw's timezone (EST/EDT)
+        // We just need to format it for display
+        // Create a date object - JavaScript will interpret this as local time
+        // but we'll format it directly from the components
+        const hour12 = parseInt(hour) % 12 || 12;
+        const ampm = parseInt(hour) >= 12 ? 'PM' : 'AM';
+        const monthStr = String(parseInt(month)).padStart(2, '0');
+        const dayStr = String(parseInt(day)).padStart(2, '0');
+        const minuteStr = String(parseInt(minute)).padStart(2, '0');
         
-        // Display time exactly as stored (no timezone conversion)
-        return date.toLocaleString('en-US', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: true
-        });
+        return `${monthStr}/${dayStr}/${year}, ${hour12}:${minuteStr} ${ampm}`;
+    } catch (error) {
+        console.error('Error formatting date:', error, 'Input:', dateString);
+        return 'Invalid Date';
+    }
+}
+
+// Format functions - convert UTC timestamps to draw's timezone for display
+function formatDate(dateString, drawTimezone = null) {
+    if (!dateString) return 'N/A';
+    
+    try {
+        // Handle both formats: "YYYY-MM-DD HH:MM:SS" and "YYYY-MM-DDTHH:MM:SS.sssZ"
+        let datePart, timePart;
+        let isUTC = false;
+        
+        if (dateString.includes('T')) {
+            // ISO format: "2025-10-17T23:30:00.000Z"
+            if (dateString.includes('Z') || dateString.includes('+') || dateString.includes('-', 10)) {
+                isUTC = true;
+            }
+            const isoDate = dateString.split('T')[0];
+            const isoTime = dateString.split('T')[1].split('.')[0].replace('Z', ''); // Remove milliseconds and Z
+            datePart = isoDate;
+            timePart = isoTime;
+        } else {
+            // Space format: "YYYY-MM-DD HH:MM:SS" - assume UTC if no timezone info
+            [datePart, timePart] = dateString.split(' ');
+            // If we have a draw timezone, assume stored timestamps are in UTC
+            if (drawTimezone) {
+                isUTC = true;
+            }
+        }
+        
+        const [year, month, day] = datePart.split('-');
+        const [hour, minute, second] = timePart.split(':');
+        
+        let date;
+        if (isUTC && drawTimezone) {
+            // Create date as UTC, then format in the draw's timezone
+            const utcDate = new Date(Date.UTC(
+                parseInt(year),
+                parseInt(month) - 1,
+                parseInt(day),
+                parseInt(hour),
+                parseInt(minute),
+                parseInt(second || 0)
+            ));
+            
+            // TEMPORARY FIX: Subtract 1 hour for EST until daylight savings time
+            // This ensures times display correctly in EST (UTC-5) instead of EDT (UTC-4)
+            let displayDate = utcDate;
+            if (drawTimezone === 'America/New_York') {
+                // Subtract 1 hour to convert from EDT to EST
+                displayDate = new Date(utcDate.getTime() - (60 * 60 * 1000));
+            }
+            
+            // Format in the draw's timezone
+            return displayDate.toLocaleString('en-US', {
+                timeZone: drawTimezone,
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+            });
+        } else {
+            // Fallback: treat as local time (for backwards compatibility)
+            date = new Date(year, month - 1, day, hour, minute, second || 0);
+            return date.toLocaleString('en-US', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+            });
+        }
     } catch (error) {
         console.error('Error formatting date:', error, 'Input:', dateString);
         return 'Invalid Date';
@@ -87,24 +160,80 @@ function truncateAddress(address) {
     return `${address.substring(0, 8)}...${address.substring(address.length - 6)}`;
 }
 
-// Get timezone abbreviation
-function getTimezoneAbbreviation(timezone) {
+// Get timezone abbreviation for a specific date/time
+function getTimezoneAbbreviation(timezone, dateString) {
     if (!timezone) return 'UTC';
     
     try {
-        // Get current date in the specified timezone
-        const date = new Date();
-        const formatter = new Intl.DateTimeFormat('en-US', {
-            timeZone: timezone,
-            timeZoneName: 'short'
-        });
-        
-        const parts = formatter.formatToParts(date);
-        const timeZoneName = parts.find(part => part.type === 'timeZoneName');
-        
-        return timeZoneName ? timeZoneName.value : timezone;
+        if (dateString) {
+            // Parse the date string (timezone-naive)
+            let datePart, timePart;
+            if (dateString.includes('T')) {
+                const isoDate = dateString.split('T')[0];
+                const isoTime = dateString.split('T')[1].split('.')[0];
+                datePart = isoDate;
+                timePart = isoTime;
+            } else {
+                [datePart, timePart] = dateString.split(' ');
+            }
+            
+            const [year, month, day] = datePart.split('-');
+            const [hour, minute, second] = timePart.split(':');
+            
+            // Create a date object from the components (local time)
+            const dateObj = new Date(
+                parseInt(year),
+                parseInt(month) - 1,
+                parseInt(day),
+                parseInt(hour),
+                parseInt(minute),
+                parseInt(second || 0)
+            );
+            
+            // Format the date in the target timezone to get the correct abbreviation
+            // This will automatically show EST or EDT based on whether DST is in effect
+            const formatter = new Intl.DateTimeFormat('en-US', {
+                timeZone: timezone,
+                timeZoneName: 'short'
+            });
+            
+            const parts = formatter.formatToParts(dateObj);
+            const timeZoneName = parts.find(part => part.type === 'timeZoneName');
+            
+            if (timeZoneName) {
+                return timeZoneName.value;
+            }
+            
+            // Fallback for America/New_York - determine EST vs EDT
+            if (timezone === 'America/New_York') {
+                // DST in US typically: 2nd Sunday in March to 1st Sunday in November
+                // For simplicity, use month-based approximation
+                const monthNum = parseInt(month);
+                // Rough approximation: March (3) through October (10) is typically EDT
+                if (monthNum >= 3 && monthNum <= 10) {
+                    return 'EDT';
+                } else {
+                    return 'EST';
+                }
+            }
+            
+            return timezone.split('/').pop() || 'UTC';
+        } else {
+            // Fallback to current date
+            const date = new Date();
+            const formatter = new Intl.DateTimeFormat('en-US', {
+                timeZone: timezone,
+                timeZoneName: 'short'
+            });
+            
+            const parts = formatter.formatToParts(date);
+            const timeZoneName = parts.find(part => part.type === 'timeZoneName');
+            
+            return timeZoneName ? timeZoneName.value : timezone.split('/').pop() || 'UTC';
+        }
     } catch (error) {
-        // If timezone is invalid, return the timezone string or a shortened version
+        // If timezone is invalid, return fallback
+        if (timezone === 'America/New_York') return 'EST/EDT';
         return timezone.split('/').pop() || 'UTC';
     }
 }
@@ -119,6 +248,14 @@ async function loadDrawData() {
         const data = await response.json();
         
         if (!response.ok) {
+            if (response.status === 404) {
+                // Draw not found - show user-friendly message and redirect
+                showToast('❌ Draw not found. It may have been deleted.', 'error');
+                setTimeout(() => {
+                    window.location.href = '/index.html';
+                }, 2000);
+                return;
+            }
             throw new Error(data.error || 'Failed to load draw');
         }
         
@@ -137,6 +274,13 @@ async function loadDrawData() {
     } catch (error) {
         console.error('Error loading draw:', error);
         showToast('❌ Failed to load draw data', 'error');
+        
+        // If it's a network error or draw not found, redirect after a delay
+        if (error.message.includes('not found') || error.message.includes('404')) {
+            setTimeout(() => {
+                window.location.href = '/index.html';
+            }, 2000);
+        }
     }
 }
 
@@ -196,10 +340,19 @@ function updateDrawInfo() {
         `${currentDraw.filled_slots} / ${currentDraw.total_slots}`;
     
     // Display start time with timezone
-    const startTimeDisplay = formatDate(currentDraw.start_time);
+    // Note: start_time is stored as timezone-naive in the draw's timezone, not UTC
     const timezone = currentDraw.timezone || 'UTC';
-    const timezoneAbbr = getTimezoneAbbreviation(timezone);
+    const startTimeDisplay = formatDateInTimezone(currentDraw.start_time, timezone);
+    const timezoneAbbr = getTimezoneAbbreviation(timezone, currentDraw.start_time);
     document.getElementById('startTime').textContent = `${startTimeDisplay} (${timezoneAbbr})`;
+    
+    // Display minimum scan amount (admin only - not shown on public page)
+    const minScanAmountEl = document.getElementById('minScanAmount');
+    if (minScanAmountEl && currentDraw.min_usd_amount) {
+        minScanAmountEl.textContent = formatUSD(currentDraw.min_usd_amount);
+    } else if (minScanAmountEl) {
+        minScanAmountEl.textContent = 'N/A';
+    }
 }
 
 // Update progress bar
@@ -439,7 +592,7 @@ function renderEntriesTable() {
                     </button>
                 </div>
                 <div style="display: flex; gap: 1rem; align-items: center;">
-                    <span class="entry-time">⏰ ${formatDate(entry.timestamp)}</span>
+                    <span class="entry-time">⏰ ${formatDate(entry.timestamp, currentDraw?.timezone || null)}</span>
                     <a href="https://solscan.io/tx/${entry.transaction_signature}" 
                        target="_blank" 
                        class="entry-tx-link">
@@ -694,6 +847,38 @@ async function markDrawAsComplete() {
     }
 }
 
+async function markDrawAsDrawn() {
+    if (!confirm('Are you sure you want to mark this draw as drawn? It will be removed from the public homepage.')) {
+        return;
+    }
+
+    try {
+        if (!authManager.isAuthenticated()) {
+            showToast('❌ You must be logged in', 'error');
+            return;
+        }
+
+        const authHeaders = authManager.getAuthHeaders();
+        const response = await fetch(`${API_URL}/api/draws/${drawId}/status`, {
+            method: 'PUT',
+            headers: authHeaders,
+            body: JSON.stringify({ status: 'drawn' })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            showToast('✅ Draw marked as drawn! It will no longer appear on the public page.', 'success');
+            await loadDrawData();
+        } else {
+            showToast(`❌ Error: ${data.error || 'Failed to update status'}`, 'error');
+        }
+    } catch (error) {
+        console.error('Error marking draw as drawn:', error);
+        showToast('❌ Failed to update draw status', 'error');
+    }
+}
+
 async function deactivateDraw() {
     if (!confirm('Are you sure you want to deactivate this draw? It will be marked as cancelled.')) {
         return;
@@ -764,15 +949,23 @@ function updateDrawManagementButtons() {
     if (!currentDraw) return;
 
     const markCompleteBtn = document.getElementById('markCompleteBtn');
+    const markDrawnBtn = document.getElementById('markDrawnBtn');
     const deactivateBtn = document.getElementById('deactivateBtn');
     const deleteDrawBtn = document.getElementById('deleteDrawBtn');
 
     // Show buttons based on draw status
     if (currentDraw.status === 'active') {
         markCompleteBtn.style.display = 'inline-flex';
+        markDrawnBtn.style.display = 'inline-flex';
+        deactivateBtn.style.display = 'inline-flex';
+    } else if (currentDraw.status === 'completed') {
+        // Show "Mark as Drawn" for completed draws
+        markDrawnBtn.style.display = 'inline-flex';
+        markCompleteBtn.style.display = 'none';
         deactivateBtn.style.display = 'inline-flex';
     } else {
         markCompleteBtn.style.display = 'none';
+        markDrawnBtn.style.display = 'none';
         deactivateBtn.style.display = 'none';
     }
 
@@ -783,12 +976,17 @@ function updateDrawManagementButtons() {
 // Setup event listeners for management buttons
 function setupDrawManagementButtons() {
     const markCompleteBtn = document.getElementById('markCompleteBtn');
+    const markDrawnBtn = document.getElementById('markDrawnBtn');
     const deactivateBtn = document.getElementById('deactivateBtn');
     const deleteDrawBtn = document.getElementById('deleteDrawBtn');
 
     if (markCompleteBtn && !markCompleteBtn.hasAttribute('data-listener')) {
         markCompleteBtn.addEventListener('click', markDrawAsComplete);
         markCompleteBtn.setAttribute('data-listener', 'true');
+    }
+    if (markDrawnBtn && !markDrawnBtn.hasAttribute('data-listener')) {
+        markDrawnBtn.addEventListener('click', markDrawAsDrawn);
+        markDrawnBtn.setAttribute('data-listener', 'true');
     }
     if (deactivateBtn && !deactivateBtn.hasAttribute('data-listener')) {
         deactivateBtn.addEventListener('click', deactivateDraw);

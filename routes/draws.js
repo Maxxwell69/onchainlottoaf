@@ -194,15 +194,14 @@ router.post('/:id/scan-dex', authenticateToken, requireModerator, async (req, re
       const transactionTime = new Date(buy.timestamp);
       const drawStartTime = new Date(draw.start_time);
       
-      console.log(`🔍 Validating: Transaction ${buy.timestamp} vs Draw Start ${draw.start_time}`);
-      console.log(`   Transaction Time: ${transactionTime.toISOString()}`);
-      console.log(`   Draw Start Time: ${drawStartTime.toISOString()}`);
-      
       if (transactionTime < drawStartTime) {
         filtered++;
         console.log(`⏰ Filtered transaction before draw start: ${buy.signature.substring(0, 8)}... (${buy.timestamp} < ${draw.start_time})`);
         continue;
       }
+      
+      // Log transaction details for debugging
+      console.log(`🔍 Processing: ${buy.signature.substring(0, 16)}... | Wallet: ${buy.walletAddress.substring(0, 8)}... | Amount: $${buy.usdAmount.toFixed(2)} | Min Required: $${draw.min_usd_amount}`);
       
       // Skip if signature already exists (optional validation)
       const exists = await LottoEntry.existsBySignature(buy.signature, id);
@@ -314,10 +313,10 @@ router.put('/:id/status', authenticateToken, requireModerator, async (req, res) 
     const { id } = req.params;
     const { status } = req.body;
 
-    if (!status || !['active', 'completed', 'cancelled'].includes(status)) {
+    if (!status || !['active', 'completed', 'cancelled', 'drawn'].includes(status)) {
       return res.status(400).json({
         error: 'Invalid status',
-        allowed: ['active', 'completed', 'cancelled']
+        allowed: ['active', 'completed', 'cancelled', 'drawn']
       });
     }
 
