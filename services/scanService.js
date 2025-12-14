@@ -31,12 +31,12 @@ class ScanService {
       }
 
       // Check if draw is already full
+      // Note: Draws remain active until admin explicitly marks them as completed
       if (draw.filled_slots >= draw.total_slots) {
-        console.log(`⚠️  Draw #${drawId} is full (${draw.filled_slots}/${draw.total_slots})`);
-        await LottoDraw.updateStatus(drawId, 'completed');
+        console.log(`⚠️  Draw #${drawId} is full (${draw.filled_slots}/${draw.total_slots}) - Admin must manually mark as completed`);
         return {
           success: true,
-          message: 'Draw is full',
+          message: 'Draw is full - Admin must manually mark as completed',
           newEntries: 0
         };
       }

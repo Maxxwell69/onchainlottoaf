@@ -80,11 +80,11 @@ class LottoDraw {
   }
 
   // Get active draws
+  // Draws remain active until admin explicitly marks them as completed, cancelled, or deletes them
   static async getActive() {
     const sql = `
       SELECT *, start_time::text as start_time_text FROM lotto_draws 
-      WHERE status = 'active' 
-      AND filled_slots < total_slots
+      WHERE status = 'active'
       ORDER BY created_at DESC
     `;
     const result = await query(sql);
@@ -103,11 +103,11 @@ class LottoDraw {
   }
 
   // Update filled slots
+  // Note: Status remains unchanged - admin must manually mark as completed
   static async updateFilledSlots(drawId, filledSlots) {
     const sql = `
       UPDATE lotto_draws 
       SET filled_slots = $1, 
-          status = CASE WHEN $1 >= total_slots THEN 'completed' ELSE status END,
           end_time = CASE WHEN $1 >= total_slots THEN CURRENT_TIMESTAMP ELSE end_time END
       WHERE id = $2 
       RETURNING *
