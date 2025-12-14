@@ -80,11 +80,11 @@ class LottoDraw {
   }
 
   // Get active draws
-  // Draws remain active until admin explicitly marks them as completed, cancelled, or deletes them
+  // Draws remain visible (including completed) until admin explicitly deactivates (cancelled) or deletes them
   static async getActive() {
     const sql = `
       SELECT *, start_time::text as start_time_text FROM lotto_draws 
-      WHERE status = 'active'
+      WHERE status IN ('active', 'completed')
       ORDER BY created_at DESC
     `;
     const result = await query(sql);
