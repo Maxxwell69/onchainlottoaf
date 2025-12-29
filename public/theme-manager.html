@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Theme Manager - On Chain Lotto</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .theme-manager-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .manager-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        @media (max-width: 1024px) {
+            .manager-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .theme-section {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+        }
+
+        .theme-section h3 {
+            margin-bottom: 1.5rem;
+            color: var(--primary);
+        }
+
+        .page-selector {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .page-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem;
+            background: var(--background);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .page-item:hover {
+            border-color: var(--primary);
+        }
+
+        .page-item label {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            cursor: pointer;
+            flex: 1;
+        }
+
+        .page-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .theme-select {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--background);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 1rem;
+        }
+
+        .theme-editor {
+            margin-top: 2rem;
+        }
+
+        .color-picker-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .color-picker-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .color-picker-item label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .color-input-wrapper {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .color-input {
+            width: 60px;
+            height: 40px;
+            border: 2px solid var(--border);
+            border-radius: 6px;
+            cursor: pointer;
+            padding: 0;
+        }
+
+        .color-text-input {
+            flex: 1;
+            padding: 0.5rem;
+            background: var(--background);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            font-family: 'Courier New', monospace;
+        }
+
+        .ball-image-section {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .ball-image-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .ball-image-option {
+            position: relative;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .ball-image-option:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .ball-image-option.selected {
+            border-color: var(--primary);
+            background: rgba(255, 215, 0, 0.1);
+        }
+
+        .ball-image-option input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+        }
+
+        .ball-preview {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            margin: 0 auto 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            position: relative;
+        }
+
+        .ball-image-option label {
+            cursor: pointer;
+            display: block;
+        }
+
+        .image-upload-area {
+            border: 2px dashed var(--border);
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 1rem;
+        }
+
+        .image-upload-area:hover {
+            border-color: var(--primary);
+            background: rgba(255, 215, 0, 0.05);
+        }
+
+        .image-upload-area.dragover {
+            border-color: var(--primary);
+            background: rgba(255, 215, 0, 0.1);
+        }
+
+        .preview-ball-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .preview-ball-item {
+            text-align: center;
+        }
+
+        .preview-ball {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.25rem;
+        }
+
+        .save-theme-btn {
+            margin-top: 2rem;
+            width: 100%;
+        }
+
+        .custom-themes-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .custom-theme-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem;
+            background: var(--background);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+
+        .custom-theme-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container theme-manager-container">
+        <div id="main-navigation"></div>
+        <header>
+            <h1>🎨 Theme Manager</h1>
+            <p class="subtitle">Customize themes and control where they appear</p>
+        </header>
+
+        <div class="manager-grid">
+            <!-- Page-Specific Theme Selection -->
+            <div class="theme-section">
+                <h3>📄 Page-Specific Themes</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+                    Select which theme appears on each page
+                </p>
+                
+                <div class="page-selector" id="pageSelector">
+                    <!-- Pages will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Theme Editor -->
+            <div class="theme-section">
+                <h3>✏️ Edit Theme</h3>
+                
+                <div class="form-group">
+                    <label for="editThemeSelect">Select Theme to Edit:</label>
+                    <select id="editThemeSelect" class="theme-select">
+                        <option value="">-- Select a theme --</option>
+                    </select>
+                </div>
+
+                <div id="themeEditor" style="display: none;">
+                    <div class="form-group">
+                        <label for="themeName">Theme Name:</label>
+                        <input type="text" id="themeName" class="form-control" placeholder="Enter theme name">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="themeIcon">Theme Icon (Emoji):</label>
+                        <input type="text" id="themeIcon" class="form-control" placeholder="🎨" maxlength="2">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Colors:</label>
+                        <div class="color-picker-group" id="colorPickers">
+                            <!-- Color pickers will be populated by JavaScript -->
+                        </div>
+                    </div>
+
+                    <div class="ball-image-section">
+                        <h4 style="margin-bottom: 1rem;">Ball Graphics</h4>
+                        
+                        <div class="form-group">
+                            <label>Filled Ball Style:</label>
+                            <div class="ball-image-options" id="filledBallOptions">
+                                <!-- Options will be populated by JavaScript -->
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="margin-top: 1.5rem;">
+                            <label>Available Ball Style:</label>
+                            <div class="ball-image-options" id="availableBallOptions">
+                                <!-- Options will be populated by JavaScript -->
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="margin-top: 1.5rem;">
+                            <label>Custom Ball Image (Optional):</label>
+                            <div class="image-upload-area" id="imageUploadArea">
+                                <p>📤 Click or drag image here</p>
+                                <p style="font-size: 0.875rem; color: var(--text-secondary); margin-top: 0.5rem;">
+                                    Recommended: 200x200px, transparent background
+                                </p>
+                                <input type="file" id="ballImageUpload" accept="image/*" style="display: none;">
+                            </div>
+                            <div id="imagePreview" style="margin-top: 1rem; display: none;">
+                                <img id="previewImage" style="max-width: 200px; border-radius: 50%; border: 2px solid var(--primary);">
+                                <button type="button" class="btn btn-danger btn-sm" id="removeImage" style="margin-top: 0.5rem;">Remove Image</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 2rem;">
+                        <h4>Preview:</h4>
+                        <div class="preview-ball-grid">
+                            <div class="preview-ball-item">
+                                <div class="preview-ball" id="previewFilled">1</div>
+                                <small>Filled</small>
+                            </div>
+                            <div class="preview-ball-item">
+                                <div class="preview-ball" id="previewAvailable">2</div>
+                                <small>Available</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                        <button type="button" class="btn btn-primary save-theme-btn" id="saveThemeBtn">
+                            💾 Save Theme
+                        </button>
+                        <button type="button" class="btn btn-secondary" id="createNewThemeBtn">
+                            ➕ Create New Theme
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Custom Themes List -->
+        <div class="card" style="margin-top: 2rem;">
+            <div class="card-header">
+                <h3>📚 Custom Themes</h3>
+            </div>
+            <div class="custom-themes-list" id="customThemesList">
+                <!-- Custom themes will be listed here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+
+    <script src="themes.js"></script>
+    <script src="auth.js"></script>
+    <script src="navigation.js"></script>
+    <script src="theme-manager.js"></script>
+</body>
+</html>
+
+
+

@@ -24,6 +24,41 @@
     margin: 0;
 }
 
+.nav-brand a {
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+}
+
+.nav-brand a:hover {
+    transform: scale(1.05);
+    opacity: 0.9;
+}
+
+.nav-brand a:hover h1 {
+    color: var(--primary);
+}
+
+.site-logo {
+    height: 50px;
+    width: auto;
+    object-fit: contain;
+    transition: transform 0.3s ease;
+}
+
+.site-logo:hover {
+    transform: scale(1.05);
+}
+
+.hero-logo {
+    height: 120px;
+    width: auto;
+    object-fit: contain;
+    margin-bottom: 1rem;
+}
+
 .nav-links {
     display: flex;
     align-items: center;
@@ -47,7 +82,7 @@
     grid-template-columns: 1fr 1fr;
     gap: 4rem;
     align-items: center;
-    padding: 6rem 2rem;
+    padding: 2rem 2rem;
     max-width: 1200px;
     margin: 0 auto;
 }
@@ -138,7 +173,7 @@
 /* Sections */
 .section-header {
     text-align: center;
-    margin-bottom: 4rem;
+    margin-bottom: 1.5rem;
 }
 
 .section-header h2 {
@@ -450,5 +485,80 @@
 
     .footer-links {
         justify-content: center;
+    }
+}
+
+/* Draw Cards Styling - Horizontal Layout */
+.draw-card-horizontal {
+    transition: all 0.3s ease;
+}
+
+.draw-card-horizontal:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 8px 20px rgba(255, 215, 0, 0.3);
+    border-color: var(--primary);
+}
+
+.draw-card-horizontal .btn {
+    transition: all 0.3s ease;
+}
+
+.draw-card-horizontal .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Horizontal scroll container */
+#allDrawsContainer {
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary) var(--background);
+}
+
+#allDrawsContainer::-webkit-scrollbar {
+    height: 8px;
+}
+
+#allDrawsContainer::-webkit-scrollbar-track {
+    background: var(--background);
+    border-radius: 4px;
+}
+
+#allDrawsContainer::-webkit-scrollbar-thumb {
+    background: var(--primary);
+    border-radius: 4px;
+}
+
+#allDrawsContainer::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-dark);
+}
+
+.status-badge.status-active {
+    background: rgba(20, 241, 149, 0.2);
+    color: var(--success);
+}
+
+.status-badge.status-completed {
+    background: rgba(59, 130, 246, 0.2);
+    color: var(--info);
+}
+
+.status-badge.status-cancelled {
+    background: rgba(255, 71, 87, 0.2);
+    color: var(--danger);
+}
+
+/* All Draws Section */
+.all-draws-section {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+@media (max-width: 768px) {
+    .draw-card {
+        padding: 1rem;
+    }
+    
+    .draw-card h3 {
+        font-size: 1.25rem;
     }
 }

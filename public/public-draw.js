@@ -7,7 +7,7 @@ const drawId = urlParams.get('id');
 
 if (!drawId) {
     alert('No draw ID specified');
-    window.location.href = 'home.html';
+    window.location.href = 'index.html';
 }
 
 let currentDraw = null;
@@ -34,7 +34,6 @@ function formatDate(dateString) {
         
         if (dateString.includes('T')) {
             // ISO format: "2025-10-17T23:30:00.000Z"
-            // The Z means UTC, but we want to treat this as local time
             const isoDate = dateString.split('T')[0];
             const isoTime = dateString.split('T')[1].split('.')[0]; // Remove milliseconds and Z
             datePart = isoDate;
@@ -48,7 +47,6 @@ function formatDate(dateString) {
         const [hour, minute, second] = timePart.split(':');
         
         // Create date using local timezone but with the exact values
-        // This treats the time as if it's already in the correct timezone
         const date = new Date(year, month - 1, day, hour, minute, second || 0);
         
         // Display time exactly as stored (no timezone conversion)
@@ -66,58 +64,31 @@ function formatDate(dateString) {
     }
 }
 
-// Format date only (no time) - for start time display
-function formatDateOnly(dateString) {
-    if (!dateString) return 'N/A';
-    
-    try {
-        // Handle both formats: "YYYY-MM-DD HH:MM:SS" and "YYYY-MM-DDTHH:MM:SS.sssZ"
-        let datePart;
-        
-        if (dateString.includes('T')) {
-            // ISO format: "2025-10-17T23:30:00.000Z"
-            datePart = dateString.split('T')[0];
-        } else {
-            // Space format: "2025-10-17 23:30:00"
-            [datePart] = dateString.split(' ');
-        }
-        
-        const [year, month, day] = datePart.split('-');
-        
-        // Create date using local timezone
-        const date = new Date(year, month - 1, day);
-        
-        // Display date only (no time)
-        return date.toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit'
-        });
-    } catch (error) {
-        console.error('Error formatting date:', error, 'Input:', dateString);
-        return 'Invalid Date';
-    }
-}
-
-function formatUSD(amount) {
-    return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-    }).format(amount);
-}
-
-function formatTokenAmount(amount) {
-    return new Intl.NumberFormat('en-US', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 8
-    }).format(amount / 1e9); // Assuming 9 decimals
-}
-
 function truncateAddress(address) {
     if (!address) return 'N/A';
     return `${address.substring(0, 8)}...${address.substring(address.length - 6)}`;
+}
+
+// Get timezone abbreviation
+function getTimezoneAbbreviation(timezone) {
+    if (!timezone) return 'UTC';
+    
+    try {
+        // Get current date in the specified timezone
+        const date = new Date();
+        const formatter = new Intl.DateTimeFormat('en-US', {
+            timeZone: timezone,
+            timeZoneName: 'short'
+        });
+        
+        const parts = formatter.formatToParts(date);
+        const timeZoneName = parts.find(part => part.type === 'timeZoneName');
+        
+        return timeZoneName ? timeZoneName.value : timezone;
+    } catch (error) {
+        // If timezone is invalid, return the timezone string or a shortened version
+        return timezone.split('/').pop() || 'UTC';
+    }
 }
 
 // Load draw data
@@ -149,10 +120,20 @@ function updateDrawInfo() {
     document.getElementById('drawTitle').textContent = currentDraw.draw_name;
     document.getElementById('drawSubtitle').textContent = `Draw #${currentDraw.id}`;
     
+    // Display prize description if available
+    const prizeDescriptionCard = document.getElementById('prizeDescriptionCard');
+    const prizeDescriptionLong = document.getElementById('prizeDescriptionLong');
+    if (prizeDescriptionCard && prizeDescriptionLong) {
+        if (currentDraw.prize_description_long) {
+            prizeDescriptionLong.textContent = currentDraw.prize_description_long;
+            prizeDescriptionCard.style.display = 'block';
+        } else {
+            prizeDescriptionCard.style.display = 'none';
+        }
+    }
+    
     document.getElementById('tokenInfo').textContent = 
         `${currentDraw.token_symbol || 'Unknown'} (${truncateAddress(currentDraw.token_address)})`;
-    
-    document.getElementById('minPurchase').textContent = formatUSD(currentDraw.min_usd_amount);
     
     const statusEl = document.getElementById('drawStatus');
     statusEl.textContent = currentDraw.status.toUpperCase();
@@ -161,9 +142,11 @@ function updateDrawInfo() {
     document.getElementById('filledSlots').textContent = 
         `${currentDraw.filled_slots} / ${currentDraw.total_slots}`;
     
-    // Use formatDateOnly for start time (date only, no time)
-    document.getElementById('startTime').textContent = formatDateOnly(currentDraw.start_time);
-    document.getElementById('endTime').textContent = formatDate(currentDraw.end_time);
+    // Display start time with timezone
+    const startTimeDisplay = formatDate(currentDraw.start_time);
+    const timezone = currentDraw.timezone || 'UTC';
+    const timezoneAbbr = getTimezoneAbbreviation(timezone);
+    document.getElementById('startTime').textContent = `${startTimeDisplay} (${timezoneAbbr})`;
 }
 
 // Update progress bar
@@ -187,7 +170,7 @@ function renderNumbersGrid() {
     
     // First, render all filled balls in chronological order by purchase time
     sortedEntries.forEach((entry, index) => {
-        const walletDigits = entry.wallet_address.slice(-6);
+        const walletDigits = entry.wallet_address.slice(-6); // Last 6 digits of wallet
         
         // Calculate time from draw start
         let timeFromStart = '';
@@ -232,8 +215,46 @@ function renderNumbersGrid() {
     }
     
     grid.innerHTML = html;
+    
+    // Apply theme styles to all balls (with a small delay to ensure DOM is ready)
+    setTimeout(() => {
+        applyThemeToBalls();
+    }, 50);
 }
 
+// Apply theme styles to number balls
+function applyThemeToBalls() {
+    if (!window.themeManager) {
+        // Fallback: ensure default golden style is applied
+        const filledBalls = document.querySelectorAll('.number-ball.filled');
+        filledBalls.forEach(ball => {
+            if (!ball.style.background || ball.style.background === 'none') {
+                ball.style.background = 'linear-gradient(135deg, #FFD700 0%, #B8860B 50%, #FFD700 100%)';
+                ball.style.color = '#000000';
+                ball.style.borderColor = '#FFD700';
+            }
+        });
+        return;
+    }
+    
+    const filledBalls = document.querySelectorAll('.number-ball.filled');
+    const availableBalls = document.querySelectorAll('.number-ball.available');
+    
+    filledBalls.forEach(ball => {
+        window.themeManager.applyBallStyles(ball, 'filled');
+    });
+    
+    availableBalls.forEach(ball => {
+        window.themeManager.applyBallStyles(ball, 'available');
+    });
+}
+
+// Listen for theme changes to re-render balls
+window.addEventListener('themeChanged', () => {
+    if (currentEntries && currentEntries.length > 0) {
+        applyThemeToBalls();
+    }
+});
 
 // Auto-refresh every 30 seconds
 setInterval(async () => {
@@ -243,3 +264,7 @@ setInterval(async () => {
 
 // Initial load
 loadDrawData();
+
+
+
+

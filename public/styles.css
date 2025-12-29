@@ -392,16 +392,15 @@ h3 {
     font-family: 'Orbitron', monospace;
     font-size: 2rem;
     font-weight: 700;
-    color: black;
+    color: #000000 !important;
     position: relative;
     box-shadow: 
         0 8px 16px rgba(0, 0, 0, 0.3),
         inset 0 -2px 10px rgba(0, 0, 0, 0.3),
-        inset 0 2px 10px rgba(255, 255, 255, 0.3);
-    background: linear-gradient(135deg, 
-        var(--primary) 0%, 
-        var(--primary-dark) 50%, 
-        var(--primary) 100%);
+        inset 0 2px 10px rgba(255, 255, 255, 0.3) !important;
+    /* Default golden ball style - will be overridden by theme system if available */
+    background: linear-gradient(135deg, #FFD700 0%, #B8860B 50%, #FFD700 100%) !important;
+    border: 2px solid #FFD700 !important;
     animation: ballAppear 0.5s ease;
 }
 
@@ -414,6 +413,8 @@ h3 {
     height: 30%;
     background: radial-gradient(circle, rgba(255, 255, 255, 0.4) 0%, transparent 70%);
     border-radius: 50%;
+    pointer-events: none;
+    z-index: 1;
 }
 
 @keyframes ballAppear {
@@ -561,10 +562,15 @@ h3 {
 }
 
 .number-ball.filled {
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 50%, var(--primary) 100%);
-    color: black;
-    border: 2px solid var(--primary);
+    /* Default golden ball style - will be overridden by theme system if available */
+    background: linear-gradient(135deg, #FFD700 0%, #B8860B 50%, #FFD700 100%) !important;
+    color: #000000 !important;
+    border: 2px solid #FFD700 !important;
     animation: ballFillIn 0.5s ease;
+    box-shadow: 
+        0 6px 12px rgba(0, 0, 0, 0.3),
+        inset 0 -2px 8px rgba(0, 0, 0, 0.3),
+        inset 0 2px 8px rgba(255, 255, 255, 0.3) !important;
 }
 
 .number-ball::before {
@@ -576,6 +582,19 @@ h3 {
     height: 25%;
     background: radial-gradient(circle, rgba(255, 255, 255, 0.4) 0%, transparent 70%);
     border-radius: 50%;
+    pointer-events: none;
+}
+
+/* Theme-specific ball styles will be applied via JavaScript */
+.ball-highlight {
+    position: absolute;
+    top: 12%;
+    left: 18%;
+    width: 25%;
+    height: 25%;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 1;
 }
 
 .wallet-digits {
@@ -1318,5 +1337,203 @@ tbody tr:hover {
     background: linear-gradient(135deg, var(--primary-dark), #8B6914);
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Navigation Styles */
+.main-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 2rem;
+    background: var(--card-bg);
+    border-bottom: 2px solid var(--border);
+    margin-bottom: 2rem;
+    border-radius: 8px;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.nav-brand h2 {
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+.nav-brand a {
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+}
+
+.nav-brand a:hover {
+    transform: scale(1.05);
+    opacity: 0.9;
+}
+
+.nav-brand a:hover h2 {
+    color: var(--primary);
+}
+
+.site-logo {
+    height: 50px;
+    width: auto;
+    object-fit: contain;
+    transition: transform 0.3s ease;
+}
+
+.site-logo:hover {
+    transform: scale(1.05);
+}
+
+.hero-logo {
+    height: 120px;
+    width: auto;
+    object-fit: contain;
+    margin-bottom: 1rem;
+}
+
+.nav-menu {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.nav-menu .nav-link {
+    color: var(--text);
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.nav-menu .nav-link:hover {
+    background: var(--border);
+    color: var(--primary);
+}
+
+.nav-user {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.user-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.username {
+    font-weight: 600;
+    color: var(--text);
+}
+
+.user-role {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.role-user {
+    background: var(--info);
+    color: white;
+}
+
+.role-moderator {
+    background: var(--warning);
+    color: white;
+}
+
+.role-admin,
+.role-super_admin {
+    background: var(--success);
+    color: white;
+}
+
+.btn-small {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+}
+
+/* Theme Selector Button */
+.theme-selector-btn {
+    position: fixed !important;
+    top: 20px !important;
+    right: 20px !important;
+    z-index: 10000 !important;
+    padding: 0.75rem 1.25rem !important;
+    font-size: 0.9rem !important;
+    font-weight: 600 !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5), 0 0 20px rgba(255, 215, 0, 0.4) !important;
+    background: linear-gradient(135deg, #1A1A1A 0%, #0F0F0F 100%) !important;
+    border: 2px solid #FFD700 !important;
+    border-radius: 8px !important;
+    color: #FFD700 !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    transition: all 0.3s ease !important;
+    min-width: 120px !important;
+}
+
+.theme-selector-btn:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.6), 0 0 30px rgba(255, 215, 0, 0.6) !important;
+    background: linear-gradient(135deg, #FFD700 0%, #B8860B 100%) !important;
+    color: #000000 !important;
+}
+
+/* Theme Modal Styles */
+.themes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.theme-card {
+    padding: 1.5rem;
+    background: var(--card-bg);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-align: center;
+}
+
+.theme-card:hover {
+    border-color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.theme-card.active {
+    border-color: var(--primary);
+    background: var(--background);
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+}
+
+.theme-card .theme-icon {
+    font-size: 3rem;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.theme-card .theme-name {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    color: var(--text);
+}
+
+.theme-card .theme-description {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
 }
 

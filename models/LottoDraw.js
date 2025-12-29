@@ -8,22 +8,49 @@ class LottoDraw {
       token_address,
       token_symbol,
       min_usd_amount,
-      start_time
+      timezone,
+      start_time,
+      prize_description_short,
+      prize_description_long
     } = drawData;
 
+    // Validate and format start_time
+    let formattedStartTime = start_time;
+    if (typeof start_time === 'string') {
+      // Handle format: "YYYY-MM-DD HH:MM:SS"
+      if (start_time.includes(' ')) {
+        formattedStartTime = start_time;
+      } 
+      // Handle format: "YYYY-MM-DDTHH:MM:SS"
+      else if (start_time.includes('T')) {
+        formattedStartTime = start_time.replace('T', ' ').replace(/\.\d{3}Z?$/, '');
+      }
+    }
+
     const sql = `
-      INSERT INTO lotto_draws (draw_name, token_address, token_symbol, min_usd_amount, start_time)
-      VALUES ($1, $2, $3, $4, $5::timestamp without time zone)
+      INSERT INTO lotto_draws (draw_name, token_address, token_symbol, min_usd_amount, timezone, start_time, prize_description_short, prize_description_long)
+      VALUES ($1, $2, $3, $4, $5, $6::timestamp without time zone, $7, $8)
       RETURNING *
     `;
 
-    const result = await query(sql, [
-      draw_name,
-      token_address,
-      token_symbol,
-      min_usd_amount,
-      start_time
-    ]);
+    try {
+      const result = await query(sql, [
+        draw_name,
+        token_address,
+        token_symbol || null,
+        min_usd_amount,
+        timezone || null,
+        formattedStartTime,
+        prize_description_short || null,
+        prize_description_long || null
+      ]);
+      return result.rows[0];
+    } catch (dbError) {
+      console.error('Database error creating draw:', dbError);
+      console.error('SQL:', sql);
+      console.error('Parameters:', [draw_name, token_address, token_symbol, min_usd_amount, timezone, formattedStartTime, prize_description_short, prize_description_long]);
+      throw dbError;
+    }
 
     return result.rows[0];
   }
@@ -53,11 +80,11 @@ class LottoDraw {
   }
 
   // Get active draws
+  // Draws remain visible (including completed) until admin explicitly marks as drawn, deactivates (cancelled), or deletes them
   static async getActive() {
     const sql = `
       SELECT *, start_time::text as start_time_text FROM lotto_draws 
-      WHERE status = 'active' 
-      AND filled_slots < total_slots
+      WHERE status IN ('active', 'completed')
       ORDER BY created_at DESC
     `;
     const result = await query(sql);
@@ -76,16 +103,29 @@ class LottoDraw {
   }
 
   // Update filled slots
+  // Note: Status remains unchanged - admin must manually mark as completed
   static async updateFilledSlots(drawId, filledSlots) {
     const sql = `
       UPDATE lotto_draws 
       SET filled_slots = $1, 
-          status = CASE WHEN $1 >= total_slots THEN 'completed' ELSE status END,
           end_time = CASE WHEN $1 >= total_slots THEN CURRENT_TIMESTAMP ELSE end_time END
       WHERE id = $2 
       RETURNING *
     `;
     const result = await query(sql, [filledSlots, drawId]);
+    return result.rows[0];
+  }
+
+  // Update prize descriptions
+  static async updatePrizes(drawId, prizeDescriptionShort, prizeDescriptionLong) {
+    const sql = `
+      UPDATE lotto_draws 
+      SET prize_description_short = $1, 
+          prize_description_long = $2
+      WHERE id = $3 
+      RETURNING *
+    `;
+    const result = await query(sql, [prizeDescriptionShort || null, prizeDescriptionLong || null, drawId]);
     return result.rows[0];
   }
 

@@ -4,28 +4,48 @@ const LottoDraw = require('../models/LottoDraw');
 const LottoEntry = require('../models/LottoEntry');
 const scanService = require('../services/scanService');
 const heliusService = require('../services/heliusService');
+const { authenticateToken, requireModerator, requireAdmin } = require('../middleware/auth');
 
 /**
  * POST /api/draws
- * Create a new lotto draw
+ * Create a new lotto draw (Moderator+ required)
  */
-router.post('/', async (req, res) => {
+router.post('/', authenticateToken, requireModerator, async (req, res) => {
   try {
-    const { draw_name, token_address, token_symbol, min_usd_amount, start_time } = req.body;
+    const { draw_name, token_address, token_symbol, min_usd_amount, timezone, start_time, prize_description_short, prize_description_long } = req.body;
 
     // Validation
-    if (!draw_name || !token_address || !min_usd_amount || !start_time) {
+    if (!draw_name || !draw_name.trim()) {
       return res.status(400).json({
-        error: 'Missing required fields',
-        required: ['draw_name', 'token_address', 'min_usd_amount', 'start_time']
+        error: 'Missing required field: draw_name'
+      });
+    }
+    if (!token_address || !token_address.trim()) {
+      return res.status(400).json({
+        error: 'Missing required field: token_address'
+      });
+    }
+    if (!min_usd_amount || isNaN(parseFloat(min_usd_amount)) || parseFloat(min_usd_amount) <= 0) {
+      return res.status(400).json({
+        error: 'Invalid min_usd_amount. Must be a positive number.'
+      });
+    }
+    if (!start_time || !start_time.trim()) {
+      return res.status(400).json({
+        error: 'Missing required field: start_time'
       });
     }
 
     // Get token metadata if token_symbol not provided
     let finalTokenSymbol = token_symbol;
-    if (!finalTokenSymbol) {
-      const metadata = await heliusService.getTokenMetadata(token_address);
-      finalTokenSymbol = metadata?.symbol || 'UNKNOWN';
+    if (!finalTokenSymbol || finalTokenSymbol.trim() === '') {
+      try {
+        const metadata = await heliusService.getTokenMetadata(token_address);
+        finalTokenSymbol = metadata?.symbol || 'UNKNOWN';
+      } catch (metadataError) {
+        console.warn('Could not fetch token metadata:', metadataError.message);
+        finalTokenSymbol = 'UNKNOWN';
+      }
     }
 
     // Create draw - store start_time exactly as provided (no timezone conversion)
@@ -34,7 +54,10 @@ router.post('/', async (req, res) => {
       token_address,
       token_symbol: finalTokenSymbol,
       min_usd_amount,
-      start_time: start_time // Store exactly as provided
+      timezone: timezone || null,
+      start_time: start_time, // Store exactly as provided
+      prize_description_short: prize_description_short || null,
+      prize_description_long: prize_description_long || null
     });
 
     res.status(201).json({
@@ -44,9 +67,12 @@ router.post('/', async (req, res) => {
     });
   } catch (error) {
     console.error('Error creating draw:', error);
+    console.error('Error stack:', error.stack);
+    console.error('Request body:', req.body);
     res.status(500).json({
       error: 'Failed to create lotto draw',
-      details: error.message
+      details: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 });
@@ -123,7 +149,7 @@ router.get('/:id', async (req, res) => {
  * POST /api/draws/:id/scan-dex
  * Force DexScreener scan method
  */
-router.post('/:id/scan-dex', async (req, res) => {
+router.post('/:id/scan-dex', authenticateToken, requireModerator, async (req, res) => {
   try {
     const { id } = req.params;
     
@@ -168,15 +194,14 @@ router.post('/:id/scan-dex', async (req, res) => {
       const transactionTime = new Date(buy.timestamp);
       const drawStartTime = new Date(draw.start_time);
       
-      console.log(`🔍 Validating: Transaction ${buy.timestamp} vs Draw Start ${draw.start_time}`);
-      console.log(`   Transaction Time: ${transactionTime.toISOString()}`);
-      console.log(`   Draw Start Time: ${drawStartTime.toISOString()}`);
-      
       if (transactionTime < drawStartTime) {
         filtered++;
         console.log(`⏰ Filtered transaction before draw start: ${buy.signature.substring(0, 8)}... (${buy.timestamp} < ${draw.start_time})`);
         continue;
       }
+      
+      // Log transaction details for debugging
+      console.log(`🔍 Processing: ${buy.signature.substring(0, 16)}... | Wallet: ${buy.walletAddress.substring(0, 8)}... | Amount: $${buy.usdAmount.toFixed(2)} | Min Required: $${draw.min_usd_amount}`);
       
       // Skip if signature already exists (optional validation)
       const exists = await LottoEntry.existsBySignature(buy.signature, id);
@@ -228,7 +253,7 @@ router.post('/:id/scan-dex', async (req, res) => {
  * POST /api/draws/:id/scan
  * Manually trigger a scan for a specific draw
  */
-router.post('/:id/scan', async (req, res) => {
+router.post('/:id/scan', authenticateToken, requireModerator, async (req, res) => {
   try {
     const { id } = req.params;
     
@@ -283,15 +308,15 @@ router.get('/:id/entries', async (req, res) => {
  * PUT /api/draws/:id/status
  * Update draw status
  */
-router.put('/:id/status', async (req, res) => {
+router.put('/:id/status', authenticateToken, requireModerator, async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
 
-    if (!status || !['active', 'completed', 'cancelled'].includes(status)) {
+    if (!status || !['active', 'completed', 'cancelled', 'drawn'].includes(status)) {
       return res.status(400).json({
         error: 'Invalid status',
-        allowed: ['active', 'completed', 'cancelled']
+        allowed: ['active', 'completed', 'cancelled', 'drawn']
       });
     }
 
@@ -317,10 +342,54 @@ router.put('/:id/status', async (req, res) => {
 });
 
 /**
+ * PUT /api/draws/:id/prizes
+ * Update prize descriptions
+ */
+router.put('/:id/prizes', authenticateToken, requireModerator, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { prize_description_short, prize_description_long } = req.body;
+
+    // Validate that at least one description is provided
+    if (!prize_description_short && !prize_description_long) {
+      return res.status(400).json({
+        error: 'At least one prize description must be provided'
+      });
+    }
+
+    // Validate short description length if provided
+    if (prize_description_short && prize_description_short.length > 150) {
+      return res.status(400).json({
+        error: 'Short description must be 150 characters or less'
+      });
+    }
+
+    const draw = await LottoDraw.updatePrizes(id, prize_description_short, prize_description_long);
+    if (!draw) {
+      return res.status(404).json({
+        error: 'Draw not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Prize descriptions updated',
+      draw
+    });
+  } catch (error) {
+    console.error('Error updating prize descriptions:', error);
+    res.status(500).json({
+      error: 'Failed to update prize descriptions',
+      details: error.message
+    });
+  }
+});
+
+/**
  * DELETE /api/draws/:id
  * Delete a draw and all its entries
  */
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', authenticateToken, requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     
@@ -357,7 +426,7 @@ router.delete('/:id', async (req, res) => {
  * POST /api/draws/:id/clean-blacklisted
  * Remove entries that are now blacklisted
  */
-router.post('/:id/clean-blacklisted', async (req, res) => {
+router.post('/:id/clean-blacklisted', authenticateToken, requireModerator, async (req, res) => {
   try {
     const { id } = req.params;
     
@@ -418,7 +487,7 @@ router.post('/:id/clean-blacklisted', async (req, res) => {
  * DELETE /api/draws/:id/scan-history
  * Clear scan history for a draw
  */
-router.delete('/:id/scan-history', async (req, res) => {
+router.delete('/:id/scan-history', authenticateToken, requireModerator, async (req, res) => {
   try {
     const { id } = req.params;
     

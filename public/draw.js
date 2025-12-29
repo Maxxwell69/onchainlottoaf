@@ -24,42 +24,115 @@ function showToast(message, type = 'info') {
     }, 4000);
 }
 
-// Format functions - display times exactly as stored (no timezone conversion)
-function formatDate(dateString) {
+// Format start_time - it's stored as timezone-naive in the draw's timezone (not UTC)
+// The stored time is already in EST/EDT, so we just display it as-is
+function formatDateInTimezone(dateString, drawTimezone) {
     if (!dateString) return 'N/A';
     
     try {
-        // Handle both formats: "YYYY-MM-DD HH:MM:SS" and "YYYY-MM-DDTHH:MM:SS.sssZ"
+        // Parse the date string (timezone-naive, already in the draw's timezone)
         let datePart, timePart;
-        
         if (dateString.includes('T')) {
-            // ISO format: "2025-10-17T23:30:00.000Z"
-            // The Z means UTC, but we want to treat this as local time
             const isoDate = dateString.split('T')[0];
-            const isoTime = dateString.split('T')[1].split('.')[0]; // Remove milliseconds and Z
+            const isoTime = dateString.split('T')[1].split('.')[0].replace('Z', '');
             datePart = isoDate;
             timePart = isoTime;
         } else {
-            // Space format: "2025-10-17 23:30:00"
             [datePart, timePart] = dateString.split(' ');
         }
         
         const [year, month, day] = datePart.split('-');
         const [hour, minute, second] = timePart.split(':');
         
-        // Create date using local timezone but with the exact values
-        // This treats the time as if it's already in the correct timezone
-        const date = new Date(year, month - 1, day, hour, minute, second || 0);
+        // The stored time is already in the draw's timezone (EST/EDT)
+        // We just need to format it for display
+        // Create a date object - JavaScript will interpret this as local time
+        // but we'll format it directly from the components
+        const hour12 = parseInt(hour) % 12 || 12;
+        const ampm = parseInt(hour) >= 12 ? 'PM' : 'AM';
+        const monthStr = String(parseInt(month)).padStart(2, '0');
+        const dayStr = String(parseInt(day)).padStart(2, '0');
+        const minuteStr = String(parseInt(minute)).padStart(2, '0');
         
-        // Display time exactly as stored (no timezone conversion)
-        return date.toLocaleString('en-US', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: true
-        });
+        return `${monthStr}/${dayStr}/${year}, ${hour12}:${minuteStr} ${ampm}`;
+    } catch (error) {
+        console.error('Error formatting date:', error, 'Input:', dateString);
+        return 'Invalid Date';
+    }
+}
+
+// Format functions - convert UTC timestamps to draw's timezone for display
+function formatDate(dateString, drawTimezone = null) {
+    if (!dateString) return 'N/A';
+    
+    try {
+        // Handle both formats: "YYYY-MM-DD HH:MM:SS" and "YYYY-MM-DDTHH:MM:SS.sssZ"
+        let datePart, timePart;
+        let isUTC = false;
+        
+        if (dateString.includes('T')) {
+            // ISO format: "2025-10-17T23:30:00.000Z"
+            if (dateString.includes('Z') || dateString.includes('+') || dateString.includes('-', 10)) {
+                isUTC = true;
+            }
+            const isoDate = dateString.split('T')[0];
+            const isoTime = dateString.split('T')[1].split('.')[0].replace('Z', ''); // Remove milliseconds and Z
+            datePart = isoDate;
+            timePart = isoTime;
+        } else {
+            // Space format: "YYYY-MM-DD HH:MM:SS" - assume UTC if no timezone info
+            [datePart, timePart] = dateString.split(' ');
+            // If we have a draw timezone, assume stored timestamps are in UTC
+            if (drawTimezone) {
+                isUTC = true;
+            }
+        }
+        
+        const [year, month, day] = datePart.split('-');
+        const [hour, minute, second] = timePart.split(':');
+        
+        let date;
+        if (isUTC && drawTimezone) {
+            // Create date as UTC, then format in the draw's timezone
+            const utcDate = new Date(Date.UTC(
+                parseInt(year),
+                parseInt(month) - 1,
+                parseInt(day),
+                parseInt(hour),
+                parseInt(minute),
+                parseInt(second || 0)
+            ));
+            
+            // TEMPORARY FIX: Subtract 1 hour for EST until daylight savings time
+            // This ensures times display correctly in EST (UTC-5) instead of EDT (UTC-4)
+            let displayDate = utcDate;
+            if (drawTimezone === 'America/New_York') {
+                // Subtract 1 hour to convert from EDT to EST
+                displayDate = new Date(utcDate.getTime() - (60 * 60 * 1000));
+            }
+            
+            // Format in the draw's timezone
+            return displayDate.toLocaleString('en-US', {
+                timeZone: drawTimezone,
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+            });
+        } else {
+            // Fallback: treat as local time (for backwards compatibility)
+            date = new Date(year, month - 1, day, hour, minute, second || 0);
+            return date.toLocaleString('en-US', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+            });
+        }
     } catch (error) {
         console.error('Error formatting date:', error, 'Input:', dateString);
         return 'Invalid Date';
@@ -87,13 +160,102 @@ function truncateAddress(address) {
     return `${address.substring(0, 8)}...${address.substring(address.length - 6)}`;
 }
 
+// Get timezone abbreviation for a specific date/time
+function getTimezoneAbbreviation(timezone, dateString) {
+    if (!timezone) return 'UTC';
+    
+    try {
+        if (dateString) {
+            // Parse the date string (timezone-naive)
+            let datePart, timePart;
+            if (dateString.includes('T')) {
+                const isoDate = dateString.split('T')[0];
+                const isoTime = dateString.split('T')[1].split('.')[0];
+                datePart = isoDate;
+                timePart = isoTime;
+            } else {
+                [datePart, timePart] = dateString.split(' ');
+            }
+            
+            const [year, month, day] = datePart.split('-');
+            const [hour, minute, second] = timePart.split(':');
+            
+            // Create a date object from the components (local time)
+            const dateObj = new Date(
+                parseInt(year),
+                parseInt(month) - 1,
+                parseInt(day),
+                parseInt(hour),
+                parseInt(minute),
+                parseInt(second || 0)
+            );
+            
+            // Format the date in the target timezone to get the correct abbreviation
+            // This will automatically show EST or EDT based on whether DST is in effect
+            const formatter = new Intl.DateTimeFormat('en-US', {
+                timeZone: timezone,
+                timeZoneName: 'short'
+            });
+            
+            const parts = formatter.formatToParts(dateObj);
+            const timeZoneName = parts.find(part => part.type === 'timeZoneName');
+            
+            if (timeZoneName) {
+                return timeZoneName.value;
+            }
+            
+            // Fallback for America/New_York - determine EST vs EDT
+            if (timezone === 'America/New_York') {
+                // DST in US typically: 2nd Sunday in March to 1st Sunday in November
+                // For simplicity, use month-based approximation
+                const monthNum = parseInt(month);
+                // Rough approximation: March (3) through October (10) is typically EDT
+                if (monthNum >= 3 && monthNum <= 10) {
+                    return 'EDT';
+                } else {
+                    return 'EST';
+                }
+            }
+            
+            return timezone.split('/').pop() || 'UTC';
+        } else {
+            // Fallback to current date
+            const date = new Date();
+            const formatter = new Intl.DateTimeFormat('en-US', {
+                timeZone: timezone,
+                timeZoneName: 'short'
+            });
+            
+            const parts = formatter.formatToParts(date);
+            const timeZoneName = parts.find(part => part.type === 'timeZoneName');
+            
+            return timeZoneName ? timeZoneName.value : timezone.split('/').pop() || 'UTC';
+        }
+    } catch (error) {
+        // If timezone is invalid, return fallback
+        if (timezone === 'America/New_York') return 'EST/EDT';
+        return timezone.split('/').pop() || 'UTC';
+    }
+}
+
 // Load draw data
 async function loadDrawData() {
     try {
+        // Display prize description if available
+        const prizeDescriptionCard = document.getElementById('prizeDescriptionCard');
+        const prizeDescriptionLong = document.getElementById('prizeDescriptionLong');
         const response = await fetch(`${API_URL}/api/draws/${drawId}`);
         const data = await response.json();
         
         if (!response.ok) {
+            if (response.status === 404) {
+                // Draw not found - show user-friendly message and redirect
+                showToast('❌ Draw not found. It may have been deleted.', 'error');
+                setTimeout(() => {
+                    window.location.href = '/index.html';
+                }, 2000);
+                return;
+            }
             throw new Error(data.error || 'Failed to load draw');
         }
         
@@ -105,10 +267,20 @@ async function loadDrawData() {
         updateProgressBar();
         renderNumbersGrid();
         renderEntriesTable();
+        updateDrawManagementButtons();
+        setupDrawManagementButtons();
+        setupPrizeEdit();
         
     } catch (error) {
         console.error('Error loading draw:', error);
         showToast('❌ Failed to load draw data', 'error');
+        
+        // If it's a network error or draw not found, redirect after a delay
+        if (error.message.includes('not found') || error.message.includes('404')) {
+            setTimeout(() => {
+                window.location.href = '/index.html';
+            }, 2000);
+        }
     }
 }
 
@@ -117,10 +289,48 @@ function updateDrawInfo() {
     document.getElementById('drawTitle').textContent = currentDraw.draw_name;
     document.getElementById('drawSubtitle').textContent = `Draw #${currentDraw.id}`;
     
+    // Display prize description if available
+    const prizeDescriptionCard = document.getElementById('prizeDescriptionCard');
+    const prizeDescriptionLong = document.getElementById('prizeDescriptionLong');
+    const editPrizeBtn = document.getElementById('editPrizeBtn');
+    const editPrizeForm = document.getElementById('editPrizeForm');
+    
+    if (prizeDescriptionCard && prizeDescriptionLong) {
+        if (currentDraw.prize_description_short || currentDraw.prize_description_long) {
+            // Show long description if available, otherwise show short
+            if (currentDraw.prize_description_long) {
+                prizeDescriptionLong.textContent = currentDraw.prize_description_long;
+            } else if (currentDraw.prize_description_short) {
+                prizeDescriptionLong.textContent = currentDraw.prize_description_short;
+            }
+            prizeDescriptionCard.style.display = 'block';
+            
+            // Ensure form is hidden and button is visible
+            if (editPrizeForm) editPrizeForm.style.display = 'none';
+            if (prizeDescriptionLong) prizeDescriptionLong.style.display = 'block';
+            if (editPrizeBtn) editPrizeBtn.style.display = 'inline-block';
+        } else {
+            // Show card even if no description, so admin can add one
+            prizeDescriptionCard.style.display = 'block';
+            prizeDescriptionLong.textContent = 'No prize description set. Click "Edit Prize" to add one.';
+            prizeDescriptionLong.style.opacity = '0.7';
+            
+            // Ensure form is hidden and button is visible
+            if (editPrizeForm) editPrizeForm.style.display = 'none';
+            if (prizeDescriptionLong) prizeDescriptionLong.style.display = 'block';
+            if (editPrizeBtn) editPrizeBtn.style.display = 'inline-block';
+        }
+    }
+    
+    // Update public link button
+    const publicLinkBtn = document.getElementById('publicLinkBtn');
+    if (publicLinkBtn) {
+        publicLinkBtn.href = `public-draw.html?id=${drawId}`;
+        publicLinkBtn.target = '_blank';
+    }
+    
     document.getElementById('tokenInfo').textContent = 
         `${currentDraw.token_symbol || 'Unknown'} (${truncateAddress(currentDraw.token_address)})`;
-    
-    document.getElementById('minPurchase').textContent = formatUSD(currentDraw.min_usd_amount);
     
     const statusEl = document.getElementById('drawStatus');
     statusEl.textContent = currentDraw.status.toUpperCase();
@@ -129,8 +339,20 @@ function updateDrawInfo() {
     document.getElementById('filledSlots').textContent = 
         `${currentDraw.filled_slots} / ${currentDraw.total_slots}`;
     
-    document.getElementById('startTime').textContent = formatDate(currentDraw.start_time);
-    document.getElementById('endTime').textContent = formatDate(currentDraw.end_time);
+    // Display start time with timezone
+    // Note: start_time is stored as timezone-naive in the draw's timezone, not UTC
+    const timezone = currentDraw.timezone || 'UTC';
+    const startTimeDisplay = formatDateInTimezone(currentDraw.start_time, timezone);
+    const timezoneAbbr = getTimezoneAbbreviation(timezone, currentDraw.start_time);
+    document.getElementById('startTime').textContent = `${startTimeDisplay} (${timezoneAbbr})`;
+    
+    // Display minimum scan amount (admin only - not shown on public page)
+    const minScanAmountEl = document.getElementById('minScanAmount');
+    if (minScanAmountEl && currentDraw.min_usd_amount) {
+        minScanAmountEl.textContent = formatUSD(currentDraw.min_usd_amount);
+    } else if (minScanAmountEl) {
+        minScanAmountEl.textContent = 'N/A';
+    }
 }
 
 // Update progress bar
@@ -199,6 +421,11 @@ function renderNumbersGrid() {
     }
     
     grid.innerHTML = html;
+    
+    // Apply theme styles to all balls (with a small delay to ensure DOM is ready)
+    setTimeout(() => {
+        applyThemeToBalls();
+    }, 50);
 }
 
 // Manual Add Transaction functionality
@@ -239,11 +466,6 @@ async function submitManualAddTransaction() {
             return;
         }
         
-        if (usdAmount < currentDraw.min_usd_amount) {
-            showToast(`USD amount must be at least $${currentDraw.min_usd_amount}`, 'error');
-            return;
-        }
-        
         // Convert EST time to proper format
         // The datetime-local input gives us a string like "2025-10-17T23:30"
         // We need to store it as a timezone-naive timestamp
@@ -256,12 +478,19 @@ async function submitManualAddTransaction() {
         submitBtn.textContent = 'Adding...';
         submitBtn.disabled = true;
         
+        // Get auth headers
+        if (!authManager.isAuthenticated()) {
+            showToast('❌ You must be logged in to add entries', 'error');
+            window.location.href = '/login.html';
+            return;
+        }
+        
+        const authHeaders = authManager.getAuthHeaders();
+        
         // Submit to API
         const response = await fetch('/api/manual-entries/add', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: authHeaders,
             body: JSON.stringify({
                 drawId: currentDraw.id,
                 walletAddress: walletAddress,
@@ -363,7 +592,7 @@ function renderEntriesTable() {
                     </button>
                 </div>
                 <div style="display: flex; gap: 1rem; align-items: center;">
-                    <span class="entry-time">⏰ ${formatDate(entry.timestamp)}</span>
+                    <span class="entry-time">⏰ ${formatDate(entry.timestamp, currentDraw?.timezone || null)}</span>
                     <a href="https://solscan.io/tx/${entry.transaction_signature}" 
                        target="_blank" 
                        class="entry-tx-link">
@@ -373,6 +602,68 @@ function renderEntriesTable() {
             </div>
         </div>
     `).join('');
+    
+    // Apply theme styles to lotto balls (with delay to ensure DOM is ready)
+    setTimeout(() => {
+        applyThemeToLottoBalls();
+    }, 50);
+}
+
+// Apply theme styles to number balls
+function applyThemeToBalls() {
+    if (!window.themeManager) {
+        // Fallback: ensure default golden style is applied
+        const filledBalls = document.querySelectorAll('.number-ball.filled');
+        filledBalls.forEach(ball => {
+            if (!ball.style.background || ball.style.background === 'none') {
+                ball.style.background = 'linear-gradient(135deg, #FFD700 0%, #B8860B 50%, #FFD700 100%)';
+                ball.style.color = '#000000';
+                ball.style.borderColor = '#FFD700';
+            }
+        });
+        return;
+    }
+    
+    const filledBalls = document.querySelectorAll('.number-ball.filled');
+    const availableBalls = document.querySelectorAll('.number-ball.available');
+    
+    filledBalls.forEach(ball => {
+        window.themeManager.applyBallStyles(ball, 'filled');
+    });
+    
+    availableBalls.forEach(ball => {
+        window.themeManager.applyBallStyles(ball, 'available');
+    });
+}
+
+// Apply theme styles to lotto balls in entry list
+function applyThemeToLottoBalls() {
+    const lottoBalls = document.querySelectorAll('.lotto-ball');
+    
+    if (!window.themeManager) {
+        // Fallback: ensure default golden style is applied
+        lottoBalls.forEach(ball => {
+            if (!ball.style.background || ball.style.background === 'none' || ball.style.background === 'transparent') {
+                ball.style.background = 'linear-gradient(135deg, #FFD700 0%, #B8860B 50%, #FFD700 100%)';
+                ball.style.color = '#000000';
+                ball.style.borderColor = '#FFD700';
+                ball.style.borderWidth = '2px';
+                ball.style.borderStyle = 'solid';
+            }
+        });
+        return;
+    }
+    
+    lottoBalls.forEach(ball => {
+        window.themeManager.applyBallStyles(ball, 'filled');
+        
+        // Ensure ball is visible even if theme application fails
+        if (!ball.style.background || ball.style.background === 'none' || ball.style.background === 'transparent') {
+            ball.style.background = 'linear-gradient(135deg, #FFD700 0%, #B8860B 50%, #FFD700 100%)';
+            ball.style.color = '#000000';
+            ball.style.borderColor = '#FFD700';
+        }
+    });
 }
 
 // Scan for new buys using DexScreener (ALWAYS works)
@@ -388,8 +679,18 @@ document.getElementById('scanDexBtn').addEventListener('click', async () => {
     showToast('🔍 Scanning for new qualifying buys...', 'info');
     
     try {
+        // Get auth headers
+        if (!authManager.isAuthenticated()) {
+            showToast('❌ You must be logged in to scan', 'error');
+            window.location.href = '/login.html';
+            return;
+        }
+        
+        const authHeaders = authManager.getAuthHeaders();
+        
         const response = await fetch(`${API_URL}/api/draws/${drawId}/scan-dex`, {
-            method: 'POST'
+            method: 'POST',
+            headers: authHeaders
         });
         
         const data = await response.json();
@@ -499,11 +800,316 @@ function exportToCSV() {
     }
 }
 
+// Listen for theme changes to re-render balls
+window.addEventListener('themeChanged', () => {
+    if (currentEntries && currentEntries.length > 0) {
+        applyThemeToBalls();
+        applyThemeToLottoBalls();
+    }
+});
+
 // Auto-refresh every 30 seconds
 setInterval(async () => {
     console.log('Auto-refreshing draw data...');
     await loadDrawData();
 }, 30000);
+
+// Draw Management Functions
+async function markDrawAsComplete() {
+    if (!confirm('Are you sure you want to mark this draw as complete? This will end the draw.')) {
+        return;
+    }
+
+    try {
+        if (!authManager.isAuthenticated()) {
+            showToast('❌ You must be logged in', 'error');
+            return;
+        }
+
+        const authHeaders = authManager.getAuthHeaders();
+        const response = await fetch(`${API_URL}/api/draws/${drawId}/status`, {
+            method: 'PUT',
+            headers: authHeaders,
+            body: JSON.stringify({ status: 'completed' })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            showToast('✅ Draw marked as complete!', 'success');
+            await loadDrawData();
+        } else {
+            showToast(`❌ Error: ${data.error || 'Failed to update status'}`, 'error');
+        }
+    } catch (error) {
+        console.error('Error marking draw as complete:', error);
+        showToast('❌ Failed to update draw status', 'error');
+    }
+}
+
+async function markDrawAsDrawn() {
+    if (!confirm('Are you sure you want to mark this draw as drawn? It will be removed from the public homepage.')) {
+        return;
+    }
+
+    try {
+        if (!authManager.isAuthenticated()) {
+            showToast('❌ You must be logged in', 'error');
+            return;
+        }
+
+        const authHeaders = authManager.getAuthHeaders();
+        const response = await fetch(`${API_URL}/api/draws/${drawId}/status`, {
+            method: 'PUT',
+            headers: authHeaders,
+            body: JSON.stringify({ status: 'drawn' })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            showToast('✅ Draw marked as drawn! It will no longer appear on the public page.', 'success');
+            await loadDrawData();
+        } else {
+            showToast(`❌ Error: ${data.error || 'Failed to update status'}`, 'error');
+        }
+    } catch (error) {
+        console.error('Error marking draw as drawn:', error);
+        showToast('❌ Failed to update draw status', 'error');
+    }
+}
+
+async function deactivateDraw() {
+    if (!confirm('Are you sure you want to deactivate this draw? It will be marked as cancelled.')) {
+        return;
+    }
+
+    try {
+        if (!authManager.isAuthenticated()) {
+            showToast('❌ You must be logged in', 'error');
+            return;
+        }
+
+        const authHeaders = authManager.getAuthHeaders();
+        const response = await fetch(`${API_URL}/api/draws/${drawId}/status`, {
+            method: 'PUT',
+            headers: authHeaders,
+            body: JSON.stringify({ status: 'cancelled' })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            showToast('✅ Draw deactivated!', 'success');
+            await loadDrawData();
+        } else {
+            showToast(`❌ Error: ${data.error || 'Failed to update status'}`, 'error');
+        }
+    } catch (error) {
+        console.error('Error deactivating draw:', error);
+        showToast('❌ Failed to deactivate draw', 'error');
+    }
+}
+
+async function deleteDraw() {
+    if (!confirm(`⚠️ Are you sure you want to DELETE this draw?\n\nThis will permanently delete:\n- The draw\n- All entries (lotto numbers)\n- All scan history\n\nThis action cannot be undone!`)) {
+        return;
+    }
+
+    try {
+        if (!authManager.isAuthenticated()) {
+            showToast('❌ You must be logged in', 'error');
+            return;
+        }
+
+        const authHeaders = authManager.getAuthHeaders();
+        const response = await fetch(`${API_URL}/api/draws/${drawId}`, {
+            method: 'DELETE',
+            headers: authHeaders
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            showToast('✅ Draw deleted successfully!', 'success');
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 1500);
+        } else {
+            showToast(`❌ Error: ${data.error || 'Failed to delete draw'}`, 'error');
+        }
+    } catch (error) {
+        console.error('Error deleting draw:', error);
+        showToast('❌ Failed to delete draw', 'error');
+    }
+}
+
+// Update draw info to show/hide management buttons based on status
+function updateDrawManagementButtons() {
+    if (!currentDraw) return;
+
+    const markCompleteBtn = document.getElementById('markCompleteBtn');
+    const markDrawnBtn = document.getElementById('markDrawnBtn');
+    const deactivateBtn = document.getElementById('deactivateBtn');
+    const deleteDrawBtn = document.getElementById('deleteDrawBtn');
+
+    // Show buttons based on draw status
+    if (currentDraw.status === 'active') {
+        markCompleteBtn.style.display = 'inline-flex';
+        markDrawnBtn.style.display = 'inline-flex';
+        deactivateBtn.style.display = 'inline-flex';
+    } else if (currentDraw.status === 'completed') {
+        // Show "Mark as Drawn" for completed draws
+        markDrawnBtn.style.display = 'inline-flex';
+        markCompleteBtn.style.display = 'none';
+        deactivateBtn.style.display = 'inline-flex';
+    } else {
+        markCompleteBtn.style.display = 'none';
+        markDrawnBtn.style.display = 'none';
+        deactivateBtn.style.display = 'none';
+    }
+
+    // Delete button always available (admin only)
+    deleteDrawBtn.style.display = 'inline-flex';
+}
+
+// Setup event listeners for management buttons
+function setupDrawManagementButtons() {
+    const markCompleteBtn = document.getElementById('markCompleteBtn');
+    const markDrawnBtn = document.getElementById('markDrawnBtn');
+    const deactivateBtn = document.getElementById('deactivateBtn');
+    const deleteDrawBtn = document.getElementById('deleteDrawBtn');
+
+    if (markCompleteBtn && !markCompleteBtn.hasAttribute('data-listener')) {
+        markCompleteBtn.addEventListener('click', markDrawAsComplete);
+        markCompleteBtn.setAttribute('data-listener', 'true');
+    }
+    if (markDrawnBtn && !markDrawnBtn.hasAttribute('data-listener')) {
+        markDrawnBtn.addEventListener('click', markDrawAsDrawn);
+        markDrawnBtn.setAttribute('data-listener', 'true');
+    }
+    if (deactivateBtn && !deactivateBtn.hasAttribute('data-listener')) {
+        deactivateBtn.addEventListener('click', deactivateDraw);
+        deactivateBtn.setAttribute('data-listener', 'true');
+    }
+    if (deleteDrawBtn && !deleteDrawBtn.hasAttribute('data-listener')) {
+        deleteDrawBtn.addEventListener('click', deleteDraw);
+        deleteDrawBtn.setAttribute('data-listener', 'true');
+    }
+}
+
+// Prize Edit Functions
+function setupPrizeEdit() {
+    const editPrizeBtn = document.getElementById('editPrizeBtn');
+    const cancelPrizeEditBtn = document.getElementById('cancelPrizeEditBtn');
+    const savePrizeBtn = document.getElementById('savePrizeBtn');
+    const editPrizeForm = document.getElementById('editPrizeForm');
+    const prizeDescriptionLong = document.getElementById('prizeDescriptionLong');
+    
+    if (!editPrizeBtn || !editPrizeForm) return;
+    
+    // Edit button click - show form
+    if (editPrizeBtn && !editPrizeBtn.hasAttribute('data-listener')) {
+        editPrizeBtn.addEventListener('click', () => {
+            // Populate form with current values
+            document.getElementById('editPrizeShort').value = currentDraw.prize_description_short || '';
+            document.getElementById('editPrizeLong').value = currentDraw.prize_description_long || '';
+            
+            // Show form, hide display
+            editPrizeForm.style.display = 'block';
+            prizeDescriptionLong.style.display = 'none';
+            editPrizeBtn.style.display = 'none';
+        });
+        editPrizeBtn.setAttribute('data-listener', 'true');
+    }
+    
+    // Cancel button
+    if (cancelPrizeEditBtn && !cancelPrizeEditBtn.hasAttribute('data-listener')) {
+        cancelPrizeEditBtn.addEventListener('click', () => {
+            editPrizeForm.style.display = 'none';
+            prizeDescriptionLong.style.display = 'block';
+            editPrizeBtn.style.display = 'inline-block';
+        });
+        cancelPrizeEditBtn.setAttribute('data-listener', 'true');
+    }
+    
+    // Save button
+    if (savePrizeBtn && !savePrizeBtn.hasAttribute('data-listener')) {
+        savePrizeBtn.addEventListener('click', async () => {
+            const prizeShort = document.getElementById('editPrizeShort').value.trim();
+            const prizeLong = document.getElementById('editPrizeLong').value.trim();
+            
+            if (!prizeShort && !prizeLong) {
+                showToast('❌ At least one prize description must be provided', 'error');
+                return;
+            }
+            
+            if (prizeShort && prizeShort.length > 150) {
+                showToast('❌ Short description must be 150 characters or less', 'error');
+                return;
+            }
+            
+            // Disable button and show loading
+            savePrizeBtn.disabled = true;
+            savePrizeBtn.textContent = '💾 Saving...';
+            
+            try {
+                if (!authManager.isAuthenticated()) {
+                    showToast('❌ You must be logged in to edit prizes', 'error');
+                    window.location.href = '/login.html';
+                    return;
+                }
+                
+                const authHeaders = authManager.getAuthHeaders();
+                
+                const response = await fetch(`${API_URL}/api/draws/${drawId}/prizes`, {
+                    method: 'PUT',
+                    headers: {
+                        ...authHeaders,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        prize_description_short: prizeShort || null,
+                        prize_description_long: prizeLong || null
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showToast('✅ Prize descriptions updated successfully!', 'success');
+                    
+                    // Update current draw data
+                    currentDraw.prize_description_short = prizeShort || null;
+                    currentDraw.prize_description_long = prizeLong || null;
+                    
+                    // Update display
+                    if (currentDraw.prize_description_long) {
+                        prizeDescriptionLong.textContent = currentDraw.prize_description_long;
+                    } else if (currentDraw.prize_description_short) {
+                        prizeDescriptionLong.textContent = currentDraw.prize_description_short;
+                    } else {
+                        prizeDescriptionLong.textContent = '';
+                    }
+                    
+                    // Hide form, show display
+                    editPrizeForm.style.display = 'none';
+                    prizeDescriptionLong.style.display = 'block';
+                    editPrizeBtn.style.display = 'inline-block';
+                } else {
+                    showToast(`❌ Error: ${data.error || 'Failed to update prizes'}`, 'error');
+                }
+            } catch (error) {
+                console.error('Error updating prizes:', error);
+                showToast('❌ Failed to update prizes. Check console for details.', 'error');
+            } finally {
+                savePrizeBtn.disabled = false;
+                savePrizeBtn.textContent = '💾 Save Changes';
+            }
+        });
+        savePrizeBtn.setAttribute('data-listener', 'true');
+    }
+}
 
 // Initial load
 loadDrawData();
