@@ -65,24 +65,8 @@ function truncateAddress(address) {
     return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
 }
 
-// Initialize role-based UI
-function initRoleBasedUI() {
-    const user = authManager.getCurrentUser();
-    if (!user) return;
-    
-    const isModerator = user.role === 'moderator' || user.role === 'admin' || user.role === 'super_admin';
-    
-    // Show/hide create draw form based on role
-    const createDrawCard = document.getElementById('createDrawCard');
-    if (createDrawCard) {
-        createDrawCard.style.display = isModerator ? 'block' : 'none';
-    }
-}
-
-// Create Draw Form Handler (only if form exists)
-const createDrawForm = document.getElementById('createDrawForm');
-if (createDrawForm) {
-    createDrawForm.addEventListener('submit', async (e) => {
+// Create Draw Form Handler
+document.getElementById('createDrawForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     
     const createBtn = document.getElementById('createBtn');
@@ -104,54 +88,20 @@ if (createDrawForm) {
         // Format: YYYY-MM-DD HH:MM:SS (space instead of T)
         const startTimeEST = startTimeValue.replace('T', ' ') + ':00';
         
-        // Validate required fields
-        const drawName = document.getElementById('drawName').value.trim();
-        const tokenAddress = document.getElementById('tokenAddress').value.trim();
-        const tokenSymbol = document.getElementById('tokenSymbol').value.trim() || null;
-        const minUsdAmount = parseFloat(document.getElementById('minUsdAmount').value);
-
-        if (!drawName || !tokenAddress || !minUsdAmount || isNaN(minUsdAmount) || !startTimeEST) {
-            showToast('❌ Please fill in all required fields', 'error');
-            createBtn.disabled = false;
-            btnText.style.display = 'inline';
-            btnSpinner.style.display = 'none';
-            return;
-        }
-
-        const prizeDescriptionShort = document.getElementById('prizeDescriptionShort').value.trim();
-        const prizeDescriptionLong = document.getElementById('prizeDescriptionLong').value.trim();
-
-        if (!prizeDescriptionShort) {
-            showToast('❌ Please enter a short prize description', 'error');
-            createBtn.disabled = false;
-            btnText.style.display = 'inline';
-            btnSpinner.style.display = 'none';
-            return;
-        }
-
         const formData = {
-            draw_name: drawName,
-            token_address: tokenAddress,
-            token_symbol: tokenSymbol,
-            min_usd_amount: minUsdAmount,
+            draw_name: document.getElementById('drawName').value,
+            token_address: document.getElementById('tokenAddress').value,
+            token_symbol: document.getElementById('tokenSymbol').value || null,
+            min_usd_amount: parseFloat(document.getElementById('minUsdAmount').value),
             start_time: startTimeEST,
-            timezone: timezone || null,
-            prize_description_short: prizeDescriptionShort,
-            prize_description_long: prizeDescriptionLong || null
+            timezone: timezone
         };
-        
-        // Get auth headers - check if user is authenticated
-        if (!authManager.isAuthenticated()) {
-            showToast('❌ You must be logged in to create a draw', 'error');
-            window.location.href = '/login.html';
-            return;
-        }
-        
-        const authHeaders = authManager.getAuthHeaders();
         
         const response = await fetch(`${API_URL}/api/draws`, {
             method: 'POST',
-            headers: authHeaders,
+            headers: {
+                'Content-Type': 'application/json'
+            },
             body: JSON.stringify(formData)
         });
         
@@ -166,9 +116,7 @@ if (createDrawForm) {
                 window.location.href = `draw.html?id=${data.draw.id}`;
             }, 1500);
         } else {
-            const errorMsg = data.details || data.error || 'Failed to create draw';
-            showToast(`❌ Error: ${errorMsg}`, 'error');
-            console.error('Draw creation error:', data);
+            showToast(`❌ Error: ${data.error || 'Failed to create draw'}`, 'error');
         }
     } catch (error) {
         console.error('Error creating draw:', error);
@@ -178,8 +126,7 @@ if (createDrawForm) {
         btnText.style.display = 'inline';
         btnSpinner.style.display = 'none';
     }
-    });
-}
+});
 
 // Render draw item
 function renderDrawItem(draw) {
@@ -197,6 +144,10 @@ function renderDrawItem(draw) {
                     <span class="detail-value">${draw.token_symbol || 'Unknown'}</span>
                 </div>
                 <div class="detail-item">
+                    <span class="detail-label">Min Purchase</span>
+                    <span class="detail-value">${formatUSD(draw.min_usd_amount)}</span>
+                </div>
+                <div class="detail-item">
                     <span class="detail-label">Progress</span>
                     <span class="detail-value">${draw.filled_slots}/${draw.total_slots} (${progress}%)</span>
                 </div>
@@ -205,12 +156,9 @@ function renderDrawItem(draw) {
                     <span class="detail-value">${formatDate(draw.start_time)}</span>
                 </div>
             </div>
-                <div class="draw-actions">
-                <button class="btn btn-primary" onclick="window.location.href='public-draw.html?id=${draw.id}'">
-                    🌐 View Draw →
-                </button>
-                <button class="btn btn-secondary" onclick="window.location.href='draw.html?id=${draw.id}'">
-                    🔧 Admin View →
+            <div class="draw-actions">
+                <button class="btn btn-primary" onclick="window.location.href='draw.html?id=${draw.id}'">
+                    View Draw →
                 </button>
                 ${draw.status === 'active' ? `
                     <button class="btn btn-secondary" onclick="scanDraw(${draw.id})">
@@ -233,10 +181,7 @@ async function loadActiveDraws() {
     const container = document.getElementById('activeDrawsList');
     
     try {
-        const authHeaders = authManager.getAuthHeaders();
-        const response = await fetch(`${API_URL}/api/draws/active`, {
-            headers: authHeaders
-        });
+        const response = await fetch(`${API_URL}/api/draws/active`);
         const data = await response.json();
         
         if (data.draws && data.draws.length > 0) {
@@ -265,10 +210,7 @@ async function loadAllDraws() {
     const container = document.getElementById('allDrawsList');
     
     try {
-        const authHeaders = authManager.getAuthHeaders();
-        const response = await fetch(`${API_URL}/api/draws`, {
-            headers: authHeaders
-        });
+        const response = await fetch(`${API_URL}/api/draws`);
         const data = await response.json();
         
         if (data.draws && data.draws.length > 0) {
@@ -297,10 +239,8 @@ async function scanDraw(drawId) {
   showToast('🔍 Scanning for new buys...', 'info');
   
   try {
-    const authHeaders = authManager.getAuthHeaders();
     const response = await fetch(`${API_URL}/api/draws/${drawId}/scan`, {
-      method: 'POST',
-      headers: authHeaders
+      method: 'POST'
     });
     
     const data = await response.json();
@@ -327,10 +267,8 @@ async function deleteDraw(drawId, drawName) {
   showToast('🗑️ Deleting draw...', 'info');
   
   try {
-    const authHeaders = authManager.getAuthHeaders();
     const response = await fetch(`${API_URL}/api/draws/${drawId}`, {
-      method: 'DELETE',
-      headers: authHeaders
+      method: 'DELETE'
     });
     
     const data = await response.json();
@@ -357,10 +295,8 @@ async function clearScanHistory(drawId, drawName) {
   showToast('🧹 Clearing scan history...', 'info');
   
   try {
-    const authHeaders = authManager.getAuthHeaders();
     const response = await fetch(`${API_URL}/api/draws/${drawId}/scan-history`, {
-      method: 'DELETE',
-      headers: authHeaders
+      method: 'DELETE'
     });
     
     const data = await response.json();
@@ -386,14 +322,11 @@ document.getElementById('refreshDrawsBtn').addEventListener('click', () => {
 // Load managed tokens for dropdown
 async function loadManagedTokens() {
     try {
-        const authHeaders = authManager.getAuthHeaders();
-        const response = await fetch(`${API_URL}/api/tokens`, {
-            headers: authHeaders
-        });
+        const response = await fetch(`${API_URL}/api/tokens`);
         const data = await response.json();
         
         const select = document.getElementById('tokenSelect');
-        if (select && data.tokens && data.tokens.length > 0) {
+        if (data.tokens && data.tokens.length > 0) {
             // Add managed tokens to dropdown
             data.tokens.forEach(token => {
                 const option = document.createElement('option');
@@ -411,92 +344,54 @@ async function loadManagedTokens() {
     }
 }
 
-// Token dropdown change handler (only if element exists)
-const tokenSelect = document.getElementById('tokenSelect');
-if (tokenSelect) {
-    tokenSelect.addEventListener('change', (e) => {
-        const value = e.target.value;
-        if (value) {
-            const token = JSON.parse(value);
-            const tokenAddressField = document.getElementById('tokenAddress');
-            const tokenSymbolField = document.getElementById('tokenSymbol');
-            
-            if (tokenAddressField) tokenAddressField.value = token.address;
-            if (tokenSymbolField) tokenSymbolField.value = token.symbol || '';
-            
-            // Auto-generate draw name if empty
-            const drawNameField = document.getElementById('drawName');
-            if (drawNameField && !drawNameField.value && token.symbol) {
-                const now = new Date();
-                drawNameField.value = `${token.symbol} Draw - ${now.toLocaleDateString()}`;
-            }
+// Token dropdown change handler
+document.getElementById('tokenSelect').addEventListener('change', (e) => {
+    const value = e.target.value;
+    if (value) {
+        const token = JSON.parse(value);
+        document.getElementById('tokenAddress').value = token.address;
+        document.getElementById('tokenSymbol').value = token.symbol || '';
+        
+        // Auto-generate draw name if empty
+        const drawNameField = document.getElementById('drawName');
+        if (!drawNameField.value && token.symbol) {
+            const now = new Date();
+            drawNameField.value = `${token.symbol} Draw - ${now.toLocaleDateString()}`;
         }
-    });
-}
+    }
+});
 
 // Set default timezone and start time
-// Initialize form elements (only if they exist - for moderators+)
-const timezoneSelect = document.getElementById('timezoneSelect');
-const startTimeInput = document.getElementById('startTime');
-const startNowBtn = document.getElementById('startNowBtn');
+document.getElementById('timezoneSelect').value = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
 
-if (timezoneSelect) {
-    timezoneSelect.value = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
-}
+// Set start time to local computer time (not UTC)
+const now = new Date();
+const localTimeString = now.getFullYear() + '-' + 
+    String(now.getMonth() + 1).padStart(2, '0') + '-' + 
+    String(now.getDate()).padStart(2, '0') + 'T' + 
+    String(now.getHours()).padStart(2, '0') + ':' + 
+    String(now.getMinutes()).padStart(2, '0');
+document.getElementById('startTime').value = localTimeString;
 
-if (startTimeInput) {
-    // Set start time to local computer time (not UTC)
+// Timezone conversion removed - using local time directly
+
+// Start from now button functionality
+document.getElementById('startNowBtn').addEventListener('click', () => {
     const now = new Date();
+    
+    // Use local computer time (not UTC)
     const localTimeString = now.getFullYear() + '-' + 
         String(now.getMonth() + 1).padStart(2, '0') + '-' + 
         String(now.getDate()).padStart(2, '0') + 'T' + 
         String(now.getHours()).padStart(2, '0') + ':' + 
         String(now.getMinutes()).padStart(2, '0');
-    startTimeInput.value = localTimeString;
-}
-
-// Start from now button functionality (only if button exists)
-if (startNowBtn) {
-    startNowBtn.addEventListener('click', () => {
-        const now = new Date();
-        
-        // Use local computer time (not UTC)
-        const localTimeString = now.getFullYear() + '-' + 
-            String(now.getMonth() + 1).padStart(2, '0') + '-' + 
-            String(now.getDate()).padStart(2, '0') + 'T' + 
-            String(now.getHours()).padStart(2, '0') + ':' + 
-            String(now.getMinutes()).padStart(2, '0');
-        
-        if (startTimeInput) {
-            startTimeInput.value = localTimeString;
-        }
-        showToast('✅ Start time set to current local time', 'success');
-    });
-}
-
-// Initialize role-based UI and load data
-document.addEventListener('DOMContentLoaded', async () => {
-    // Check authentication first
-    if (!authManager.isAuthenticated()) {
-        // Try to verify token
-        const isValid = await authManager.verifyToken();
-        if (!isValid) {
-            showToast('❌ Please log in to continue', 'error');
-            setTimeout(() => {
-                window.location.href = '/login.html';
-            }, 1500);
-            return;
-        }
-    }
     
-    initRoleBasedUI();
-    loadActiveDraws();
-    loadAllDraws();
-    
-    // Only load tokens if user is moderator+ (for the form dropdown)
-    const user = authManager.getCurrentUser();
-    if (user && (user.role === 'moderator' || user.role === 'admin' || user.role === 'super_admin')) {
-        loadManagedTokens();
-    }
+    document.getElementById('startTime').value = localTimeString;
+    showToast('✅ Start time set to current local time', 'success');
 });
+
+// Initial load
+loadActiveDraws();
+loadAllDraws();
+loadManagedTokens();
 
