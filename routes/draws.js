@@ -160,6 +160,57 @@ router.get('/public/category/:category', async (req, res) => {
 });
 
 /**
+ * GET /api/draws/public/category/:category/winners
+ * Get all winners for public draws in a category
+ */
+router.get('/public/category/:category/winners', async (req, res) => {
+  try {
+    const { category } = req.params;
+    
+    // Get all public draws for this category
+    const draws = await LottoDraw.getPublicActiveByCategory(category);
+    
+    // Get winners for each draw
+    const winnersData = [];
+    for (const draw of draws) {
+      const winners = await LottoEntry.getWinnersByDrawId(draw.id);
+      for (const winner of winners) {
+        winnersData.push({
+          draw_id: draw.id,
+          draw_name: draw.draw_name,
+          draw_date: draw.start_time,
+          lotto_number: winner.lotto_number,
+          wallet_address: winner.wallet_address,
+          prize: winner.prize,
+          timestamp: winner.timestamp || winner.created_at
+        });
+      }
+    }
+    
+    // Sort by draw date (most recent first), then by lotto number
+    winnersData.sort((a, b) => {
+      const dateA = new Date(a.draw_date);
+      const dateB = new Date(b.draw_date);
+      if (dateB.getTime() !== dateA.getTime()) {
+        return dateB.getTime() - dateA.getTime();
+      }
+      return a.lotto_number - b.lotto_number;
+    });
+    
+    res.json({
+      success: true,
+      winners: winnersData
+    });
+  } catch (error) {
+    console.error('Error fetching winners by category:', error);
+    res.status(500).json({
+      error: 'Failed to fetch winners by category',
+      details: error.message
+    });
+  }
+});
+
+/**
  * GET /api/draws/:id
  * Get a specific draw by ID with entries
  */
