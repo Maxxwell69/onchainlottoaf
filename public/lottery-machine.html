@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lottery Ball Machine - On Chain Lotto</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="lottery-machine.css">
+</head>
+<body>
+    <div class="container">
+        <div class="lottery-machine-container">
+            <header style="text-align: center; margin-bottom: 2rem;">
+                <h1 class="machine-title">🎰 Lottery Ball Machine</h1>
+                <p class="subtitle">Spin the machine to randomly select a winning number</p>
+            </header>
+            
+            <div class="machine-display">
+                <div class="ball-machine">
+                    <div class="machine-top">
+                        <div class="machine-vent"></div>
+                        <div class="machine-vent"></div>
+                        <div class="machine-vent"></div>
+                    </div>
+                    <div class="machine-window">
+                        <div class="tumbling-balls" id="tumblingBalls"></div>
+                        <div class="machine-glass"></div>
+                    </div>
+                    <div class="machine-bottom">
+                        <div class="output-chute" id="outputChute">
+                            <div class="output-ball" id="outputBall" style="display: none;">
+                                <span id="outputNumber">?</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="controls-section">
+                    <div class="range-selector">
+                        <label for="minNumber">Minimum Number</label>
+                        <input type="number" id="minNumber" value="1" min="1" max="99">
+                    </div>
+                    <div class="range-selector">
+                        <label for="maxNumber">Maximum Number</label>
+                        <input type="number" id="maxNumber" value="69" min="1" max="99">
+                    </div>
+                    <div class="range-display">
+                        <span>Range: <strong id="rangeDisplay">1 - 69</strong></span>
+                    </div>
+                </div>
+                
+                <button class="spin-button" id="spinButton" onclick="spinMachine()">
+                    🎲 Spin the Machine
+                </button>
+                
+                <div class="result-display" id="resultDisplay" style="display: none;">
+                    <div class="result-label">🎉 Winning Number Selected!</div>
+                    <div class="result-ball-container">
+                        <div class="result-ball" id="resultBall">
+                            <span id="resultNumber">?</span>
+                        </div>
+                    </div>
+                    <button class="btn btn-secondary" onclick="spinMachine()" style="margin-top: 1rem;">
+                        🎲 Spin Again
+                    </button>
+                </div>
+            </div>
+            
+            <div class="machine-info">
+                <div class="info-card">
+                    <h3>How It Works</h3>
+                    <ul>
+                        <li>Set your number range (default: 1-69)</li>
+                        <li>Click "Spin the Machine" to start</li>
+                        <li>Watch the balls tumble in the machine</li>
+                        <li>A random number will be selected</li>
+                        <li>The winning ball will appear below</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="lottery-machine.js"></script>
+</body>
+</html>
