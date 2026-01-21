@@ -1281,8 +1281,17 @@ function selectWinner(entryId, lottoNumber, walletAddress, currentPrize = null) 
     };
     isEmptyBallWinner = false;
     
-    // Get current date for draw results
-    const drawDate = currentDraw ? formatDateInTimezone(currentDraw.start_time, currentDraw.timezone) : new Date().toLocaleDateString();
+    // Get current date for draw results (just date, not time)
+    let drawDate = new Date().toLocaleDateString();
+    if (currentDraw && currentDraw.start_time) {
+        try {
+            const datePart = currentDraw.start_time.split('T')[0] || currentDraw.start_time.split(' ')[0];
+            const [year, month, day] = datePart.split('-');
+            drawDate = `${month}/${day}/${year}`;
+        } catch (e) {
+            drawDate = new Date().toLocaleDateString();
+        }
+    }
     
     // Populate modal
     document.getElementById('winnerBallNum').textContent = lottoNumber;
@@ -1324,8 +1333,17 @@ function selectWinnerForEmptyBall(lottoNumber) {
     };
     isEmptyBallWinner = true;
     
-    // Get current date for draw results
-    const drawDate = currentDraw ? formatDateInTimezone(currentDraw.start_time, currentDraw.timezone) : new Date().toLocaleDateString();
+    // Get current date for draw results (just date, not time)
+    let drawDate = new Date().toLocaleDateString();
+    if (currentDraw && currentDraw.start_time) {
+        try {
+            const datePart = currentDraw.start_time.split('T')[0] || currentDraw.start_time.split(' ')[0];
+            const [year, month, day] = datePart.split('-');
+            drawDate = `${month}/${day}/${year}`;
+        } catch (e) {
+            drawDate = new Date().toLocaleDateString();
+        }
+    }
     
     // Populate modal
     document.getElementById('winnerBallNum').textContent = lottoNumber;
@@ -1462,7 +1480,16 @@ function shareWinnerOnTwitter(entryId, lottoNumber, walletAddress, prize) {
     
     // Generate Twitter text with date
     const drawName = currentDraw?.draw_name || 'Lotto Draw';
-    const drawDate = currentDraw ? formatDateInTimezone(currentDraw.start_time, currentDraw.timezone) : new Date().toLocaleDateString();
+    let drawDate = new Date().toLocaleDateString();
+    if (currentDraw && currentDraw.start_time) {
+        try {
+            const datePart = currentDraw.start_time.split('T')[0] || currentDraw.start_time.split(' ')[0];
+            const [year, month, day] = datePart.split('-');
+            drawDate = `${month}/${day}/${year}`;
+        } catch (e) {
+            drawDate = new Date().toLocaleDateString();
+        }
+    }
     const twitterText = `🎉 Draw Results! 🎉
 
 Ball #${lottoNumber} - ${drawDate}
