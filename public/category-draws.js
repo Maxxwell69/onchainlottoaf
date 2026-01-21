@@ -306,8 +306,12 @@ async function loadCategoryWinners(category) {
     const winnersContainer = document.getElementById('winnersContainer');
     
     if (!winnersSection || !winnersContainer) {
+        console.error('Winners section or container not found');
         return;
     }
+    
+    // Ensure section is visible
+    winnersSection.style.display = 'block';
     
     try {
         const apiUrl = `${API_URL}/api/draws/public/category/${encodeURIComponent(category)}/winners`;
@@ -316,6 +320,8 @@ async function loadCategoryWinners(category) {
         const response = await fetch(apiUrl);
         
         if (!response.ok) {
+            const errorText = await response.text();
+            console.error('API error response:', errorText);
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         
@@ -324,13 +330,24 @@ async function loadCategoryWinners(category) {
 
         if (data.success && data.winners && data.winners.length > 0) {
             renderWinners(data.winners);
-            winnersSection.style.display = 'block';
         } else {
-            winnersSection.style.display = 'none';
+            // Show empty state
+            winnersContainer.innerHTML = `
+                <div class="empty-state" style="grid-column: 1 / -1; text-align: center; padding: 2rem;">
+                    <h3 style="color: var(--text-secondary); margin-bottom: 0.5rem;">No Draw Results Yet</h3>
+                    <p style="color: var(--text-secondary);">There are no winners for this category yet. Check back after draws are completed!</p>
+                </div>
+            `;
         }
     } catch (error) {
         console.error('Error loading category winners:', error);
-        winnersSection.style.display = 'none';
+        winnersContainer.innerHTML = `
+            <div class="empty-state" style="grid-column: 1 / -1; text-align: center; padding: 2rem;">
+                <h3 style="color: var(--error, #ef4444); margin-bottom: 0.5rem;">Error Loading Results</h3>
+                <p style="color: var(--text-secondary);">Failed to load draw results. Please try refreshing the page.</p>
+                <p style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 0.5rem;">Error: ${error.message}</p>
+            </div>
+        `;
     }
 }
 
