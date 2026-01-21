@@ -3,16 +3,61 @@ let isSpinning = false;
 let currentResult = null;
 let tumblingInterval = null;
 
-// Get random number within range
-function getRandomNumber(min, max) {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
+// Get all possible selections including special balls
+function getAllSelections(min, max) {
+    const selections = [];
+    
+    // Add number range
+    for (let i = min; i <= max; i++) {
+        selections.push(i.toString());
+    }
+    
+    // Add special balls if enabled
+    if (document.getElementById('includeZero')?.checked) {
+        selections.push('0');
+    }
+    if (document.getElementById('includeDoubleZero')?.checked) {
+        selections.push('00');
+    }
+    if (document.getElementById('includeJackpot')?.checked) {
+        selections.push('JP');
+    }
+    
+    return selections;
+}
+
+// Get random selection from all possible options
+function getRandomSelection(min, max) {
+    const selections = getAllSelections(min, max);
+    if (selections.length === 0) {
+        return '1'; // Default fallback
+    }
+    return selections[Math.floor(Math.random() * selections.length)];
 }
 
 // Update range display
 function updateRangeDisplay() {
     const minNum = parseInt(document.getElementById('minNumber').value) || 1;
     const maxNum = parseInt(document.getElementById('maxNumber').value) || 69;
-    document.getElementById('rangeDisplay').textContent = `${minNum} - ${maxNum}`;
+    let display = `${minNum} - ${maxNum}`;
+    
+    // Add special balls indicator
+    const specialBalls = [];
+    if (document.getElementById('includeZero')?.checked) {
+        specialBalls.push('0');
+    }
+    if (document.getElementById('includeDoubleZero')?.checked) {
+        specialBalls.push('00');
+    }
+    if (document.getElementById('includeJackpot')?.checked) {
+        specialBalls.push('JP');
+    }
+    
+    if (specialBalls.length > 0) {
+        display += ` (+ ${specialBalls.join(', ')})`;
+    }
+    
+    document.getElementById('rangeDisplay').textContent = display;
 }
 
 // Create floating/bouncing balls animation (air-puffed effect)
@@ -33,8 +78,15 @@ function createTumblingBalls(min, max) {
         
         const ball = document.createElement('div');
         ball.className = 'tumbling-ball';
-        const number = getRandomNumber(min, max);
-        ball.textContent = number;
+        const selection = getRandomSelection(min, max);
+        ball.textContent = selection;
+        
+        // Special styling for JP ball
+        if (selection === 'JP') {
+            ball.classList.add('jackpot-ball');
+        } else if (selection === '0' || selection === '00') {
+            ball.classList.add('zero-ball');
+        }
         
         // Random horizontal position (within dome bounds)
         const leftPosition = Math.random() * 70 + 15; // 15% to 85%
@@ -77,12 +129,20 @@ function stopTumblingAnimation() {
 }
 
 // Show ball in output chute
-function showOutputBall(number) {
+function showOutputBall(selection) {
     const outputBall = document.getElementById('outputBall');
     const outputNumber = document.getElementById('outputNumber');
     
     outputBall.style.display = 'flex';
-    outputNumber.textContent = number;
+    outputNumber.textContent = selection;
+    
+    // Apply special styling
+    outputBall.classList.remove('jackpot-ball', 'zero-ball');
+    if (selection === 'JP') {
+        outputBall.classList.add('jackpot-ball');
+    } else if (selection === '0' || selection === '00') {
+        outputBall.classList.add('zero-ball');
+    }
     
     // Reset animation
     outputBall.style.animation = 'none';
@@ -114,6 +174,7 @@ function spinMachine() {
     const resultDisplay = document.getElementById('resultDisplay');
     const resultBall = document.getElementById('resultBall');
     const resultNumber = document.getElementById('resultNumber');
+    const resultLabel = document.getElementById('resultLabel');
     const outputBall = document.getElementById('outputBall');
     
     // Disable button and update UI
@@ -126,8 +187,8 @@ function spinMachine() {
     resultNumber.textContent = '?';
     outputBall.style.display = 'none';
     
-    // Generate the random number
-    currentResult = getRandomNumber(minNum, maxNum);
+    // Generate the random selection (including special balls)
+    currentResult = getRandomSelection(minNum, maxNum);
     
     // Start tumbling balls animation
     createTumblingBalls(minNum, maxNum);
@@ -135,8 +196,8 @@ function spinMachine() {
     // Show number flashes in output chute
     let flashCount = 0;
     const flashInterval = setInterval(() => {
-        const flashNumber = getRandomNumber(minNum, maxNum);
-        showOutputBall(flashNumber);
+        const flashSelection = getRandomSelection(minNum, maxNum);
+        showOutputBall(flashSelection);
         flashCount++;
         
         // After flashing, reveal the actual result
@@ -154,12 +215,32 @@ function spinMachine() {
                 
                 // Show result display
                 resultNumber.textContent = currentResult;
+                resultBall.classList.remove('jackpot-ball', 'zero-ball');
+                
+                // Apply special styling to result ball
+                if (currentResult === 'JP') {
+                    resultBall.classList.add('jackpot-ball');
+                    resultLabel.textContent = '🎰🎰🎰 JACKPOT! 🎰🎰🎰';
+                } else {
+                    resultLabel.textContent = '🎉 Winning Number Selected!';
+                }
+                
+                if (currentResult === '0' || currentResult === '00') {
+                    resultBall.classList.add('zero-ball');
+                }
+                
                 resultDisplay.style.display = 'flex';
                 
                 // Trigger reveal animation
                 setTimeout(() => {
                     resultBall.classList.add('revealed');
-                    celebrate();
+                    
+                    // Extra celebration for jackpot
+                    if (currentResult === 'JP') {
+                        celebrateJackpot();
+                    } else {
+                        celebrate();
+                    }
                 }, 300);
                 
                 // Re-enable button
@@ -188,6 +269,55 @@ function celebrate() {
             createSparkle();
         }, i * 100);
     }
+}
+
+// Extra special celebration for jackpot
+function celebrateJackpot() {
+    // Create massive confetti explosion
+    const colors = ['#FFD700', '#FF6347', '#00CED1', '#32CD32', '#FF1493', '#FFA500', '#9370DB', '#FF00FF', '#00FF00', '#0000FF'];
+    
+    for (let i = 0; i < 150; i++) {
+        setTimeout(() => {
+            createConfettiParticle(colors[Math.floor(Math.random() * colors.length)]);
+        }, i * 20);
+    }
+    
+    // Add tons of sparkles
+    for (let i = 0; i < 50; i++) {
+        setTimeout(() => {
+            createSparkle();
+        }, i * 50);
+    }
+    
+    // Extra special sparkles for JP
+    for (let i = 0; i < 30; i++) {
+        setTimeout(() => {
+            createJPSparkle();
+        }, i * 150);
+    }
+}
+
+function createJPSparkle() {
+    const sparkle = document.createElement('div');
+    sparkle.style.position = 'fixed';
+    sparkle.style.width = '8px';
+    sparkle.style.height = '8px';
+    sparkle.style.background = '#FFD700';
+    sparkle.style.left = Math.random() * 100 + '%';
+    sparkle.style.top = Math.random() * 100 + '%';
+    sparkle.style.borderRadius = '50%';
+    sparkle.style.pointerEvents = 'none';
+    sparkle.style.zIndex = '9999';
+    sparkle.style.boxShadow = '0 0 20px #FFD700, 0 0 40px #FFD700, 0 0 60px #FFD700';
+    sparkle.style.animation = 'sparkleFade 2s ease-out';
+    
+    document.body.appendChild(sparkle);
+    
+    setTimeout(() => {
+        if (document.body.contains(sparkle)) {
+            document.body.removeChild(sparkle);
+        }
+    }, 2000);
 }
 
 function createConfettiParticle(color) {
@@ -288,7 +418,15 @@ function createIdleAnimation() {
             
             const ball = document.createElement('div');
             ball.className = 'tumbling-ball';
-            ball.textContent = getRandomNumber(minNum, maxNum);
+            const selection = getRandomSelection(minNum, maxNum);
+            ball.textContent = selection;
+            
+            // Special styling for special balls
+            if (selection === 'JP') {
+                ball.classList.add('jackpot-ball');
+            } else if (selection === '0' || selection === '00') {
+                ball.classList.add('zero-ball');
+            }
             
             // Random starting position
             const leftPosition = Math.random() * 70 + 15;

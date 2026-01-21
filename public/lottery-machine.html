@@ -55,6 +55,25 @@
                     </div>
                 </div>
                 
+                <div class="special-balls-section">
+                    <h3 style="margin-bottom: 1rem; color: var(--text);">Special Balls</h3>
+                    <div class="special-balls-controls">
+                        <label class="special-ball-checkbox">
+                            <input type="checkbox" id="includeZero" onchange="updateRangeDisplay()">
+                            <span class="special-ball-label">0</span>
+                        </label>
+                        <label class="special-ball-checkbox">
+                            <input type="checkbox" id="includeDoubleZero" onchange="updateRangeDisplay()">
+                            <span class="special-ball-label">00</span>
+                        </label>
+                        <label class="special-ball-checkbox special-jp">
+                            <input type="checkbox" id="includeJackpot" onchange="updateRangeDisplay()">
+                            <span class="special-ball-label">JP</span>
+                            <span class="jp-label">🎰 JACKPOT 🎰</span>
+                        </label>
+                    </div>
+                </div>
+                
                 <button class="spin-button" id="spinButton" onclick="spinMachine()">
                     🎲 Spin the Machine
                 </button>

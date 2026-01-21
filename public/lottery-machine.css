@@ -437,6 +437,141 @@
     font-size: 1.1rem;
 }
 
+/* Special Balls Section */
+.special-balls-section {
+    margin: 2rem 0;
+    padding: 1.5rem;
+    background: var(--card-bg);
+    border-radius: 12px;
+    border: 2px solid var(--border);
+    text-align: center;
+}
+
+.special-balls-section h3 {
+    color: var(--text);
+    margin-bottom: 1rem;
+    font-size: 1.3rem;
+}
+
+.special-balls-controls {
+    display: flex;
+    gap: 1.5rem;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.special-ball-checkbox {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    padding: 1rem;
+    border-radius: 12px;
+    border: 2px solid var(--border);
+    transition: all 0.3s;
+    background: var(--background);
+}
+
+.special-ball-checkbox:hover {
+    border-color: var(--primary);
+    background: rgba(255, 215, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.special-ball-checkbox input[type="checkbox"] {
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+    accent-color: var(--primary);
+}
+
+.special-ball-label {
+    font-size: 2rem;
+    font-weight: bold;
+    font-family: 'Orbitron', monospace;
+    color: var(--text);
+    min-width: 60px;
+    padding: 0.5rem;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #FFD700 0%, #B8860B 50%, #FFD700 100%);
+    color: #000000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.special-jp {
+    position: relative;
+}
+
+.special-jp .special-ball-label {
+    background: linear-gradient(135deg, #FF1493 0%, #FF69B4 25%, #FFD700 50%, #FF1493 75%, #FF69B4 100%);
+    background-size: 200% 200%;
+    animation: rainbowShift 3s ease infinite;
+    font-size: 1.5rem;
+}
+
+.jp-label {
+    font-size: 0.8rem;
+    color: var(--primary);
+    font-weight: bold;
+    margin-top: 0.25rem;
+}
+
+@keyframes rainbowShift {
+    0%, 100% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+}
+
+/* Special ball styling */
+.tumbling-ball.jackpot-ball,
+.output-ball.jackpot-ball,
+.result-ball.jackpot-ball {
+    background: linear-gradient(135deg, #FF1493 0%, #FF69B4 25%, #FFD700 50%, #FF1493 75%, #FF69B4 100%);
+    background-size: 200% 200%;
+    animation: rainbowShift 2s ease infinite, floatBounce 1.5s ease-in-out;
+    border: 3px solid #FFD700;
+    box-shadow: 
+        0 8px 16px rgba(0, 0, 0, 0.4),
+        inset 0 -3px 10px rgba(0, 0, 0, 0.4),
+        inset 0 3px 10px rgba(255, 255, 255, 0.4),
+        0 0 20px rgba(255, 20, 147, 0.6),
+        0 0 40px rgba(255, 215, 0, 0.4);
+}
+
+.tumbling-ball.zero-ball,
+.output-ball.zero-ball,
+.result-ball.zero-ball {
+    background: linear-gradient(135deg, #C0C0C0 0%, #FFFFFF 50%, #C0C0C0 100%);
+    border: 3px solid #808080;
+    color: #000000;
+    box-shadow: 
+        0 8px 16px rgba(0, 0, 0, 0.4),
+        inset 0 -3px 10px rgba(0, 0, 0, 0.4),
+        inset 0 3px 10px rgba(255, 255, 255, 0.6);
+}
+
+.result-ball.jackpot-ball {
+    width: 280px;
+    height: 280px;
+    font-size: 5rem;
+    border-width: 8px;
+    box-shadow: 
+        0 30px 60px rgba(0, 0, 0, 0.5),
+        inset 0 -10px 25px rgba(0, 0, 0, 0.4),
+        inset 0 10px 25px rgba(255, 255, 255, 0.4),
+        0 0 30px rgba(255, 20, 147, 0.8),
+        0 0 60px rgba(255, 215, 0, 0.6),
+        0 0 90px rgba(255, 20, 147, 0.4);
+}
+
 .spin-button {
     padding: 1.5rem 4rem;
     font-size: 1.75rem;
