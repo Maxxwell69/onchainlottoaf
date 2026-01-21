@@ -440,77 +440,73 @@ function updateProgressBar() {
 function renderNumbersGrid() {
     const grid = document.getElementById('numbersGrid');
     
-    // Sort entries by timestamp (chronological order by purchase time)
-    const sortedEntries = [...currentEntries].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+    // Create a map of entries by lotto number for quick lookup
+    const entriesByNumber = {};
+    currentEntries.forEach(entry => {
+        entriesByNumber[entry.lotto_number] = entry;
+    });
     
     let html = '';
     
-        // First, render all filled balls in chronological order by purchase time
-    sortedEntries.forEach((entry, index) => {
-        const walletDigits = entry.wallet_address.slice(-6);
-        const isWinner = entry.is_winner || false;
-        const winnerClass = isWinner ? 'winner-ball' : '';
-        const clickHandler = `onclick="selectWinner(${entry.id}, ${entry.lotto_number}, '${entry.wallet_address.replace(/'/g, "\\'")}', ${entry.prize ? `'${entry.prize.replace(/'/g, "\\'")}'` : 'null'})"`;
-        
-        // Calculate time from draw start
-        let timeFromStart = '';
-        if (currentDraw) {
-            const drawStart = new Date(currentDraw.start_time);
-            const purchaseTime = new Date(entry.timestamp);
-            const diffMs = purchaseTime.getTime() - drawStart.getTime();
-            const diffMinutes = Math.floor(diffMs / (1000 * 60));
-            
-            if (diffMinutes < 0) {
-                timeFromStart = `${Math.abs(diffMinutes)} minutes before draw start`;
-            } else if (diffMinutes === 0) {
-                timeFromStart = 'At draw start';
-            } else {
-                timeFromStart = `${diffMinutes} minutes after draw start`;
-            }
-        }
-        
-        const title = isWinner 
-            ? `Draw Result - Prize: ${entry.prize || 'N/A'}`
-            : `Purchased ${timeFromStart} - $${entry.usd_amount}`;
-        
-        // Only show gold ball if there's an actual owner (not manual winner)
-        const ballClass = (entry.wallet_address === 'Manual Winner') ? 'available' : 'filled';
-        
-        html += `
-            <div class="number-ball-container">
-                <div class="number-ball ${ballClass} ${winnerClass}" 
-                     title="${title}"
-                     style="cursor: pointer;"
-                     ${clickHandler}>
-                    ${entry.lotto_number}
-                </div>
-                <div class="wallet-digits">${isWinner ? '🏆' : ''} ${entry.wallet_address === 'Manual Winner' ? 'Vacant' : walletDigits}</div>
-            </div>
-        `;
-    });
-    
-    // Then, render available balls (not yet purchased) in lotto number order
-    const filledNumbers = currentEntries.map(entry => entry.lotto_number);
+    // Render ALL balls in lotto number order (1, 2, 3, ...) to keep positions fixed
     for (let i = 1; i <= currentDraw.total_slots; i++) {
-        if (!filledNumbers.includes(i)) {
-            // Check if this number is already a winner (might have winner without entry)
-            const winnerEntry = currentEntries.find(e => e.lotto_number === i && e.is_winner);
-            const isWinner = winnerEntry ? true : false;
+        const entry = entriesByNumber[i];
+        
+        if (entry) {
+            // Ball has an entry (filled or vacant with prize)
+            const walletDigits = entry.wallet_address.slice(-6);
+            const isWinner = entry.is_winner || false;
+            const winnerClass = isWinner ? 'winner-ball' : '';
+            const clickHandler = `onclick="selectWinner(${entry.id}, ${entry.lotto_number}, '${entry.wallet_address.replace(/'/g, "\\'")}', ${entry.prize ? `'${entry.prize.replace(/'/g, "\\'")}'` : 'null'})"`;
             
-            // Only show as winner-ball if there's an actual entry with owner
-            // Empty balls should remain as "available" (vacant) even if they have a prize
-            const winnerClass = (isWinner && winnerEntry && winnerEntry.wallet_address !== 'Manual Winner') ? 'winner-ball' : '';
-            const clickHandler = isWinner 
-                ? `onclick="selectWinner(${winnerEntry.id}, ${i}, '${winnerEntry.wallet_address.replace(/'/g, "\\'")}', '${(winnerEntry.prize || '').replace(/'/g, "\\'")}')"`
-                : `onclick="selectWinnerForEmptyBall(${i})"`;
-            const title = isWinner ? 'Click to edit draw result' : 'Click to assign draw result (vacant ball)';
+            // Calculate time from draw start
+            let timeFromStart = '';
+            if (currentDraw && entry.timestamp) {
+                const drawStart = new Date(currentDraw.start_time);
+                const purchaseTime = new Date(entry.timestamp);
+                const diffMs = purchaseTime.getTime() - drawStart.getTime();
+                const diffMinutes = Math.floor(diffMs / (1000 * 60));
+                
+                if (diffMinutes < 0) {
+                    timeFromStart = `${Math.abs(diffMinutes)} minutes before draw start`;
+                } else if (diffMinutes === 0) {
+                    timeFromStart = 'At draw start';
+                } else {
+                    timeFromStart = `${diffMinutes} minutes after draw start`;
+                }
+            }
+            
+            const title = isWinner 
+                ? `Draw Result - Prize: ${entry.prize || 'N/A'}`
+                : entry.wallet_address === 'Manual Winner' 
+                    ? 'Vacant ball with draw result'
+                    : `Purchased ${timeFromStart} - $${entry.usd_amount}`;
+            
+            // Determine ball class: filled if has real owner, available if vacant
+            const ballClass = (entry.wallet_address === 'Manual Winner') ? 'available' : 'filled';
             
             html += `
                 <div class="number-ball-container">
-                    <div class="number-ball available ${winnerClass}" title="${title}" style="cursor: pointer;" ${clickHandler}>
+                    <div class="number-ball ${ballClass} ${winnerClass}" 
+                         title="${title}"
+                         style="cursor: pointer;"
+                         ${clickHandler}>
+                        ${entry.lotto_number}
+                    </div>
+                    <div class="wallet-digits">${isWinner ? '🏆' : ''} ${entry.wallet_address === 'Manual Winner' ? 'Vacant' : walletDigits}</div>
+                </div>
+            `;
+        } else {
+            // Ball is empty (no entry)
+            html += `
+                <div class="number-ball-container">
+                    <div class="number-ball available" 
+                         title="Click to assign draw result (vacant ball)" 
+                         style="cursor: pointer;" 
+                         onclick="selectWinnerForEmptyBall(${i})">
                         ${i}
                     </div>
-                    ${isWinner ? '<div class="wallet-digits" style="color: var(--primary); font-weight: bold;">🏆 Draw Result</div>' : '<div class="wallet-digits" style="color: var(--text-secondary); font-style: italic;">Vacant</div>'}
+                    <div class="wallet-digits" style="color: var(--text-secondary); font-style: italic;">Vacant</div>
                 </div>
             `;
         }
@@ -1308,7 +1304,7 @@ function selectWinner(entryId, lottoNumber, walletAddress, currentPrize = null) 
     const winnerWalletContainer = document.getElementById('winnerWallet').parentElement;
     if (winnerWalletContainer) winnerWalletContainer.style.display = 'block';
     
-    // Update ball display in modal - show as gold ball since it has owner
+    // Update ball display in modal - show as green ball since it has owner
     const winnerBallNumber = document.getElementById('winnerBallNumber');
     winnerBallNumber.textContent = lottoNumber;
     winnerBallNumber.className = 'lotto-ball filled winner-ball';
