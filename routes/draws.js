@@ -150,6 +150,7 @@ router.get('/public/category/:category/winners', async (req, res) => {
     
     // Get ALL public draws for this category (not just active/completed)
     // We want to show winners from all previous draws too
+    const { query } = require('../database/db');
     const sql = `
       SELECT d.*, d.start_time::text as start_time_text 
       FROM lotto_draws d
@@ -158,7 +159,6 @@ router.get('/public/category/:category/winners', async (req, res) => {
         AND mt.category = $1
       ORDER BY d.created_at DESC
     `;
-    const { query } = require('../database/db');
     const result = await query(sql, [category]);
     const draws = result.rows.map(draw => {
       draw.start_time = draw.start_time_text;
