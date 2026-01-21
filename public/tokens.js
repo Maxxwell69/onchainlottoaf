@@ -110,6 +110,9 @@ function renderToken(token) {
                 <button class="btn btn-primary" onclick="window.location.href='token-detail.html?id=${token.id}'">
                     Manage Blacklist →
                 </button>
+                <button class="btn btn-secondary" onclick="editToken(${token.id})">
+                    ✏️ Edit
+                </button>
                 <button class="btn btn-secondary" onclick="toggleTokenStatus(${token.id}, ${!token.is_active})">
                     ${token.is_active ? '⏸️ Deactivate' : '▶️ Activate'}
                 </button>
@@ -180,6 +183,91 @@ async function toggleTokenStatus(tokenId, active) {
     }
 }
 
+// Edit token
+async function editToken(tokenId) {
+    try {
+        // Fetch token details
+        const response = await fetch(`${API_URL}/api/tokens/${tokenId}`);
+        const data = await response.json();
+        
+        if (!data.success || !data.token) {
+            showToast('❌ Failed to load token details', 'error');
+            return;
+        }
+        
+        const token = data.token;
+        
+        // Populate edit form
+        document.getElementById('editTokenId').value = token.id;
+        document.getElementById('editTokenSymbol').value = token.token_symbol || '';
+        document.getElementById('editTokenName').value = token.token_name || '';
+        document.getElementById('editTokenNotes').value = token.notes || '';
+        document.getElementById('editTokenCategory').value = token.category || '';
+        document.getElementById('editBannerUrl').value = token.banner_url || '';
+        document.getElementById('editLogoUrl').value = token.logo_url || '';
+        document.getElementById('editWebsiteUrl').value = token.website_url || '';
+        document.getElementById('editTwitterUrl').value = token.twitter_url || '';
+        document.getElementById('editTelegramUrl').value = token.telegram_url || '';
+        document.getElementById('editDiscordUrl').value = token.discord_url || '';
+        
+        // Show modal
+        document.getElementById('editTokenModal').style.display = 'flex';
+    } catch (error) {
+        console.error('Error loading token:', error);
+        showToast('❌ Failed to load token details', 'error');
+    }
+}
+
+// Save edited token
+async function saveTokenEdit() {
+    const tokenId = document.getElementById('editTokenId').value;
+    const btnText = document.getElementById('saveEditTokenText');
+    const btnSpinner = document.getElementById('saveEditTokenSpinner');
+    const saveBtn = document.getElementById('saveEditToken');
+    
+    saveBtn.disabled = true;
+    btnText.style.display = 'none';
+    btnSpinner.style.display = 'inline-block';
+    
+    try {
+        const formData = {
+            token_symbol: document.getElementById('editTokenSymbol').value || null,
+            token_name: document.getElementById('editTokenName').value || null,
+            notes: document.getElementById('editTokenNotes').value || null,
+            category: document.getElementById('editTokenCategory').value || null,
+            banner_url: document.getElementById('editBannerUrl').value || null,
+            logo_url: document.getElementById('editLogoUrl').value || null,
+            website_url: document.getElementById('editWebsiteUrl').value || null,
+            twitter_url: document.getElementById('editTwitterUrl').value || null,
+            telegram_url: document.getElementById('editTelegramUrl').value || null,
+            discord_url: document.getElementById('editDiscordUrl').value || null
+        };
+        
+        const response = await fetch(`${API_URL}/api/tokens/${tokenId}`, {
+            method: 'PUT',
+            headers: authManager.getAuthHeaders(),
+            body: JSON.stringify(formData)
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            showToast('✅ Token updated successfully!', 'success');
+            document.getElementById('editTokenModal').style.display = 'none';
+            loadTokens();
+        } else {
+            showToast(`❌ Error: ${data.error}`, 'error');
+        }
+    } catch (error) {
+        console.error('Error updating token:', error);
+        showToast('❌ Failed to update token', 'error');
+    } finally {
+        saveBtn.disabled = false;
+        btnText.style.display = 'inline';
+        btnSpinner.style.display = 'none';
+    }
+}
+
 // Delete token
 async function deleteToken(tokenId, tokenSymbol) {
     if (!confirm(`⚠️ Delete ${tokenSymbol}?\n\nThis will also delete all blacklist entries for this token.`)) {
@@ -208,6 +296,24 @@ async function deleteToken(tokenId, tokenSymbol) {
 document.getElementById('refreshTokensBtn').addEventListener('click', () => {
     showToast('🔄 Refreshing...', 'info');
     loadTokens();
+});
+
+// Edit modal handlers
+document.getElementById('closeEditTokenModal').addEventListener('click', () => {
+    document.getElementById('editTokenModal').style.display = 'none';
+});
+
+document.getElementById('cancelEditToken').addEventListener('click', () => {
+    document.getElementById('editTokenModal').style.display = 'none';
+});
+
+document.getElementById('saveEditToken').addEventListener('click', saveTokenEdit);
+
+// Close modal when clicking outside
+document.getElementById('editTokenModal').addEventListener('click', (e) => {
+    if (e.target.id === 'editTokenModal') {
+        document.getElementById('editTokenModal').style.display = 'none';
+    }
 });
 
 // Initial load

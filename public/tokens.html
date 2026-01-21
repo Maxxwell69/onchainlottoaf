@@ -92,6 +92,83 @@
         </div>
     </div>
 
+    <!-- Edit Token Modal -->
+    <div id="editTokenModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 800px; max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header">
+                <h3>✏️ Edit Token</h3>
+                <button class="modal-close" id="closeEditTokenModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="editTokenForm">
+                    <input type="hidden" id="editTokenId">
+                    
+                    <div class="form-group">
+                        <label for="editTokenSymbol">Symbol*</label>
+                        <input type="text" id="editTokenSymbol" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editTokenName">Name*</label>
+                        <input type="text" id="editTokenName" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editTokenNotes">Notes</label>
+                        <textarea id="editTokenNotes" rows="2" placeholder="Optional notes..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editTokenCategory">Category</label>
+                        <input type="text" id="editTokenCategory" placeholder="Category name">
+                        <small>Category for grouping tokens (auto-set from name if not provided)</small>
+                    </div>
+
+                    <h3 style="margin-top: 2rem; margin-bottom: 1rem; color: var(--primary);">Media & Social Links</h3>
+                    
+                    <div class="form-group">
+                        <label for="editBannerUrl">Banner Image URL</label>
+                        <input type="url" id="editBannerUrl" placeholder="https://example.com/banner.png">
+                        <small>URL to banner image for category pages</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editLogoUrl">Logo Image URL</label>
+                        <input type="url" id="editLogoUrl" placeholder="https://example.com/logo.png">
+                        <small>URL to logo image</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editWebsiteUrl">Website URL</label>
+                        <input type="url" id="editWebsiteUrl" placeholder="https://example.com">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editTwitterUrl">Twitter/X URL</label>
+                        <input type="url" id="editTwitterUrl" placeholder="https://twitter.com/username">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editTelegramUrl">Telegram URL</label>
+                        <input type="url" id="editTelegramUrl" placeholder="https://t.me/channelname">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editDiscordUrl">Discord URL</label>
+                        <input type="url" id="editDiscordUrl" placeholder="https://discord.gg/invitecode">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="cancelEditToken">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveEditToken">
+                    <span id="saveEditTokenText">Save Changes</span>
+                    <span id="saveEditTokenSpinner" class="spinner" style="display: none;"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast Notification -->
     <div id="toast" class="toast"></div>
 
