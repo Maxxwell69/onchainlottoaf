@@ -512,6 +512,86 @@ router.put('/:drawId/entries/:entryId/winner', authenticateToken, requireModerat
 });
 
 /**
+ * POST /api/draws/:drawId/entries/empty-ball-winner
+ * Assign winner to an empty ball (no existing entry)
+ */
+router.post('/:drawId/entries/empty-ball-winner', authenticateToken, requireModerator, async (req, res) => {
+  try {
+    const { drawId } = req.params;
+    const { lotto_number, prize, is_winner = true } = req.body;
+
+    if (!lotto_number || lotto_number < 1) {
+      return res.status(400).json({
+        error: 'Valid lotto number is required'
+      });
+    }
+
+    if (!prize || prize.trim() === '') {
+      return res.status(400).json({
+        error: 'Prize description is required'
+      });
+    }
+
+    // Verify draw exists
+    const draw = await LottoDraw.getById(drawId);
+    if (!draw) {
+      return res.status(404).json({
+        error: 'Draw not found'
+      });
+    }
+
+    // Check if lotto number is already taken
+    const LottoEntry = require('../models/LottoEntry');
+    const existingEntries = await LottoEntry.getByDrawId(drawId);
+    const existingEntry = existingEntries.find(e => e.lotto_number === lotto_number);
+    
+    if (existingEntry) {
+      // If entry exists, update it instead
+      const updatedEntry = await LottoEntry.updateWinner(existingEntry.id, prize.trim(), is_winner);
+      return res.json({
+        success: true,
+        message: 'Winner assigned successfully',
+        entry: updatedEntry
+      });
+    }
+
+    // Create a minimal entry for the winner (no wallet/transaction required)
+    const entry = await LottoEntry.create({
+      draw_id: parseInt(drawId),
+      lotto_number: lotto_number,
+      wallet_address: 'Manual Winner', // Placeholder
+      transaction_signature: `manual-winner-${drawId}-${lotto_number}-${Date.now()}`,
+      token_amount: 0,
+      usd_amount: 0,
+      timestamp: new Date().toISOString(),
+      notes: 'Manual winner assignment for empty ball',
+      verified: true
+    });
+
+    if (!entry) {
+      return res.status(400).json({
+        error: 'Failed to create entry. Ball number may already be taken.'
+      });
+    }
+
+    // Update winner status
+    const updatedEntry = await LottoEntry.updateWinner(entry.id, prize.trim(), is_winner);
+
+    res.json({
+      success: true,
+      message: 'Winner assigned successfully to empty ball',
+      entry: updatedEntry
+    });
+  } catch (error) {
+    console.error('Error assigning winner to empty ball:', error);
+    res.status(500).json({
+      error: 'Failed to assign winner',
+      details: error.message
+    });
+  }
+});
+
+/**
  * DELETE /api/draws/:drawId/entries/:entryId/winner
  * Remove winner status from an entry
  */
