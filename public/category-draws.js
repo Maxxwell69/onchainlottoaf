@@ -33,6 +33,9 @@ async function loadCategoryDraws() {
     // Load token info for the category
     await loadCategoryTokenInfo(category);
     
+    // Load winners results
+    await loadCategoryWinners(category);
+    
     try {
         const apiUrl = `${API_URL}/api/draws/public/category/${encodeURIComponent(category)}`;
         console.log('Fetching category draws from:', apiUrl);
@@ -292,6 +295,115 @@ function renderCategoryDraws(draws) {
                         onclick="window.location.href='public-draw.html?id=${draw.id}'">
                     View Draw →
                 </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Load winners for the category
+async function loadCategoryWinners(category) {
+    const winnersSection = document.getElementById('winners-results');
+    const winnersContainer = document.getElementById('winnersContainer');
+    
+    if (!winnersSection || !winnersContainer) {
+        return;
+    }
+    
+    try {
+        const apiUrl = `${API_URL}/api/draws/public/category/${encodeURIComponent(category)}/winners`;
+        console.log('Fetching category winners from:', apiUrl);
+        
+        const response = await fetch(apiUrl);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('Category winners response:', data);
+
+        if (data.success && data.winners && data.winners.length > 0) {
+            renderWinners(data.winners);
+            winnersSection.style.display = 'block';
+        } else {
+            winnersSection.style.display = 'none';
+        }
+    } catch (error) {
+        console.error('Error loading category winners:', error);
+        winnersSection.style.display = 'none';
+    }
+}
+
+// Render winners results
+function renderWinners(winners) {
+    const container = document.getElementById('winnersContainer');
+    if (!container) {
+        return;
+    }
+    
+    // Format date helper
+    function formatDate(dateString) {
+        if (!dateString) return 'N/A';
+        try {
+            const date = new Date(dateString);
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const year = date.getFullYear();
+            return `${month}/${day}/${year}`;
+        } catch (e) {
+            return dateString;
+        }
+    }
+    
+    // Format wallet address (show last 6 digits)
+    function formatWallet(wallet) {
+        if (!wallet || wallet === 'Manual Winner') return 'Vacant';
+        return `...${wallet.slice(-6)}`;
+    }
+    
+    container.innerHTML = winners.map(winner => `
+        <div class="winner-card" style="
+            background: var(--background);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 1.25rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+            border-left: 4px solid #22c55e;
+        " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(34, 197, 94, 0.2)'" 
+           onmouseout="this.style.transform=''; this.style.boxShadow=''">
+            <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.75rem;">
+                <div class="lotto-ball winner-ball" style="
+                    width: 50px;
+                    height: 50px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 1.25rem;
+                    font-weight: bold;
+                    flex-shrink: 0;
+                ">${winner.lotto_number}</div>
+                <div style="flex: 1;">
+                    <div style="font-weight: 600; color: var(--primary); margin-bottom: 0.25rem;">
+                        ${winner.draw_name}
+                    </div>
+                    <div style="font-size: 0.85rem; color: var(--text-secondary);">
+                        ${formatDate(winner.draw_date)}
+                    </div>
+                </div>
+            </div>
+            <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--border);">
+                <div style="margin-bottom: 0.5rem;">
+                    <div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.25rem;">Wallet</div>
+                    <div style="font-family: monospace; font-size: 0.9rem; color: var(--text);">
+                        ${formatWallet(winner.wallet_address)}
+                    </div>
+                </div>
+                <div>
+                    <div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.25rem;">Prize</div>
+                    <div style="font-weight: 600; color: #22c55e; font-size: 1rem;">
+                        🎁 ${winner.prize}
+                    </div>
+                </div>
             </div>
         </div>
     `).join('');

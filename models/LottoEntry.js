@@ -56,6 +56,19 @@ class LottoEntry {
     return result.rows;
   }
 
+  // Get winners by draw ID
+  static async getWinnersByDrawId(drawId) {
+    const sql = `
+      SELECT * FROM lotto_entries 
+      WHERE draw_id = $1 
+        AND is_winner = true
+        AND prize IS NOT NULL
+      ORDER BY lotto_number ASC
+    `;
+    const result = await query(sql, [drawId]);
+    return result.rows;
+  }
+
   // Get next available lotto number for a draw
   static async getNextLottoNumber(drawId) {
     const sql = `

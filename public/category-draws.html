@@ -35,6 +35,27 @@
             <!-- Token banner, logo, and links will be inserted here by JavaScript -->
         </div>
 
+        <!-- Winners Results Section -->
+        <section id="winners-results" class="winners-section" style="
+            padding: 2rem 2rem; 
+            background: var(--card-bg); 
+            margin: 1rem auto; 
+            border-radius: 12px;
+            max-width: 1400px;
+            display: none;
+        ">
+            <h2 style="margin: 0 0 1.5rem 0; color: var(--primary); font-size: 1.75rem; display: flex; align-items: center; gap: 0.5rem;">
+                🏆 Draw Results
+            </h2>
+            <div id="winnersContainer" style="
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+                gap: 1rem;
+            ">
+                <p class="loading" style="text-align: center; color: var(--text-secondary); width: 100%; grid-column: 1 / -1;">Loading winners...</p>
+            </div>
+        </section>
+
         <!-- Category Draws Section -->
         <section id="category-draws" class="all-draws-section" style="
             padding: 2rem 2rem; 
@@ -43,6 +64,7 @@
             border-radius: 12px;
             max-width: 1400px;
         ">
+            <h2 style="margin: 0 0 1.5rem 0; color: var(--primary); font-size: 1.75rem;">Active Draws</h2>
             <div id="categoryDrawsContainer" style="
                 margin: 2rem auto 0;
                 display: flex;
