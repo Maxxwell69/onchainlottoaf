@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const { query } = require('../database/db');
 const LottoDraw = require('../models/LottoDraw');
 const LottoEntry = require('../models/LottoEntry');
 const scanService = require('../services/scanService');
@@ -150,7 +151,6 @@ router.get('/public/category/:category/winners', async (req, res) => {
     
     // Get ALL public draws for this category (not just active/completed)
     // We want to show winners from all previous draws too
-    const { query } = require('../database/db');
     const sql = `
       SELECT d.*, d.start_time::text as start_time_text 
       FROM lotto_draws d
