@@ -15,7 +15,7 @@ function updateRangeDisplay() {
     document.getElementById('rangeDisplay').textContent = `${minNum} - ${maxNum}`;
 }
 
-// Create tumbling balls animation
+// Create floating/bouncing balls animation (air-puffed effect)
 function createTumblingBalls(min, max) {
     const container = document.getElementById('tumblingBalls');
     
@@ -24,7 +24,7 @@ function createTumblingBalls(min, max) {
         clearInterval(tumblingInterval);
     }
     
-    // Create balls at different intervals for continuous tumbling
+    // Create balls at different intervals for continuous floating
     tumblingInterval = setInterval(() => {
         if (!isSpinning) {
             clearInterval(tumblingInterval);
@@ -36,13 +36,20 @@ function createTumblingBalls(min, max) {
         const number = getRandomNumber(min, max);
         ball.textContent = number;
         
-        // Random horizontal position
-        const leftPosition = Math.random() * 75 + 10; // 10% to 85%
+        // Random horizontal position (within dome bounds)
+        const leftPosition = Math.random() * 70 + 15; // 15% to 85%
+        const bottomPosition = Math.random() * 20 + 5; // Start from bottom 5-25%
         ball.style.left = `${leftPosition}%`;
+        ball.style.bottom = `${bottomPosition}%`;
         
-        // Random animation duration (faster spinning)
-        const duration = 0.4 + Math.random() * 0.3; // 0.4s to 0.7s
-        ball.style.animation = `tumble ${duration}s linear`;
+        // Random animation variation (3 different bounce patterns)
+        const animationVariations = ['floatBounce', 'floatBounce2', 'floatBounce3'];
+        const animation = animationVariations[Math.floor(Math.random() * 3)];
+        
+        // Random animation duration (slower for more visible floating)
+        const duration = 1.5 + Math.random() * 1.5; // 1.5s to 3s
+        
+        ball.style.animation = `${animation} ${duration}s ease-in-out`;
         
         // Random starting rotation
         ball.style.transform = `rotate(${Math.random() * 360}deg)`;
@@ -56,7 +63,7 @@ function createTumblingBalls(min, max) {
             }
         }, duration * 1000 + 100);
         
-    }, 100); // Create new ball every 100ms during spin
+    }, 150); // Create new ball every 150ms during spin (more chaotic)
 }
 
 // Stop tumbling animation
@@ -270,21 +277,32 @@ document.addEventListener('DOMContentLoaded', () => {
     createIdleAnimation();
 });
 
-// Create slow idle balls when not spinning
+// Create slow idle balls when not spinning (gentle floating)
 function createIdleAnimation() {
     const container = document.getElementById('tumblingBalls');
     
     setInterval(() => {
-        if (!isSpinning && container.children.length < 3) {
+        if (!isSpinning && container.children.length < 5) {
             const minNum = parseInt(document.getElementById('minNumber').value) || 1;
             const maxNum = parseInt(document.getElementById('maxNumber').value) || 69;
             
             const ball = document.createElement('div');
             ball.className = 'tumbling-ball';
             ball.textContent = getRandomNumber(minNum, maxNum);
-            ball.style.left = `${Math.random() * 75 + 10}%`;
-            ball.style.animation = `tumble ${2 + Math.random()}s linear`;
-            ball.style.opacity = '0.6';
+            
+            // Random starting position
+            const leftPosition = Math.random() * 70 + 15;
+            const bottomPosition = Math.random() * 30 + 10;
+            ball.style.left = `${leftPosition}%`;
+            ball.style.bottom = `${bottomPosition}%`;
+            
+            // Use slower floating animation for idle
+            const animationVariations = ['floatBounce', 'floatBounce2', 'floatBounce3'];
+            const animation = animationVariations[Math.floor(Math.random() * 3)];
+            const duration = 3 + Math.random() * 2; // 3-5s for slower idle
+            
+            ball.style.animation = `${animation} ${duration}s ease-in-out`;
+            ball.style.opacity = '0.5';
             
             container.appendChild(ball);
             
@@ -292,7 +310,7 @@ function createIdleAnimation() {
                 if (container.contains(ball)) {
                     container.removeChild(ball);
                 }
-            }, 3000);
+            }, duration * 1000 + 100);
         }
-    }, 1500);
+    }, 2000);
 }
