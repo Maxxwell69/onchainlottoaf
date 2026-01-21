@@ -10,47 +10,82 @@ function getCategoryFromURL() {
 // Load category draws
 async function loadCategoryDraws() {
     const category = getCategoryFromURL();
+    const container = document.getElementById('categoryDrawsContainer');
+    const categoryNameEl = document.getElementById('categoryName');
+    
     if (!category) {
-        document.getElementById('categoryName').textContent = 'Category Not Found';
-        document.getElementById('categoryDrawsContainer').innerHTML = `
-            <div class="empty-state">
-                <h3>Category not specified</h3>
-                <p>Please select a category from the <a href="category-list.html">category list</a></p>
-            </div>
-        `;
+        if (categoryNameEl) categoryNameEl.textContent = 'Category Not Found';
+        if (container) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <h3>Category not specified</h3>
+                    <p>Please select a category from the <a href="category-list.html">category list</a></p>
+                </div>
+            `;
+        }
         return;
     }
 
-    document.getElementById('categoryName').textContent = category;
+    // Decode URL-encoded category name and replace underscores with spaces for display
+    const displayCategory = decodeURIComponent(category).replace(/_/g, ' ');
+    if (categoryNameEl) categoryNameEl.textContent = displayCategory;
     
     try {
-        const response = await fetch(`${API_URL}/api/draws/public/category/${encodeURIComponent(category)}`);
+        const apiUrl = `${API_URL}/api/draws/public/category/${encodeURIComponent(category)}`;
+        console.log('Fetching category draws from:', apiUrl);
+        
+        const response = await fetch(apiUrl);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
         const data = await response.json();
+        console.log('Category draws response:', data);
 
         if (data.success && data.draws && data.draws.length > 0) {
             renderCategoryDraws(data.draws);
         } else {
-            document.getElementById('categoryDrawsContainer').innerHTML = `
-                <div class="empty-state">
-                    <h3>No Active Draws</h3>
-                    <p>There are currently no active public draws for ${category}</p>
-                </div>
-            `;
+            if (container) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <h3>No Active Draws</h3>
+                        <p>There are currently no active public draws for ${displayCategory}</p>
+                        <p style="margin-top: 1rem; color: var(--text-secondary); font-size: 0.9rem;">
+                            Make sure draws are marked as public in the admin panel.
+                        </p>
+                    </div>
+                `;
+            }
         }
     } catch (error) {
         console.error('Error loading category draws:', error);
-        document.getElementById('categoryDrawsContainer').innerHTML = `
-            <div class="empty-state">
-                <h3>Error Loading Draws</h3>
-                <p>Please try again later</p>
-            </div>
-        `;
+        if (container) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <h3>Error Loading Draws</h3>
+                    <p>Failed to load draws for category: ${displayCategory}</p>
+                    <p style="margin-top: 1rem; color: var(--text-secondary); font-size: 0.9rem;">
+                        Error: ${error.message}
+                    </p>
+                    <p style="margin-top: 0.5rem;">
+                        <a href="category-list.html" style="color: var(--primary);">← Back to Categories</a>
+                    </p>
+                </div>
+            `;
+        }
     }
 }
 
 // Render category draws
 function renderCategoryDraws(draws) {
     const container = document.getElementById('categoryDrawsContainer');
+    if (!container) {
+        console.error('Container not found');
+        return;
+    }
+    
+    console.log(`Rendering ${draws.length} draws`);
     
     container.innerHTML = draws.map(draw => `
         <div class="draw-card" style="
