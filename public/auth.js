@@ -103,7 +103,9 @@ const PUBLIC_PAGES = [
     'login.html',
     'register.html',
     'home.html',
-    'public-draw.html'
+    'public-draw.html',
+    'category-list.html',
+    'category-draws.html'
 ];
 
 // Check if current page is public
