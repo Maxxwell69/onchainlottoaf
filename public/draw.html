@@ -282,21 +282,24 @@
                 <button class="modal-close" id="closeTwitterModal">&times;</button>
             </div>
             <div class="modal-body">
-                <div id="twitterSharePreview" style="padding: 1.5rem; background: #1DA1F2; border-radius: 12px; color: white; margin-bottom: 1.5rem;">
+                <div id="twitterSharePreview" style="padding: 1.5rem; background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%); border-radius: 12px; color: #000000; margin-bottom: 1.5rem; box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);">
                     <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
-                        <div class="lotto-ball" id="shareBallNumber" style="margin: 0; width: 80px; height: 80px; font-size: 2rem;"></div>
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <img src="images/x-logo.png" alt="X Logo" style="width: 40px; height: 40px; object-fit: contain;" onerror="this.style.display='none';">
+                            <div class="lotto-ball" id="shareBallNumber" style="margin: 0; width: 80px; height: 80px; font-size: 2rem;"></div>
+                        </div>
                         <div>
-                            <div style="font-size: 1.5rem; font-weight: bold; margin-bottom: 0.25rem;">🎉 Winner!</div>
-                            <div style="font-size: 1rem; opacity: 0.9;">Ball #<span id="shareBallNum">-</span></div>
+                            <div style="font-size: 1.5rem; font-weight: bold; margin-bottom: 0.25rem; color: #000000;">🎉 Winner!</div>
+                            <div style="font-size: 1rem; opacity: 0.8; color: #000000;">Ball #<span id="shareBallNum">-</span></div>
                         </div>
                     </div>
-                    <div style="padding: 1rem; background: rgba(255, 255, 255, 0.1); border-radius: 8px; margin-bottom: 1rem;">
-                        <div style="font-size: 0.9rem; opacity: 0.9; margin-bottom: 0.5rem;">Wallet:</div>
-                        <div style="font-family: monospace; font-size: 1.1rem; font-weight: bold;">...<span id="shareWalletDigits">-</span></div>
+                    <div style="padding: 1rem; background: rgba(0, 0, 0, 0.1); border-radius: 8px; margin-bottom: 1rem;">
+                        <div style="font-size: 0.9rem; opacity: 0.8; margin-bottom: 0.5rem; color: #000000;">Wallet:</div>
+                        <div style="font-family: monospace; font-size: 1.1rem; font-weight: bold; color: #000000;">...<span id="shareWalletDigits">-</span></div>
                     </div>
-                    <div style="padding: 1rem; background: rgba(255, 255, 255, 0.1); border-radius: 8px;">
-                        <div style="font-size: 0.9rem; opacity: 0.9; margin-bottom: 0.5rem;">Prize:</div>
-                        <div style="font-size: 1.1rem; font-weight: bold;" id="sharePrize">-</div>
+                    <div style="padding: 1rem; background: rgba(0, 0, 0, 0.1); border-radius: 8px;">
+                        <div style="font-size: 0.9rem; opacity: 0.8; margin-bottom: 0.5rem; color: #000000;">Prize:</div>
+                        <div style="font-size: 1.1rem; font-weight: bold; color: #000000;" id="sharePrize">-</div>
                     </div>
                 </div>
                 <div class="form-group">
@@ -307,8 +310,8 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" id="cancelTwitterBtn">Close</button>
-                <button type="button" class="btn btn-primary" id="copyTwitterBtn" style="background: #1DA1F2; color: white;">📋 Copy to Clipboard</button>
-                <a id="openTwitterLink" href="#" target="_blank" class="btn btn-primary" style="background: #1DA1F2; color: white; text-decoration: none;">🐦 Open Twitter</a>
+                <button type="button" class="btn btn-primary" id="copyTwitterBtn" style="background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%); color: #000000; font-weight: bold;">📋 Copy to Clipboard</button>
+                <a id="openTwitterLink" href="#" target="_blank" class="btn btn-primary" style="background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%); color: #000000; font-weight: bold; text-decoration: none;">🐦 Open Twitter</a>
             </div>
         </div>
     </div>
