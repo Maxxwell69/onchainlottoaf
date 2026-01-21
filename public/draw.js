@@ -470,18 +470,21 @@ function renderNumbersGrid() {
         }
         
         const title = isWinner 
-            ? `Winner - Prize: ${entry.prize || 'N/A'}`
+            ? `Draw Result - Prize: ${entry.prize || 'N/A'}`
             : `Purchased ${timeFromStart} - $${entry.usd_amount}`;
+        
+        // Only show gold ball if there's an actual owner (not manual winner)
+        const ballClass = (entry.wallet_address === 'Manual Winner') ? 'available' : 'filled';
         
         html += `
             <div class="number-ball-container">
-                <div class="number-ball filled ${winnerClass}" 
+                <div class="number-ball ${ballClass} ${winnerClass}" 
                      title="${title}"
                      style="cursor: pointer;"
                      ${clickHandler}>
                     ${entry.lotto_number}
                 </div>
-                <div class="wallet-digits">${isWinner ? '🏆' : ''} ${walletDigits}</div>
+                <div class="wallet-digits">${isWinner ? '🏆' : ''} ${entry.wallet_address === 'Manual Winner' ? 'Vacant' : walletDigits}</div>
             </div>
         `;
     });
@@ -493,18 +496,21 @@ function renderNumbersGrid() {
             // Check if this number is already a winner (might have winner without entry)
             const winnerEntry = currentEntries.find(e => e.lotto_number === i && e.is_winner);
             const isWinner = winnerEntry ? true : false;
-            const winnerClass = isWinner ? 'winner-ball' : '';
+            
+            // Only show as winner-ball if there's an actual entry with owner
+            // Empty balls should remain as "available" (vacant) even if they have a prize
+            const winnerClass = (isWinner && winnerEntry && winnerEntry.wallet_address !== 'Manual Winner') ? 'winner-ball' : '';
             const clickHandler = isWinner 
                 ? `onclick="selectWinner(${winnerEntry.id}, ${i}, '${winnerEntry.wallet_address.replace(/'/g, "\\'")}', '${(winnerEntry.prize || '').replace(/'/g, "\\'")}')"`
                 : `onclick="selectWinnerForEmptyBall(${i})"`;
-            const title = isWinner ? 'Click to edit winner' : 'Click to assign winner (no owner)';
+            const title = isWinner ? 'Click to edit draw result' : 'Click to assign draw result (vacant ball)';
             
             html += `
                 <div class="number-ball-container">
                     <div class="number-ball available ${winnerClass}" title="${title}" style="cursor: pointer;" ${clickHandler}>
                         ${i}
                     </div>
-                    ${isWinner ? '<div class="wallet-digits" style="color: var(--primary); font-weight: bold;">🏆 Winner</div>' : ''}
+                    ${isWinner ? '<div class="wallet-digits" style="color: var(--primary); font-weight: bold;">🏆 Draw Result</div>' : '<div class="wallet-digits" style="color: var(--text-secondary); font-style: italic;">Vacant</div>'}
                 </div>
             `;
         }
@@ -669,12 +675,16 @@ function renderEntriesTable() {
     entriesList.innerHTML = sortedEntries.map(entry => {
         const isWinner = entry.is_winner || false;
         const winnerClass = isWinner ? 'winner-ball' : '';
-        const winnerBadge = isWinner ? '<span class="winner-badge">🏆 Winner</span>' : '';
+        const winnerBadge = isWinner ? '<span class="winner-badge">🏆 Draw Result</span>' : '';
         const prizeDisplay = entry.prize ? `<div class="prize-display">🎁 ${entry.prize}</div>` : '';
+        
+        // Only show gold ball if there's an actual owner (not manual winner/vacant)
+        const ballClass = (entry.wallet_address === 'Manual Winner') ? 'available' : 'filled';
+        const displayClass = (entry.wallet_address === 'Manual Winner') ? 'available' : winnerClass;
         
         return `
         <div class="lotto-entry ${isWinner ? 'winner-entry' : ''}" data-entry-id="${entry.id}">
-            <div class="lotto-ball ${winnerClass}" onclick="selectWinner(${entry.id}, ${entry.lotto_number}, '${entry.wallet_address.replace(/'/g, "\\'")}', ${isWinner ? `'${(entry.prize || '').replace(/'/g, "\\'")}'` : 'null'})" style="cursor: pointer;" title="${isWinner ? 'Click to edit prize' : 'Click to select as winner'}">
+            <div class="lotto-ball ${ballClass} ${displayClass}" onclick="selectWinner(${entry.id}, ${entry.lotto_number}, '${entry.wallet_address.replace(/'/g, "\\'")}', ${isWinner ? `'${(entry.prize || '').replace(/'/g, "\\'")}'` : 'null'})" style="cursor: pointer;" title="${isWinner ? 'Click to edit draw result' : 'Click to select as draw result'}">
                 ${entry.lotto_number}
             </div>
             <div class="entry-details">
@@ -686,10 +696,10 @@ function renderEntriesTable() {
                 </div>
                 ${prizeDisplay}
                 <div class="entry-wallet">
-                    <span class="wallet-address">${entry.wallet_address}</span>
-                    <button class="copy-btn" onclick="copyToClipboard('${entry.wallet_address}', this)">
+                    <span class="wallet-address">${entry.wallet_address === 'Manual Winner' ? 'Vacant Ball (No Owner)' : entry.wallet_address}</span>
+                    ${entry.wallet_address !== 'Manual Winner' ? `<button class="copy-btn" onclick="copyToClipboard('${entry.wallet_address}', this)">
                         📋 Copy
-                    </button>
+                    </button>` : ''}
                 </div>
                 <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
                     <span class="entry-time">⏰ ${formatDate(entry.timestamp, currentDraw?.timezone || null)}</span>
@@ -1271,19 +1281,28 @@ function selectWinner(entryId, lottoNumber, walletAddress, currentPrize = null) 
     };
     isEmptyBallWinner = false;
     
+    // Get current date for draw results
+    const drawDate = currentDraw ? formatDateInTimezone(currentDraw.start_time, currentDraw.timezone) : new Date().toLocaleDateString();
+    
     // Populate modal
     document.getElementById('winnerBallNum').textContent = lottoNumber;
     document.getElementById('winnerWallet').textContent = walletAddress;
     document.getElementById('winnerPrize').value = currentPrize || '';
     
+    // Update modal title with date
+    const modalHeader = document.querySelector('#winnerModal .modal-header h3');
+    if (modalHeader) {
+        modalHeader.textContent = `🏆 Draw Results - ${drawDate}`;
+    }
+    
     // Show wallet field
     const winnerWalletContainer = document.getElementById('winnerWallet').parentElement;
     if (winnerWalletContainer) winnerWalletContainer.style.display = 'block';
     
-    // Update ball display in modal
+    // Update ball display in modal - show as gold ball since it has owner
     const winnerBallNumber = document.getElementById('winnerBallNumber');
     winnerBallNumber.textContent = lottoNumber;
-    winnerBallNumber.className = 'lotto-ball';
+    winnerBallNumber.className = 'lotto-ball filled winner-ball';
     
     // Apply theme if available
     setTimeout(() => {
@@ -1305,10 +1324,19 @@ function selectWinnerForEmptyBall(lottoNumber) {
     };
     isEmptyBallWinner = true;
     
+    // Get current date for draw results
+    const drawDate = currentDraw ? formatDateInTimezone(currentDraw.start_time, currentDraw.timezone) : new Date().toLocaleDateString();
+    
     // Populate modal
     document.getElementById('winnerBallNum').textContent = lottoNumber;
-    document.getElementById('winnerWallet').textContent = 'No owner (Empty Ball)';
+    document.getElementById('winnerWallet').textContent = 'Vacant Ball (No Owner)';
     document.getElementById('winnerPrize').value = '';
+    
+    // Update modal title with date
+    const modalHeader = document.querySelector('#winnerModal .modal-header h3');
+    if (modalHeader) {
+        modalHeader.textContent = `🏆 Draw Results - ${drawDate}`;
+    }
     
     // Hide wallet field or show placeholder
     const winnerWalletContainer = document.getElementById('winnerWallet').parentElement;
@@ -1318,7 +1346,7 @@ function selectWinnerForEmptyBall(lottoNumber) {
         document.getElementById('winnerWallet').style.fontStyle = 'italic';
     }
     
-    // Update ball display in modal
+    // Update ball display in modal - show as vacant (available) ball, not gold
     const winnerBallNumber = document.getElementById('winnerBallNumber');
     winnerBallNumber.textContent = lottoNumber;
     winnerBallNumber.className = 'lotto-ball available';
@@ -1432,11 +1460,12 @@ function shareWinnerOnTwitter(entryId, lottoNumber, walletAddress, prize) {
         }
     }, 50);
     
-    // Generate Twitter text
+    // Generate Twitter text with date
     const drawName = currentDraw?.draw_name || 'Lotto Draw';
-    const twitterText = `🎉 Winner Announcement! 🎉
+    const drawDate = currentDraw ? formatDateInTimezone(currentDraw.start_time, currentDraw.timezone) : new Date().toLocaleDateString();
+    const twitterText = `🎉 Draw Results! 🎉
 
-Ball #${lottoNumber} has won!
+Ball #${lottoNumber} - ${drawDate}
 
 Wallet: ...${walletDigits}
 Prize: ${prize}
