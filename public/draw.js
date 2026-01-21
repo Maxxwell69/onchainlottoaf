@@ -451,9 +451,6 @@ function renderNumbersGrid() {
         const isWinner = entry.is_winner || false;
         const winnerClass = isWinner ? 'winner-ball' : '';
         const clickHandler = `onclick="selectWinner(${entry.id}, ${entry.lotto_number}, '${entry.wallet_address.replace(/'/g, "\\'")}', ${entry.prize ? `'${entry.prize.replace(/'/g, "\\'")}'` : 'null'})"`;
-        const title = isWinner 
-            ? `Winner - Prize: ${entry.prize || 'N/A'}`
-            : `Purchased ${timeFromStart} - $${entry.usd_amount}`;
         
         // Calculate time from draw start
         let timeFromStart = '';
@@ -471,6 +468,10 @@ function renderNumbersGrid() {
                 timeFromStart = `${diffMinutes} minutes after draw start`;
             }
         }
+        
+        const title = isWinner 
+            ? `Winner - Prize: ${entry.prize || 'N/A'}`
+            : `Purchased ${timeFromStart} - $${entry.usd_amount}`;
         
         html += `
             <div class="number-ball-container">
