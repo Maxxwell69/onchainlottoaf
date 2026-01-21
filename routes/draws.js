@@ -191,6 +191,48 @@ router.get('/public/category/:category/winners', async (req, res) => {
 });
 
 /**
+ * GET /api/draws/public/category/:category
+ * Get public active draws by category
+ */
+router.get('/public/category/:category', async (req, res) => {
+  try {
+    const { category } = req.params;
+    const draws = await LottoDraw.getPublicActiveByCategory(category);
+    res.json({
+      success: true,
+      draws
+    });
+  } catch (error) {
+    console.error('Error fetching public draws by category:', error);
+    res.status(500).json({
+      error: 'Failed to fetch public draws by category',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/draws/public/category/:category
+ * Get public active draws by category
+ */
+router.get('/public/category/:category', async (req, res) => {
+  try {
+    const { category } = req.params;
+    const draws = await LottoDraw.getPublicActiveByCategory(category);
+    res.json({
+      success: true,
+      draws
+    });
+  } catch (error) {
+    console.error('Error fetching public draws by category:', error);
+    res.status(500).json({
+      error: 'Failed to fetch public draws by category',
+      details: error.message
+    });
+  }
+});
+
+/**
  * GET /api/draws/:id
  * Get a specific draw by ID with entries
  */
