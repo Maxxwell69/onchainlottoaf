@@ -353,6 +353,12 @@ function updateDrawInfo() {
     } else if (minScanAmountEl) {
         minScanAmountEl.textContent = 'N/A';
     }
+    
+    // Update public toggle checkbox
+    const publicToggle = document.getElementById('publicToggle');
+    if (publicToggle) {
+        publicToggle.checked = currentDraw.is_public || false;
+    }
 }
 
 // Update progress bar
@@ -973,8 +979,52 @@ function updateDrawManagementButtons() {
     deleteDrawBtn.style.display = 'inline-flex';
 }
 
+// Toggle public visibility
+async function togglePublicVisibility() {
+    const publicToggle = document.getElementById('publicToggle');
+    if (!publicToggle || !currentDraw) return;
+    
+    const isPublic = publicToggle.checked;
+    
+    try {
+        if (!authManager.isAuthenticated()) {
+            showToast('❌ You must be logged in', 'error');
+            publicToggle.checked = !isPublic; // Revert checkbox
+            return;
+        }
+
+        const authHeaders = authManager.getAuthHeaders();
+        const response = await fetch(`${API_URL}/api/draws/${drawId}/public`, {
+            method: 'PUT',
+            headers: authHeaders,
+            body: JSON.stringify({ is_public: isPublic })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            showToast(`✅ Draw ${isPublic ? 'made public' : 'made private'}!`, 'success');
+            currentDraw.is_public = isPublic; // Update local state
+        } else {
+            showToast(`❌ Error: ${data.error || 'Failed to update visibility'}`, 'error');
+            publicToggle.checked = !isPublic; // Revert checkbox
+        }
+    } catch (error) {
+        console.error('Error updating public visibility:', error);
+        showToast('❌ Failed to update visibility', 'error');
+        publicToggle.checked = !isPublic; // Revert checkbox
+    }
+}
+
 // Setup event listeners for management buttons
 function setupDrawManagementButtons() {
+    // Setup public toggle
+    const publicToggle = document.getElementById('publicToggle');
+    if (publicToggle && !publicToggle.hasAttribute('data-listener')) {
+        publicToggle.addEventListener('change', togglePublicVisibility);
+        publicToggle.setAttribute('data-listener', 'true');
+    }
+    
     const markCompleteBtn = document.getElementById('markCompleteBtn');
     const markDrawnBtn = document.getElementById('markDrawnBtn');
     const deactivateBtn = document.getElementById('deactivateBtn');

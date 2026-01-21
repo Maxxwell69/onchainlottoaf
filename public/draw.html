@@ -97,6 +97,18 @@
         <!-- Draw Management -->
         <div class="card" style="margin-top: 2rem; border-top: 2px solid var(--border); padding-top: 2rem;">
             <h3 style="margin-bottom: 1.5rem; color: var(--primary);">DRAW MANAGEMENT</h3>
+            
+            <!-- Public Visibility Toggle -->
+            <div class="form-group" style="margin-bottom: 2rem; padding: 1rem; background: var(--background); border-radius: 8px; border: 1px solid var(--border);">
+                <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer; font-weight: 600;">
+                    <input type="checkbox" id="publicToggle" style="width: 20px; height: 20px; cursor: pointer;">
+                    <span>🌐 Show on Category Pages (Public)</span>
+                </label>
+                <small style="display: block; margin-top: 0.5rem; color: var(--text-secondary); margin-left: 28px;">
+                    When enabled, this draw will appear on the public category pages. When disabled, it's only visible to admins.
+                </small>
+            </div>
+            
             <div class="actions-card">
                 <button class="btn btn-primary" id="markCompleteBtn" style="display: none;">
                     ✅ Mark as Complete

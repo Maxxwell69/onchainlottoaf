@@ -174,6 +174,7 @@ function updateNavigation() {
             navLinks.innerHTML = `
                 <a href="index.html" class="nav-link">🎯 Dashboard</a>
                 ${isModerator ? '<a href="draws.html" class="nav-link">📊 Draws</a>' : ''}
+                <a href="category-list.html" class="nav-link">🪙 Categories</a>
                 ${isAdmin ? '<a href="tokens.html" class="nav-link">🎫 Tokens</a>' : ''}
                 ${isAdmin ? '<a href="users.html" class="nav-link">👥 Users</a>' : ''}
                 <a href="theme-manager.html" class="nav-link">🎨 Themes</a>

@@ -11,7 +11,8 @@ class LottoDraw {
       timezone,
       start_time,
       prize_description_short,
-      prize_description_long
+      prize_description_long,
+      is_public
     } = drawData;
 
     // Validate and format start_time
@@ -28,8 +29,8 @@ class LottoDraw {
     }
 
     const sql = `
-      INSERT INTO lotto_draws (draw_name, token_address, token_symbol, min_usd_amount, timezone, start_time, prize_description_short, prize_description_long)
-      VALUES ($1, $2, $3, $4, $5, $6::timestamp without time zone, $7, $8)
+      INSERT INTO lotto_draws (draw_name, token_address, token_symbol, min_usd_amount, timezone, start_time, prize_description_short, prize_description_long, is_public)
+      VALUES ($1, $2, $3, $4, $5, $6::timestamp without time zone, $7, $8, $9)
       RETURNING *
     `;
 
@@ -42,7 +43,8 @@ class LottoDraw {
         timezone || null,
         formattedStartTime,
         prize_description_short || null,
-        prize_description_long || null
+        prize_description_long || null,
+        is_public || false
       ]);
       return result.rows[0];
     } catch (dbError) {
@@ -94,6 +96,40 @@ class LottoDraw {
       return draw;
     });
   }
+  
+  // Get public active draws (for public pages)
+  static async getPublicActive() {
+    const sql = `
+      SELECT *, start_time::text as start_time_text FROM lotto_draws 
+      WHERE status IN ('active', 'completed') AND is_public = true
+      ORDER BY created_at DESC
+    `;
+    const result = await query(sql);
+    return result.rows.map(draw => {
+      draw.start_time = draw.start_time_text;
+      delete draw.start_time_text;
+      return draw;
+    });
+  }
+  
+  // Get public active draws by category (token_symbol)
+  static async getPublicActiveByCategory(category) {
+    const sql = `
+      SELECT d.*, d.start_time::text as start_time_text 
+      FROM lotto_draws d
+      JOIN managed_tokens mt ON d.token_address = mt.token_address
+      WHERE d.status IN ('active', 'completed') 
+        AND d.is_public = true 
+        AND mt.category = $1
+      ORDER BY d.created_at DESC
+    `;
+    const result = await query(sql, [category]);
+    return result.rows.map(draw => {
+      draw.start_time = draw.start_time_text;
+      delete draw.start_time_text;
+      return draw;
+    });
+  }
 
   // Update draw status
   static async updateStatus(drawId, status) {
@@ -126,6 +162,18 @@ class LottoDraw {
       RETURNING *
     `;
     const result = await query(sql, [prizeDescriptionShort || null, prizeDescriptionLong || null, drawId]);
+    return result.rows[0];
+  }
+  
+  // Update is_public status
+  static async updatePublicStatus(drawId, isPublic) {
+    const sql = `
+      UPDATE lotto_draws 
+      SET is_public = $1
+      WHERE id = $2 
+      RETURNING *
+    `;
+    const result = await query(sql, [isPublic, drawId]);
     return result.rows[0];
   }
 

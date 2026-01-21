@@ -47,7 +47,7 @@ document.getElementById('addTokenForm').addEventListener('submit', async (e) => 
         
         const response = await fetch(`${API_URL}/api/tokens`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: authManager.getAuthHeaders(),
             body: JSON.stringify(formData)
         });
         
@@ -158,7 +158,7 @@ async function toggleTokenStatus(tokenId, active) {
     try {
         const response = await fetch(`${API_URL}/api/tokens/${tokenId}`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+            headers: authManager.getAuthHeaders(),
             body: JSON.stringify({ is_active: active })
         });
         
@@ -182,7 +182,8 @@ async function deleteToken(tokenId, tokenSymbol) {
     
     try {
         const response = await fetch(`${API_URL}/api/tokens/${tokenId}`, {
-            method: 'DELETE'
+            method: 'DELETE',
+            headers: authManager.getAuthHeaders()
         });
         
         if (response.ok) {

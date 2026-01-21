@@ -129,6 +129,8 @@ if (createDrawForm) {
             return;
         }
 
+        const isPublic = document.getElementById('isPublic').checked;
+
         const formData = {
             draw_name: drawName,
             token_address: tokenAddress,
@@ -137,7 +139,8 @@ if (createDrawForm) {
             start_time: startTimeEST,
             timezone: timezone || null,
             prize_description_short: prizeDescriptionShort,
-            prize_description_long: prizeDescriptionLong || null
+            prize_description_long: prizeDescriptionLong || null,
+            is_public: isPublic
         };
         
         // Get auth headers - check if user is authenticated

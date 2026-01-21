@@ -73,6 +73,47 @@ router.get('/', async (req, res) => {
 });
 
 /**
+ * GET /api/tokens/categories
+ * Get all unique categories
+ */
+router.get('/categories', async (req, res) => {
+  try {
+    const categories = await ManagedToken.getCategories();
+    res.json({
+      success: true,
+      categories
+    });
+  } catch (error) {
+    console.error('Error fetching categories:', error);
+    res.status(500).json({
+      error: 'Failed to fetch categories',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/tokens/category/:category
+ * Get tokens by category
+ */
+router.get('/category/:category', async (req, res) => {
+  try {
+    const { category } = req.params;
+    const tokens = await ManagedToken.getByCategory(category);
+    res.json({
+      success: true,
+      tokens
+    });
+  } catch (error) {
+    console.error('Error fetching tokens by category:', error);
+    res.status(500).json({
+      error: 'Failed to fetch tokens by category',
+      details: error.message
+    });
+  }
+});
+
+/**
  * GET /api/tokens/:id
  * Get a specific token with blacklist
  */

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://api.helius.xyz https://price.jup.ag https://mainnet.helius-rpc.com;">
+    <title>Coin Draw Categories - On Chain Lotto</title>
+    <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="home.css">
+</head>
+<body>
+    <div class="home-container">
+        <!-- Navigation -->
+        <nav class="navbar">
+            <div class="nav-brand">
+                <a href="home.html" style="text-decoration: none; color: inherit; display: flex; align-items: center;">
+                    <h1 class="logo-font">On Chain Lotto</h1>
+                </a>
+            </div>
+            <div class="nav-links" id="navLinks">
+                <a href="home.html" class="nav-link">Home</a>
+                <a href="category-list.html" class="nav-link active">Categories</a>
+                <a href="login.html" class="btn btn-primary">Login</a>
+            </div>
+        </nav>
+
+        <!-- Categories Header -->
+        <section class="hero" style="padding: 3rem 2rem; text-align: center;">
+            <h1 class="hero-title">Coin Draw Categories</h1>
+            <p class="hero-description">Browse lotto draws by coin category</p>
+        </section>
+
+        <!-- Categories Section -->
+        <section id="categories" class="all-draws-section" style="
+            padding: 2rem 2rem; 
+            background: var(--card-bg); 
+            margin: 1rem auto; 
+            border-radius: 12px;
+            max-width: 1400px;
+        ">
+            <div id="categoriesContainer" style="
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+                gap: 1.5rem;
+                margin-top: 2rem;
+            ">
+                <p class="loading" style="text-align: center; color: var(--text-secondary); width: 100%; grid-column: 1 / -1;">Loading categories...</p>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <h3 class="logo-font">On Chain Lotto</h3>
+                    <p>Premium Solana Lotto System</p>
+                </div>
+                <div class="footer-links">
+                    <a href="home.html">Home</a>
+                    <a href="category-list.html">Categories</a>
+                    <a href="login.html">Login</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 On Chain Lotto. All rights reserved.</p>
+            </div>
+        </footer>
+    </div>
+
+    <script src="themes.js"></script>
+    <script src="theme-selector.js"></script>
+    <script src="auth.js"></script>
+    <script src="category-list.js"></script>
+    <script>
+        // Update navigation based on login status
+        function updateNavigation() {
+            const navLinks = document.getElementById('navLinks');
+            
+            if (authManager && authManager.isAuthenticated()) {
+                const user = authManager.getCurrentUser();
+                const isAdmin = user.role === 'admin' || user.role === 'super_admin';
+                const isModerator = user.role === 'moderator' || isAdmin;
+                
+                if (navLinks) {
+                    navLinks.innerHTML = `
+                        <a href="home.html" class="nav-link">Home</a>
+                        <a href="category-list.html" class="nav-link active">Categories</a>
+                        <a href="index.html" class="nav-link">🎯 Dashboard</a>
+                        ${isModerator ? '<a href="draws.html" class="nav-link">📊 Draws</a>' : ''}
+                        ${isAdmin ? '<a href="tokens.html" class="nav-link">🎫 Tokens</a>' : ''}
+                        ${isAdmin ? '<a href="users.html" class="nav-link">👥 Users</a>' : ''}
+                        <a href="theme-manager.html" class="nav-link">🎨 Themes</a>
+                        <span style="color: var(--text-secondary); margin: 0 1rem;">${user.username}</span>
+                        <button class="btn btn-secondary" onclick="authManager.logout()">Logout</button>
+                    `;
+                }
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            updateNavigation();
+        });
+    </script>
+</body>
+</html>

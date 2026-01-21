@@ -12,7 +12,7 @@ const { authenticateToken, requireModerator, requireAdmin } = require('../middle
  */
 router.post('/', authenticateToken, requireModerator, async (req, res) => {
   try {
-    const { draw_name, token_address, token_symbol, min_usd_amount, timezone, start_time, prize_description_short, prize_description_long } = req.body;
+    const { draw_name, token_address, token_symbol, min_usd_amount, timezone, start_time, prize_description_short, prize_description_long, is_public } = req.body;
 
     // Validation
     if (!draw_name || !draw_name.trim()) {
@@ -57,7 +57,8 @@ router.post('/', authenticateToken, requireModerator, async (req, res) => {
       timezone: timezone || null,
       start_time: start_time, // Store exactly as provided
       prize_description_short: prize_description_short || null,
-      prize_description_long: prize_description_long || null
+      prize_description_long: prize_description_long || null,
+      is_public: is_public === true || is_public === 'true'
     });
 
     res.status(201).json({
@@ -112,6 +113,47 @@ router.get('/active', async (req, res) => {
     console.error('Error fetching active draws:', error);
     res.status(500).json({
       error: 'Failed to fetch active draws',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/draws/public
+ * Get public active lotto draws
+ */
+router.get('/public', async (req, res) => {
+  try {
+    const draws = await LottoDraw.getPublicActive();
+    res.json({
+      success: true,
+      draws
+    });
+  } catch (error) {
+    console.error('Error fetching public draws:', error);
+    res.status(500).json({
+      error: 'Failed to fetch public draws',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/draws/public/category/:category
+ * Get public active draws by category
+ */
+router.get('/public/category/:category', async (req, res) => {
+  try {
+    const { category } = req.params;
+    const draws = await LottoDraw.getPublicActiveByCategory(category);
+    res.json({
+      success: true,
+      draws
+    });
+  } catch (error) {
+    console.error('Error fetching public draws by category:', error);
+    res.status(500).json({
+      error: 'Failed to fetch public draws by category',
       details: error.message
     });
   }
@@ -336,6 +378,42 @@ router.put('/:id/status', authenticateToken, requireModerator, async (req, res) 
     console.error('Error updating draw status:', error);
     res.status(500).json({
       error: 'Failed to update draw status',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * PUT /api/draws/:id/public
+ * Update public visibility status
+ */
+router.put('/:id/public', authenticateToken, requireModerator, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { is_public } = req.body;
+
+    if (typeof is_public !== 'boolean') {
+      return res.status(400).json({
+        error: 'is_public must be a boolean'
+      });
+    }
+
+    const draw = await LottoDraw.updatePublicStatus(id, is_public);
+    if (!draw) {
+      return res.status(404).json({
+        error: 'Draw not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: `Draw ${is_public ? 'made public' : 'made private'}`,
+      draw
+    });
+  } catch (error) {
+    console.error('Error updating public status:', error);
+    res.status(500).json({
+      error: 'Failed to update public status',
       details: error.message
     });
   }
