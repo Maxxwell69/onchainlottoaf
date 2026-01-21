@@ -142,13 +142,29 @@ router.get('/public', async (req, res) => {
  * GET /api/draws/public/category/:category/winners
  * Get all winners for public draws in a category
  * NOTE: This more specific route must come BEFORE /public/category/:category
+ * Gets ALL public draws with winners, regardless of status (including previous/completed draws)
  */
 router.get('/public/category/:category/winners', async (req, res) => {
   try {
     const { category } = req.params;
     
-    // Get all public draws for this category
-    const draws = await LottoDraw.getPublicActiveByCategory(category);
+    // Get ALL public draws for this category (not just active/completed)
+    // We want to show winners from all previous draws too
+    const sql = `
+      SELECT d.*, d.start_time::text as start_time_text 
+      FROM lotto_draws d
+      JOIN managed_tokens mt ON d.token_address = mt.token_address
+      WHERE d.is_public = true 
+        AND mt.category = $1
+      ORDER BY d.created_at DESC
+    `;
+    const { query } = require('../database/db');
+    const result = await query(sql, [category]);
+    const draws = result.rows.map(draw => {
+      draw.start_time = draw.start_time_text;
+      delete draw.start_time_text;
+      return draw;
+    });
     
     // Get winners for each draw
     const winnersData = [];
