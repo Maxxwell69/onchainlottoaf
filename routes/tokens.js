@@ -11,7 +11,18 @@ const { authenticateToken, requireAdmin } = require('../middleware/auth');
  */
 router.post('/', authenticateToken, requireAdmin, async (req, res) => {
   try {
-    const { token_address, token_symbol, token_name, notes } = req.body;
+    const { 
+      token_address, 
+      token_symbol, 
+      token_name, 
+      notes,
+      banner_url,
+      logo_url,
+      website_url,
+      twitter_url,
+      telegram_url,
+      discord_url
+    } = req.body;
 
     if (!token_address) {
       return res.status(400).json({
@@ -35,7 +46,13 @@ router.post('/', authenticateToken, requireAdmin, async (req, res) => {
       token_address,
       token_symbol: finalSymbol,
       token_name: finalName,
-      notes
+      notes,
+      banner_url,
+      logo_url,
+      website_url,
+      twitter_url,
+      telegram_url,
+      discord_url
     });
 
     res.status(201).json({
@@ -108,6 +125,34 @@ router.get('/category/:category', async (req, res) => {
     console.error('Error fetching tokens by category:', error);
     res.status(500).json({
       error: 'Failed to fetch tokens by category',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/tokens/category-info/:category
+ * Get token info by category (for category pages)
+ */
+router.get('/category-info/:category', async (req, res) => {
+  try {
+    const { category } = req.params;
+    const token = await ManagedToken.getTokenByCategory(category);
+    
+    if (!token) {
+      return res.status(404).json({
+        error: 'Token not found for this category'
+      });
+    }
+
+    res.json({
+      success: true,
+      token
+    });
+  } catch (error) {
+    console.error('Error fetching token by category:', error);
+    res.status(500).json({
+      error: 'Failed to fetch token',
       details: error.message
     });
   }

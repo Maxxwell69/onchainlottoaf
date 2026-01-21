@@ -30,6 +30,9 @@ async function loadCategoryDraws() {
     const displayCategory = decodeURIComponent(category).replace(/_/g, ' ');
     if (categoryNameEl) categoryNameEl.textContent = displayCategory;
     
+    // Load token info for the category
+    await loadCategoryTokenInfo(category);
+    
     try {
         const apiUrl = `${API_URL}/api/draws/public/category/${encodeURIComponent(category)}`;
         console.log('Fetching category draws from:', apiUrl);
@@ -75,6 +78,103 @@ async function loadCategoryDraws() {
             `;
         }
     }
+}
+
+// Load token info for the category
+async function loadCategoryTokenInfo(category) {
+    try {
+        const response = await fetch(`${API_URL}/api/tokens/category-info/${encodeURIComponent(category)}`);
+        const data = await response.json();
+        
+        if (data.success && data.token) {
+            displayTokenInfo(data.token);
+        }
+    } catch (error) {
+        console.error('Error loading token info:', error);
+    }
+}
+
+// Display token banner and links
+function displayTokenInfo(token) {
+    // Check if token info section already exists
+    let tokenInfoSection = document.getElementById('tokenInfoSection');
+    if (!tokenInfoSection) {
+        // Create token info section after hero
+        const hero = document.querySelector('.hero');
+        if (hero) {
+            tokenInfoSection = document.createElement('div');
+            tokenInfoSection.id = 'tokenInfoSection';
+            tokenInfoSection.style.cssText = 'padding: 0 2rem; max-width: 1200px; margin: 0 auto 2rem;';
+            hero.insertAdjacentElement('afterend', tokenInfoSection);
+        } else {
+            return;
+        }
+    }
+    
+    let tokenInfoHTML = '';
+    
+    // Banner
+    if (token.banner_url) {
+        tokenInfoHTML += `
+            <div style="margin-bottom: 2rem; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);">
+                <img src="${token.banner_url}" 
+                     alt="${token.token_name || 'Token'} Banner" 
+                     style="width: 100%; max-height: 300px; object-fit: cover; display: block;"
+                     onerror="this.style.display='none'">
+            </div>
+        `;
+    }
+    
+    // Logo and links container
+    const hasLogo = token.logo_url;
+    const links = [];
+    if (token.website_url) {
+        links.push({url: token.website_url, icon: '🌐', text: 'Website'});
+    }
+    if (token.twitter_url) {
+        links.push({url: token.twitter_url, icon: '🐦', text: 'Twitter'});
+    }
+    if (token.telegram_url) {
+        links.push({url: token.telegram_url, icon: '💬', text: 'Telegram'});
+    }
+    if (token.discord_url) {
+        links.push({url: token.discord_url, icon: '🎮', text: 'Discord'});
+    }
+    
+    if (hasLogo || links.length > 0) {
+        tokenInfoHTML += `
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 1rem; padding: 1.5rem; background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px;">
+                ${hasLogo ? `
+                    <img src="${token.logo_url}" 
+                         alt="${token.token_name || 'Token'} Logo" 
+                         style="height: 80px; width: auto; border-radius: 12px; object-fit: contain;"
+                         onerror="this.style.display='none'">
+                ` : ''}
+                
+                ${links.length > 0 ? `
+                    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                        ${links.map(link => `
+                            <a href="${link.url}" 
+                               target="_blank" 
+                               rel="noopener noreferrer"
+                               style="display: inline-flex; align-items: center; gap: 0.5rem; 
+                                      padding: 0.75rem 1.5rem; background: var(--background); 
+                                      border: 1px solid var(--border); border-radius: 8px; 
+                                      text-decoration: none; color: var(--text); 
+                                      transition: all 0.2s; font-weight: 500;"
+                               onmouseover="this.style.background='var(--primary)'; this.style.color='white'; this.style.borderColor='var(--primary)';"
+                               onmouseout="this.style.background='var(--background)'; this.style.color='var(--text)'; this.style.borderColor='var(--border)';">
+                                <span style="font-size: 1.2rem;">${link.icon}</span>
+                                <span>${link.text}</span>
+                            </a>
+                        `).join('')}
+                    </div>
+                ` : ''}
+            </div>
+        `;
+    }
+    
+    tokenInfoSection.innerHTML = tokenInfoHTML;
 }
 
 // Render category draws

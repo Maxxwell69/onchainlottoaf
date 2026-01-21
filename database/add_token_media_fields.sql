@@ -1,0 +1,8 @@
+-- Add media and social fields to managed_tokens
+ALTER TABLE managed_tokens 
+ADD COLUMN IF NOT EXISTS banner_url VARCHAR(500),
+ADD COLUMN IF NOT EXISTS logo_url VARCHAR(500),
+ADD COLUMN IF NOT EXISTS website_url VARCHAR(500),
+ADD COLUMN IF NOT EXISTS twitter_url VARCHAR(500),
+ADD COLUMN IF NOT EXISTS telegram_url VARCHAR(500),
+ADD COLUMN IF NOT EXISTS discord_url VARCHAR(500);

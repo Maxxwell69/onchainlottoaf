@@ -42,7 +42,13 @@ document.getElementById('addTokenForm').addEventListener('submit', async (e) => 
             token_address: document.getElementById('tokenAddress').value,
             token_symbol: document.getElementById('tokenSymbol').value || null,
             token_name: document.getElementById('tokenName').value || null,
-            notes: document.getElementById('tokenNotes').value || null
+            notes: document.getElementById('tokenNotes').value || null,
+            banner_url: document.getElementById('bannerUrl').value || null,
+            logo_url: document.getElementById('logoUrl').value || null,
+            website_url: document.getElementById('websiteUrl').value || null,
+            twitter_url: document.getElementById('twitterUrl').value || null,
+            telegram_url: document.getElementById('telegramUrl').value || null,
+            discord_url: document.getElementById('discordUrl').value || null
         };
         
         const response = await fetch(`${API_URL}/api/tokens`, {
