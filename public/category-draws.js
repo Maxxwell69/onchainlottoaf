@@ -177,6 +177,35 @@ function displayTokenInfo(token) {
     tokenInfoSection.innerHTML = tokenInfoHTML;
 }
 
+// Copy contract address to clipboard
+async function copyContractAddress(address) {
+    if (!address) {
+        return;
+    }
+    
+    try {
+        await navigator.clipboard.writeText(address);
+        // Simple visual feedback - could enhance with toast if needed
+        alert('✅ Contract address copied to clipboard!');
+    } catch (error) {
+        console.error('Error copying address:', error);
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = address;
+        textArea.style.position = 'fixed';
+        textArea.style.opacity = '0';
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+            document.execCommand('copy');
+            alert('✅ Contract address copied to clipboard!');
+        } catch (err) {
+            alert('❌ Failed to copy address');
+        }
+        document.body.removeChild(textArea);
+    }
+}
+
 // Render category draws
 function renderCategoryDraws(draws) {
     const container = document.getElementById('categoryDrawsContainer');
@@ -195,8 +224,7 @@ function renderCategoryDraws(draws) {
             border-radius: 12px;
             padding: 1.5rem;
             transition: transform 0.2s, box-shadow 0.2s;
-            cursor: pointer;
-        " onclick="window.location.href='public-draw.html?id=${draw.id}'">
+        ">
             <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
                 <h3 style="margin: 0; color: var(--primary);">${draw.draw_name}</h3>
                 <span class="status-badge status-${draw.status}">${draw.status}</span>
@@ -212,17 +240,65 @@ function renderCategoryDraws(draws) {
                     <strong>Progress:</strong> ${draw.filled_slots} / ${draw.total_slots} slots
                 </p>
             </div>
+            
+            <!-- Contract Address Section -->
+            ${draw.token_address ? `
+                <div style="padding: 1rem; background: var(--background); border-radius: 8px; margin-top: 1rem; margin-bottom: 1rem; border: 2px solid var(--border);">
+                    <div style="margin-bottom: 0.5rem; font-weight: 600; color: var(--primary); font-size: 0.9rem;">
+                        Contract Address
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                        <div id="contractAddressDisplay-${draw.id}" 
+                             style="flex: 1; min-width: 150px; padding: 0.5rem; background: var(--card-bg); 
+                                    border: 1px solid var(--border); border-radius: 6px; font-family: monospace; 
+                                    font-size: 0.75rem; word-break: break-all; cursor: pointer; user-select: all;
+                                    transition: all 0.2s;"
+                             ondblclick="copyContractAddress('${draw.token_address}')"
+                             title="Double-click to copy">
+                            ${draw.token_address}
+                        </div>
+                        <div style="display: flex; gap: 0.25rem;">
+                            <button class="btn btn-secondary" 
+                                    onclick="copyContractAddress('${draw.token_address}')" 
+                                    style="padding: 0.4rem 0.75rem; font-size: 0.85rem; white-space: nowrap;"
+                                    title="Copy address">
+                                📋
+                            </button>
+                            <a href="https://dexscreener.com/solana/${draw.token_address}" 
+                               target="_blank" 
+                               rel="noopener noreferrer" 
+                               class="btn btn-primary" 
+                               style="padding: 0.4rem 0.75rem; font-size: 0.85rem; white-space: nowrap; text-decoration: none;"
+                               onclick="event.stopPropagation()"
+                               title="View on DexScreener">
+                                📊
+                            </a>
+                        </div>
+                    </div>
+                    <small style="display: block; margin-top: 0.5rem; color: var(--text-secondary); font-size: 0.75rem;">
+                        Double-click to copy
+                    </small>
+                </div>
+            ` : ''}
+            
             ${draw.prize_description_short ? `
                 <div style="padding: 1rem; background: var(--background); border-radius: 8px; margin-top: 1rem;">
                     <p style="margin: 0; color: var(--text);">${draw.prize_description_short}</p>
                 </div>
             ` : ''}
             <div style="margin-top: 1rem; text-align: center;">
-                <button class="btn btn-primary" style="width: 100%;">View Draw →</button>
+                <button class="btn btn-primary" 
+                        style="width: 100%;" 
+                        onclick="window.location.href='public-draw.html?id=${draw.id}'">
+                    View Draw →
+                </button>
             </div>
         </div>
     `).join('');
 }
+
+// Make copyContractAddress available globally
+window.copyContractAddress = copyContractAddress;
 
 // Initialize page
 document.addEventListener('DOMContentLoaded', () => {

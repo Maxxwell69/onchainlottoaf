@@ -57,6 +57,33 @@
                 </div>
             </div>
         </div>
+
+        <!-- Contract Address Card -->
+        <div class="card" id="contractAddressCard" style="display: none;">
+            <h3 style="margin-bottom: 1rem; color: var(--primary);">Contract Address</h3>
+            <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                <div id="contractAddressDisplay" 
+                     style="flex: 1; min-width: 200px; padding: 1rem; background: var(--background); 
+                            border: 2px solid var(--border); border-radius: 8px; font-family: monospace; 
+                            font-size: 0.9rem; word-break: break-all; cursor: pointer; user-select: all;
+                            transition: all 0.2s;"
+                     ondblclick="copyContractAddress()"
+                     title="Double-click to copy">
+                    <span id="contractAddressText">-</span>
+                </div>
+                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                    <button class="btn btn-secondary" onclick="copyContractAddress()" style="white-space: nowrap;">
+                        📋 Copy
+                    </button>
+                    <a id="dexscreenerLink" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="white-space: nowrap; text-decoration: none;">
+                        📊 View on DexScreener
+                    </a>
+                </div>
+            </div>
+            <small style="display: block; margin-top: 0.5rem; color: var(--text-secondary);">
+                Double-click the address to copy or click the buttons above
+            </small>
+        </div>
     </div>
 
     <!-- Toast Notification -->

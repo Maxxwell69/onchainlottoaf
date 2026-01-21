@@ -359,7 +359,72 @@ function updateDrawInfo() {
     if (publicToggle) {
         publicToggle.checked = currentDraw.is_public || false;
     }
+    
+    // Update contract address display
+    updateContractAddress();
 }
+
+// Update contract address display
+function updateContractAddress() {
+    const contractAddressCard = document.getElementById('contractAddressCard');
+    const contractAddressText = document.getElementById('contractAddressText');
+    const dexscreenerLink = document.getElementById('dexscreenerLink');
+    
+    if (currentDraw && currentDraw.token_address) {
+        if (contractAddressCard) contractAddressCard.style.display = 'block';
+        if (contractAddressText) contractAddressText.textContent = currentDraw.token_address;
+        if (dexscreenerLink) {
+            dexscreenerLink.href = `https://dexscreener.com/solana/${currentDraw.token_address}`;
+        }
+    } else {
+        if (contractAddressCard) contractAddressCard.style.display = 'none';
+    }
+}
+
+// Copy contract address to clipboard
+async function copyContractAddress() {
+    if (!currentDraw || !currentDraw.token_address) {
+        showToast('❌ No contract address to copy', 'error');
+        return;
+    }
+    
+    try {
+        await navigator.clipboard.writeText(currentDraw.token_address);
+        showToast('✅ Contract address copied to clipboard!', 'success');
+        
+        // Visual feedback
+        const contractAddressDisplay = document.getElementById('contractAddressDisplay');
+        if (contractAddressDisplay) {
+            contractAddressDisplay.style.background = 'var(--primary)';
+            contractAddressDisplay.style.color = 'white';
+            contractAddressDisplay.style.borderColor = 'var(--primary)';
+            setTimeout(() => {
+                contractAddressDisplay.style.background = 'var(--background)';
+                contractAddressDisplay.style.color = '';
+                contractAddressDisplay.style.borderColor = 'var(--border)';
+            }, 500);
+        }
+    } catch (error) {
+        console.error('Error copying address:', error);
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = currentDraw.token_address;
+        textArea.style.position = 'fixed';
+        textArea.style.opacity = '0';
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+            document.execCommand('copy');
+            showToast('✅ Contract address copied to clipboard!', 'success');
+        } catch (err) {
+            showToast('❌ Failed to copy address', 'error');
+        }
+        document.body.removeChild(textArea);
+    }
+}
+
+// Make copyContractAddress available globally
+window.copyContractAddress = copyContractAddress;
 
 // Update progress bar
 function updateProgressBar() {
