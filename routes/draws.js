@@ -464,6 +464,95 @@ router.put('/:id/prizes', authenticateToken, requireModerator, async (req, res) 
 });
 
 /**
+ * PUT /api/draws/:drawId/entries/:entryId/winner
+ * Assign winner status and prize to an entry
+ */
+router.put('/:drawId/entries/:entryId/winner', authenticateToken, requireModerator, async (req, res) => {
+  try {
+    const { drawId, entryId } = req.params;
+    const { prize, is_winner = true } = req.body;
+
+    if (!prize || prize.trim() === '') {
+      return res.status(400).json({
+        error: 'Prize description is required'
+      });
+    }
+
+    // Verify entry belongs to draw
+    const LottoEntry = require('../models/LottoEntry');
+    const entry = await LottoEntry.getById(entryId);
+    
+    if (!entry) {
+      return res.status(404).json({
+        error: 'Entry not found'
+      });
+    }
+
+    if (entry.draw_id !== parseInt(drawId)) {
+      return res.status(400).json({
+        error: 'Entry does not belong to this draw'
+      });
+    }
+
+    // Update winner status
+    const updatedEntry = await LottoEntry.updateWinner(entryId, prize.trim(), is_winner);
+
+    res.json({
+      success: true,
+      message: 'Winner assigned successfully',
+      entry: updatedEntry
+    });
+  } catch (error) {
+    console.error('Error assigning winner:', error);
+    res.status(500).json({
+      error: 'Failed to assign winner',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * DELETE /api/draws/:drawId/entries/:entryId/winner
+ * Remove winner status from an entry
+ */
+router.delete('/:drawId/entries/:entryId/winner', authenticateToken, requireModerator, async (req, res) => {
+  try {
+    const { drawId, entryId } = req.params;
+
+    // Verify entry belongs to draw
+    const LottoEntry = require('../models/LottoEntry');
+    const entry = await LottoEntry.getById(entryId);
+    
+    if (!entry) {
+      return res.status(404).json({
+        error: 'Entry not found'
+      });
+    }
+
+    if (entry.draw_id !== parseInt(drawId)) {
+      return res.status(400).json({
+        error: 'Entry does not belong to this draw'
+      });
+    }
+
+    // Remove winner status
+    const updatedEntry = await LottoEntry.removeWinner(entryId);
+
+    res.json({
+      success: true,
+      message: 'Winner status removed',
+      entry: updatedEntry
+    });
+  } catch (error) {
+    console.error('Error removing winner status:', error);
+    res.status(500).json({
+      error: 'Failed to remove winner status',
+      details: error.message
+    });
+  }
+});
+
+/**
  * DELETE /api/draws/:id
  * Delete a draw and all its entries
  */

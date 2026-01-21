@@ -455,6 +455,61 @@ h3 {
     box-shadow: 0 4px 12px rgba(153, 69, 255, 0.2);
 }
 
+/* Winner Styles */
+.lotto-ball.winner-ball {
+    background: linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FFD700 100%) !important;
+    border: 3px solid #FFD700 !important;
+    box-shadow: 
+        0 8px 16px rgba(255, 215, 0, 0.5),
+        inset 0 -3px 10px rgba(0, 0, 0, 0.3),
+        inset 0 3px 10px rgba(255, 255, 255, 0.5),
+        0 0 20px rgba(255, 215, 0, 0.6) !important;
+    animation: winnerPulse 2s ease-in-out infinite;
+}
+
+.lotto-entry.winner-entry {
+    border-left: 4px solid #FFD700;
+    background: linear-gradient(90deg, rgba(255, 215, 0, 0.05) 0%, transparent 100%);
+}
+
+.winner-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+    color: #000000;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.prize-display {
+    padding: 0.75rem;
+    background: rgba(255, 215, 0, 0.1);
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    border-radius: 8px;
+    margin: 0.5rem 0;
+    font-weight: 600;
+    color: var(--primary);
+}
+
+@keyframes winnerPulse {
+    0%, 100% {
+        box-shadow: 
+            0 8px 16px rgba(255, 215, 0, 0.5),
+            inset 0 -3px 10px rgba(0, 0, 0, 0.3),
+            inset 0 3px 10px rgba(255, 255, 255, 0.5),
+            0 0 20px rgba(255, 215, 0, 0.6);
+    }
+    50% {
+        box-shadow: 
+            0 8px 16px rgba(255, 215, 0, 0.7),
+            inset 0 -3px 10px rgba(0, 0, 0, 0.3),
+            inset 0 3px 10px rgba(255, 255, 255, 0.5),
+            0 0 30px rgba(255, 215, 0, 0.8);
+    }
+}
+
 .entry-details {
     flex: 1;
     display: flex;

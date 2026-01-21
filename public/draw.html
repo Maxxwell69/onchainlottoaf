@@ -240,6 +240,79 @@
         </div>
     </div>
 
+    <!-- Winner Selection Modal -->
+    <div id="winnerModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>🏆 Select Winner</h3>
+                <button class="modal-close" id="closeWinnerModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="winnerEntryInfo" style="margin-bottom: 1.5rem; padding: 1rem; background: var(--background); border-radius: 8px; border: 1px solid var(--border);">
+                    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
+                        <div class="lotto-ball" id="winnerBallNumber" style="margin: 0;"></div>
+                        <div>
+                            <strong>Ball Number: <span id="winnerBallNum">-</span></strong>
+                        </div>
+                    </div>
+                    <div style="margin-top: 0.5rem;">
+                        <small style="color: var(--text-secondary);">Wallet: <span id="winnerWallet" style="font-family: monospace;"></span></small>
+                    </div>
+                </div>
+                <form id="winnerForm">
+                    <div class="form-group">
+                        <label for="winnerPrize">Prize Description*</label>
+                        <textarea id="winnerPrize" rows="4" required placeholder="e.g., $1000 USDC, 1 SOL, Special NFT, etc." style="width: 100%; padding: 0.75rem; border-radius: 8px; border: 2px solid var(--border); font-size: 1rem;"></textarea>
+                        <small>Describe the prize that this winner will receive</small>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="cancelWinnerBtn">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveWinnerBtn">💾 Assign Prize</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Twitter Share Modal -->
+    <div id="twitterShareModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3>🐦 Share Winner on Twitter</h3>
+                <button class="modal-close" id="closeTwitterModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="twitterSharePreview" style="padding: 1.5rem; background: #1DA1F2; border-radius: 12px; color: white; margin-bottom: 1.5rem;">
+                    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                        <div class="lotto-ball" id="shareBallNumber" style="margin: 0; width: 80px; height: 80px; font-size: 2rem;"></div>
+                        <div>
+                            <div style="font-size: 1.5rem; font-weight: bold; margin-bottom: 0.25rem;">🎉 Winner!</div>
+                            <div style="font-size: 1rem; opacity: 0.9;">Ball #<span id="shareBallNum">-</span></div>
+                        </div>
+                    </div>
+                    <div style="padding: 1rem; background: rgba(255, 255, 255, 0.1); border-radius: 8px; margin-bottom: 1rem;">
+                        <div style="font-size: 0.9rem; opacity: 0.9; margin-bottom: 0.5rem;">Wallet:</div>
+                        <div style="font-family: monospace; font-size: 1.1rem; font-weight: bold;">...<span id="shareWalletDigits">-</span></div>
+                    </div>
+                    <div style="padding: 1rem; background: rgba(255, 255, 255, 0.1); border-radius: 8px;">
+                        <div style="font-size: 0.9rem; opacity: 0.9; margin-bottom: 0.5rem;">Prize:</div>
+                        <div style="font-size: 1.1rem; font-weight: bold;" id="sharePrize">-</div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="twitterShareText">Twitter Post Text</label>
+                    <textarea id="twitterShareText" rows="4" readonly style="width: 100%; padding: 0.75rem; border-radius: 8px; border: 2px solid var(--border); font-size: 0.9rem; font-family: monospace;"></textarea>
+                    <small>This text will be copied to your clipboard</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="cancelTwitterBtn">Close</button>
+                <button type="button" class="btn btn-primary" id="copyTwitterBtn" style="background: #1DA1F2; color: white;">📋 Copy to Clipboard</button>
+                <a id="openTwitterLink" href="#" target="_blank" class="btn btn-primary" style="background: #1DA1F2; color: white; text-decoration: none;">🐦 Open Twitter</a>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast Notification -->
     <div id="toast" class="toast"></div>
 

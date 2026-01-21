@@ -185,6 +185,37 @@ class LottoEntry {
     const result = await query(sql, [newLottoNumber, entryId]);
     return result.rowCount > 0;
   }
+
+  // Update winner status and prize for an entry
+  static async updateWinner(entryId, prize, isWinner = true) {
+    const sql = `
+      UPDATE lotto_entries 
+      SET prize = $1, is_winner = $2 
+      WHERE id = $3
+      RETURNING *
+    `;
+    const result = await query(sql, [prize, isWinner, entryId]);
+    return result.rows[0] || null;
+  }
+
+  // Get entry by ID
+  static async getById(entryId) {
+    const sql = 'SELECT * FROM lotto_entries WHERE id = $1';
+    const result = await query(sql, [entryId]);
+    return result.rows[0] || null;
+  }
+
+  // Remove winner status
+  static async removeWinner(entryId) {
+    const sql = `
+      UPDATE lotto_entries 
+      SET prize = NULL, is_winner = FALSE 
+      WHERE id = $1
+      RETURNING *
+    `;
+    const result = await query(sql, [entryId]);
+    return result.rows[0] || null;
+  }
 }
 
 module.exports = LottoEntry;

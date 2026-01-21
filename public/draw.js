@@ -647,32 +647,44 @@ function renderEntriesTable() {
         new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
     );
     
-    entriesList.innerHTML = sortedEntries.map(entry => `
-        <div class="lotto-entry">
-            <div class="lotto-ball">
+    entriesList.innerHTML = sortedEntries.map(entry => {
+        const isWinner = entry.is_winner || false;
+        const winnerClass = isWinner ? 'winner-ball' : '';
+        const winnerBadge = isWinner ? '<span class="winner-badge">🏆 Winner</span>' : '';
+        const prizeDisplay = entry.prize ? `<div class="prize-display">🎁 ${entry.prize}</div>` : '';
+        
+        return `
+        <div class="lotto-entry ${isWinner ? 'winner-entry' : ''}" data-entry-id="${entry.id}">
+            <div class="lotto-ball ${winnerClass}" onclick="selectWinner(${entry.id}, ${entry.lotto_number}, '${entry.wallet_address.replace(/'/g, "\\'")}', ${isWinner ? `'${(entry.prize || '').replace(/'/g, "\\'")}'` : 'null'})" style="cursor: pointer;" title="${isWinner ? 'Click to edit prize' : 'Click to select as winner'}">
                 ${entry.lotto_number}
             </div>
             <div class="entry-details">
-                <div class="entry-amount">
-                    ${formatUSD(entry.usd_amount)}
+                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                    <div class="entry-amount">
+                        ${formatUSD(entry.usd_amount)}
+                    </div>
+                    ${winnerBadge}
                 </div>
+                ${prizeDisplay}
                 <div class="entry-wallet">
                     <span class="wallet-address">${entry.wallet_address}</span>
                     <button class="copy-btn" onclick="copyToClipboard('${entry.wallet_address}', this)">
                         📋 Copy
                     </button>
                 </div>
-                <div style="display: flex; gap: 1rem; align-items: center;">
+                <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
                     <span class="entry-time">⏰ ${formatDate(entry.timestamp, currentDraw?.timezone || null)}</span>
                     <a href="https://solscan.io/tx/${entry.transaction_signature}" 
                        target="_blank" 
                        class="entry-tx-link">
                         🔍 View Transaction
                     </a>
+                    ${isWinner ? `<button class="btn btn-small btn-secondary" onclick="shareWinnerOnTwitter(${entry.id}, ${entry.lotto_number}, '${entry.wallet_address.replace(/'/g, "\\'")}', '${(entry.prize || '').replace(/'/g, "\\'")}')" style="margin-left: auto;">🐦 Share</button>` : ''}
                 </div>
             </div>
         </div>
-    `).join('');
+    `;
+    }).join('');
     
     // Apply theme styles to lotto balls (with delay to ensure DOM is ready)
     setTimeout(() => {
@@ -1225,6 +1237,207 @@ function setupPrizeEdit() {
         savePrizeBtn.setAttribute('data-listener', 'true');
     }
 }
+
+// Winner Selection Functions
+let selectedEntryId = null;
+let selectedEntryData = null;
+
+function selectWinner(entryId, lottoNumber, walletAddress, currentPrize = null) {
+    selectedEntryId = entryId;
+    selectedEntryData = {
+        lottoNumber,
+        walletAddress,
+        currentPrize
+    };
+    
+    // Populate modal
+    document.getElementById('winnerBallNum').textContent = lottoNumber;
+    document.getElementById('winnerWallet').textContent = walletAddress;
+    document.getElementById('winnerPrize').value = currentPrize || '';
+    
+    // Update ball display in modal
+    const winnerBallNumber = document.getElementById('winnerBallNumber');
+    winnerBallNumber.textContent = lottoNumber;
+    winnerBallNumber.className = 'lotto-ball';
+    
+    // Apply theme if available
+    setTimeout(() => {
+        if (window.themeManager) {
+            window.themeManager.applyThemeToElement(winnerBallNumber);
+        }
+    }, 50);
+    
+    // Show modal
+    document.getElementById('winnerModal').style.display = 'flex';
+}
+
+function closeWinnerModal() {
+    document.getElementById('winnerModal').style.display = 'none';
+    selectedEntryId = null;
+    selectedEntryData = null;
+    document.getElementById('winnerPrize').value = '';
+}
+
+async function saveWinner() {
+    if (!selectedEntryId) return;
+    
+    const prizeInput = document.getElementById('winnerPrize');
+    const prize = prizeInput.value.trim();
+    
+    if (!prize) {
+        showToast('❌ Please enter a prize description', 'error');
+        return;
+    }
+    
+    const saveBtn = document.getElementById('saveWinnerBtn');
+    saveBtn.disabled = true;
+    saveBtn.textContent = '💾 Saving...';
+    
+    try {
+        const authHeaders = authManager.getAuthHeaders();
+        if (!authHeaders) {
+            window.location.href = '/login.html';
+            return;
+        }
+        
+        const response = await fetch(`/api/draws/${drawId}/entries/${selectedEntryId}/winner`, {
+            method: 'PUT',
+            headers: authHeaders,
+            body: JSON.stringify({
+                prize: prize,
+                is_winner: true
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            showToast('✅ Winner assigned successfully!', 'success');
+            closeWinnerModal();
+            
+            // Reload draw data to refresh display
+            await loadDrawData();
+        } else {
+            showToast(`❌ Error: ${data.error || 'Failed to assign winner'}`, 'error');
+        }
+    } catch (error) {
+        console.error('Error assigning winner:', error);
+        showToast('❌ Failed to assign winner. Check console for details.', 'error');
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = '💾 Assign Prize';
+    }
+}
+
+// Twitter Share Functions
+function shareWinnerOnTwitter(entryId, lottoNumber, walletAddress, prize) {
+    // Get last 6 digits of wallet
+    const walletDigits = walletAddress.slice(-6);
+    
+    // Populate share modal
+    document.getElementById('shareBallNum').textContent = lottoNumber;
+    document.getElementById('shareWalletDigits').textContent = walletDigits;
+    document.getElementById('sharePrize').textContent = prize;
+    
+    // Update ball display
+    const shareBallNumber = document.getElementById('shareBallNumber');
+    shareBallNumber.textContent = lottoNumber;
+    shareBallNumber.className = 'lotto-ball winner-ball';
+    
+    // Apply theme
+    setTimeout(() => {
+        if (window.themeManager) {
+            window.themeManager.applyThemeToElement(shareBallNumber);
+        }
+    }, 50);
+    
+    // Generate Twitter text
+    const drawName = currentDraw?.draw_name || 'Lotto Draw';
+    const twitterText = `🎉 Winner Announcement! 🎉
+
+Ball #${lottoNumber} has won!
+
+Wallet: ...${walletDigits}
+Prize: ${prize}
+
+${drawName}
+
+#OnChainLotto #Solana #Crypto`;
+    
+    document.getElementById('twitterShareText').value = twitterText;
+    
+    // Create Twitter share URL
+    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(twitterText)}`;
+    document.getElementById('openTwitterLink').href = twitterUrl;
+    
+    // Show modal
+    document.getElementById('twitterShareModal').style.display = 'flex';
+}
+
+function closeTwitterModal() {
+    document.getElementById('twitterShareModal').style.display = 'none';
+}
+
+async function copyTwitterText() {
+    const twitterText = document.getElementById('twitterShareText').value;
+    
+    try {
+        await navigator.clipboard.writeText(twitterText);
+        showToast('✅ Twitter text copied to clipboard!', 'success');
+    } catch (error) {
+        console.error('Error copying text:', error);
+        showToast('❌ Failed to copy text', 'error');
+    }
+}
+
+// Initialize winner modal event listeners
+document.addEventListener('DOMContentLoaded', () => {
+    // Winner modal
+    const winnerModal = document.getElementById('winnerModal');
+    const closeWinnerModalBtn = document.getElementById('closeWinnerModal');
+    const cancelWinnerBtn = document.getElementById('cancelWinnerBtn');
+    const saveWinnerBtn = document.getElementById('saveWinnerBtn');
+    
+    if (closeWinnerModalBtn) {
+        closeWinnerModalBtn.addEventListener('click', closeWinnerModal);
+    }
+    if (cancelWinnerBtn) {
+        cancelWinnerBtn.addEventListener('click', closeWinnerModal);
+    }
+    if (saveWinnerBtn) {
+        saveWinnerBtn.addEventListener('click', saveWinner);
+    }
+    if (winnerModal) {
+        winnerModal.addEventListener('click', (e) => {
+            if (e.target === winnerModal) {
+                closeWinnerModal();
+            }
+        });
+    }
+    
+    // Twitter share modal
+    const twitterModal = document.getElementById('twitterShareModal');
+    const closeTwitterModalBtn = document.getElementById('closeTwitterModal');
+    const cancelTwitterBtn = document.getElementById('cancelTwitterBtn');
+    const copyTwitterBtn = document.getElementById('copyTwitterBtn');
+    
+    if (closeTwitterModalBtn) {
+        closeTwitterModalBtn.addEventListener('click', closeTwitterModal);
+    }
+    if (cancelTwitterBtn) {
+        cancelTwitterBtn.addEventListener('click', closeTwitterModal);
+    }
+    if (copyTwitterBtn) {
+        copyTwitterBtn.addEventListener('click', copyTwitterText);
+    }
+    if (twitterModal) {
+        twitterModal.addEventListener('click', (e) => {
+            if (e.target === twitterModal) {
+                closeTwitterModal();
+            }
+        });
+    }
+});
 
 // Initial load
 loadDrawData();
